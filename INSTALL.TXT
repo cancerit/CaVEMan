@@ -1,0 +1,19 @@
+System Requirements
+===================
+
+caveman is designed to run in a compute farm/clustre environment.
+caveman depends on the samtools library <http://sourceforge.net/projects/samtools/>. 
+
+
+Compilation
+===========
+
+Type `make' to compile caveman. 
+
+
+Installation
+============
+
+Copy 'bin/caveman', and other executables in bin/ to a location you want 
+(e.g. a directory in your $PATH). You may also copy 'docs/caveman.1' to a directory in your $MANPATH such
+that the `man' command may find the manual.

@@ -1,0 +1,72 @@
+/**   LICENSE
+* Copyright (c) 2014 Genome Research Ltd. 
+* 
+* Author: Cancer Genome Project cgpit@sanger.ac.uk 
+* 
+* This file is part of caveman_c. 
+* 
+* caveman_c is free software: you can redistribute it and/or modify it under 
+* the terms of the GNU Affero General Public License as published by the Free 
+* Software Foundation; either version 3 of the License, or (at your option) any 
+* later version. 
+* 
+* This program is distributed in the hope that it will be useful, but WITHOUT 
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
+* details. 
+* 
+* You should have received a copy of the GNU Affero General Public License 
+* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+*/
+
+#ifndef _alg_bean_h
+#define _alg_bean_h
+
+#include <stdio.h>
+#include <List.h>
+#include "sam.h"
+
+typedef struct alg_bean_intrange{
+	int from;
+	int to;
+} alg_bean_intrange;
+
+typedef struct alg_bean_t{
+	 List *rd_pos;
+	 int rd_pos_size;
+	 List *base_qual;
+	 int base_qual_size;
+	 List *map_qual;
+	 int map_qual_size;
+	 List *lane;	
+	 int lane_size;
+	 List *read_order;
+	 int read_order_size;
+	 List *ref_base;
+	 int ref_base_size;
+	 List *call_base;
+	 int call_base_size;
+	 List *strand; 
+	 int strand_size;
+} alg_bean_t;
+
+int alg_bean_create_default_file(FILE *file, char *norm, char *tum);
+int alg_bean_write_file(FILE *file, alg_bean_t *bean);
+List *alg_bean_parse_int_range(char *txt);
+List *alg_bean_parse_str_list(char *txt);
+List *alg_bean_parse_float_list(char *txt);
+alg_bean_t *alg_bean_read_file(FILE *file);
+alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum);
+void alg_bean_destroy(alg_bean_t *bean);
+List *alg_bean_hard_copy_char_list(List *new_list, List *old);
+int alg_bean_get_index_for_str_arr(List *list,char *value);
+int alg_bean_get_index_for_intrange_arr(List *list,int value);
+int alg_bean_get_index_for_char_arr(List *list,char *value);
+int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len);
+
+#define CEIL(a, b) (((a) / (b)) + (((a) % (b)) > 0 ? 1 : 0))
+#define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+#define MAX(a, b)  (((a) > (b)) ? (a) : (b))
+#define ABS(a)     (((a) < 0) ? -(a) : (a))
+
+#endif
