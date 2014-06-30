@@ -8,8 +8,8 @@ caveman depends on the samtools library <http://sourceforge.net/projects/samtool
 Compilation
 ===========
 
-Type `make' to compile caveman. 
-
+Type `make LFLAGS=-L$SAMTOOLS/lib OPTINC=-I$SAMTOOLS/include/' to compile caveman 
+where $SAMTOOLS is the path to your local install of samtools. 
 
 Installation
 ============
