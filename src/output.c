@@ -53,7 +53,7 @@ static const char *VCF_FORMAT_KEY = "FORMAT";
 static const char *VCF_INFO_KEY = "INFO";
 static const char *VCF_PEDIGREE_KEY= "PEDIGREE";
 static const char *VCF_FILE_KEY = "File";
-static const char *VCF_VAR_FORMAT_LINE = "GT:AF:CF:GF:TF:AR:CR:GR:TR:PM";
+static const char *VCF_VAR_FORMAT_LINE = "GT:FAZ:FCZ:FGZ:FTZ:RAZ:RCZ:RGZ:RTZ:PM";
 static const char *VCF_FORMAT_A_FWD_COUNT = "ID=FAZ,Number=1,Type=Integer,Description=\"Reads presenting a A for this position, forward strand\"";
 static const char *VCF_FORMAT_C_FWD_COUNT = "ID=FCZ,Number=1,Type=Integer,Description=\"Reads presenting a C for this position, forward strand\"";
 static const char *VCF_FORMAT_G_FWD_COUNT = "ID=FGZ,Number=1,Type=Integer,Description=\"Reads presenting a G for this position, forward strand\"";
