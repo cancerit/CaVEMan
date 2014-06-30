@@ -221,7 +221,7 @@ int test_output_to_file_int(){
 
 	fclose(out);
 
-	char *exp = "Y\t10\t.\tC\tT\t.\t.\tDP=136;MP=9.4e-01;GP=7.7e-02;TG=CC/TT;TP=9.5e-01;SG=CC/CC;SP=4.8e-02\tGT:AF:CF:GF:TF:AR:CR:GR:TR:PM\t0|0:1:2:3:4:5:6:7:8:3.3e-01\t1|1:9:10:11:12:13:14:15:16:2.8e-01\n";
+	char *exp = "Y\t10\t.\tC\tT\t.\t.\tDP=136;MP=9.4e-01;GP=7.7e-02;TG=CC/TT;TP=9.5e-01;SG=CC/CC;SP=4.8e-02\tGT:FAZ:FCZ:FGZ:FTZ:RAZ:RCZ:RGZ:RTZ:PM\t0|0:1:2:3:4:5:6:7:8:3.3e-01\t1|1:9:10:11:12:13:14:15:16:2.8e-01\n";
 	out = fopen(out_test_vcf,"r");
 	char line[5000];
 	int count = 0;
