@@ -13,13 +13,13 @@ CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"'
 CFLAGS = -g -Wall
 
 #Define locations of header files
-OPTINC?= -I$SAMTOOLS/include/
+OPTINC?= -I$(SAMTOOLS)/include/
 INCLUDES= -Isrc $(OPTINC) -rdynamic
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS ?= -L$SAMTOOLS/lib
+LFLAGS ?= -L$(SAMTOOLS)/lib
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname 
