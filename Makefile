@@ -54,8 +54,8 @@ UMNORM_TARGET=./bin/generateCavemanUMNormVCF
 
 .PHONY: depend clean test coverage copyscript
 
-all: $(CAVEMAN_TARGET) $(UMNORM_TARGET) test copyscript
-	@echo  Binaries have been compiled
+all: $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript
+	@echo  Binaries have been compiled. You are advised to run 'make test'
 
 $(UMNORM_TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(UMNORM_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/generateCavemanVCFUnmatchedNormalPanel.c
