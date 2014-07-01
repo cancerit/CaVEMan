@@ -52,10 +52,12 @@ UMNORM_TARGET=./bin/generateCavemanUMNormVCF
 # deleting dependencies appended to the file from 'make depend'
 #
 
-.PHONY: depend clean test coverage copyscript
+.PHONY: depend clean coverage copyscript test
 
-all: $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript
-	@echo  Binaries have been compiled. You are advised to run 'make test'
+.NOTPARALLEL: test
+
+all: $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript test
+	@echo  Binaries have been compiled.
 
 $(UMNORM_TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(UMNORM_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/generateCavemanVCFUnmatchedNormalPanel.c
@@ -64,13 +66,14 @@ $(CAVEMAN_TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(CAVEMAN_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/caveman.c
 
 #Unit Tests
+test: $(CAVEMAN_TARGET)
 test: CFLAGS += $(INCLUDES) $(OBJS) $(LFLAGS) $(LIBS)
 test: $(TESTS)
 	sh ./tests/runtests.sh
 
 #Unit tests with coverage
 coverage: CFLAGS += --coverage
-coverage: all
+coverage: test
 
 copyscript:
 	rsync -uE ./scripts/* ./bin/
