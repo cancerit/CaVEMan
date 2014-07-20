@@ -57,6 +57,8 @@ static float prior_mut_prob = 0.000006;
 static float prior_snp_prob = 0.0001;
 static int min_tum_cvg = 1;
 static int min_norm_cvg = 1;
+static int normal_copy_number = 2;
+static int tumour_copy_number = 2;
 static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
@@ -90,7 +92,9 @@ void estep_print_usage (int exit_code){
 	printf("-o  --prob-file [file]                           File location of the prob array. [default:'%s']\n",probs_file);
 	printf("-v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do not contain AS and SP information.\n");
 	printf("-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.\n");
-	printf("-h	help                                         Display this usage information.\n");
+	printf("-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:%d].\n",normal_copy_number);
+	printf("-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:%d].\n",tumour_copy_number);
+  printf("-h	help                                         Display this usage information.\n");
 
   exit(exit_code);
 }
@@ -116,6 +120,8 @@ void estep_setup_options(int argc, char *argv[]){
              	{"split-size", required_argument, 0, 'a'},
              	{"species-assembly ", required_argument, 0, 'v'},
              	{"species", required_argument, 0, 'w'},
+             	{"normal-copy-number", required_argument, 0, 'n'},
+             	{"tumour-copt-number", required_argument, 0, 't'},
              	{"help", no_argument, 0, 'h'},
              	{"debug", no_argument, 0, 's'},
 
@@ -126,7 +132,7 @@ void estep_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:v:w:sh",
+   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:sh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'v':
@@ -148,25 +154,33 @@ void estep_setup_options(int argc, char *argv[]){
          	estep_print_usage(0);
          	break;
 
-     		case 'e':
-     			norm_cn_loc = optarg;
-     			break;
+      case 'e':
+        norm_cn_loc = optarg;
+        break;
 
-     		case 'j':
-     			tum_cn_loc = optarg;
-     			break;
+      case 'j':
+        tum_cn_loc = optarg;
+        break;
 
-      	case 'f':
-      		config_file = optarg;
-      		break;
+      case 'f':
+        config_file = optarg;
+        break;
 
-      	case 'i':
-      		idx = atoi(optarg);
-      		break;
+      case 'n':
+        normal_copy_number = atoi(optarg);
+        break;
 
-      	case 'm':
-      		min_bq = atoi(optarg);
-      		break;
+      case 't':
+        tumour_copy_number = atoi(optarg);
+        break;
+
+      case 'i':
+        idx = atoi(optarg);
+        break;
+
+      case 'm':
+        min_bq = atoi(optarg);
+        break;
 
 			case 'k':
 				norm_contam = atof(optarg);
@@ -240,9 +254,12 @@ int estep_main(int argc, char *argv[]){
 								results,list_loc,&includeSW,&includeSingleEnd,&includeDups);
 
 	check(cfg==0,"Error parsing config file.");
-   bam_access_include_sw(includeSW);
-   bam_access_include_se(includeSingleEnd);
-   bam_access_include_dup(includeDups);
+  bam_access_include_sw(includeSW);
+  bam_access_include_se(includeSingleEnd);
+  bam_access_include_dup(includeDups);
+
+  set_normal_cn(normal_copy_number);
+  set_tumour_cn(tumour_copy_number);
 
 	//Load in alg bean
 	FILE *alg_bean_file = fopen(alg_bean_loc,"r");
