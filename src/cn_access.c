@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of caveman_c. 
-* 
-* caveman_c is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of caveman_c.
+*
+* caveman_c is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <cn_access.h>
@@ -31,7 +31,7 @@ List *cns[2] = {NULL,NULL};
 
 int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int is_normal){
 	FILE *cn_file;
-	if(cns[is_normal] == NULL){
+	if(cns[is_normal] == NULL && file_loc != NULL){
 		cn_file = fopen(file_loc,"r");
 		check(cn_file>0,"Error trying to open copy number file for reading %s.",file_loc);
 		List *li = List_create();
@@ -39,7 +39,7 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
 		char rd[250];
 		while(fgets(rd, 200, cn_file) != NULL){
 			check(rd != NULL,"Invalid line read in ignored region file.");
-			char *chr_nom = malloc(sizeof(char *));		
+			char *chr_nom = malloc(sizeof(char *));
 			int beg,end;
 			int chk = sscanf(rd,"%s\t%d\t%d\t%d",chr_nom,&beg,&end,&cop);
 			check(chk == 4,"Incorrect line parse from copy number file.\n");
@@ -53,19 +53,21 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
 		cns[is_normal] = li;
 		fclose(cn_file);
 	}
-	
+
 	int cn = -1;
-	LIST_FOREACH(cns[is_normal], first, next, cur){	
-		if(strcmp(((seq_region_t *)cur->value)->chr_name,chr) == 0 && pos >= ((seq_region_t *)cur->value)->beg && pos <= ((seq_region_t *)cur->value)->end){
-			cn = ((seq_region_t *)cur->value)->val;
-			break;
-		}	
+	if(cns[is_normal] != NULL && cn_file != NULL){
+    LIST_FOREACH(cns[is_normal], first, next, cur){
+      if(strcmp(((seq_region_t *)cur->value)->chr_name,chr) == 0 && pos >= ((seq_region_t *)cur->value)->beg && pos <= ((seq_region_t *)cur->value)->end){
+        cn = ((seq_region_t *)cur->value)->val;
+        break;
+      }
+    }
 	}
-	
+
 	return cn;
 error:
 	if(cn_file) fclose(cn_file);
-	return -1;
+	return NULL;
 }
 
 void clear_copy_number_store(){
@@ -75,8 +77,8 @@ void clear_copy_number_store(){
 		}
 		List_clear_destroy(cns[0]);
 		cns[0] = NULL;
-	}	
-	
+	}
+
 	if(cns[1] != NULL){
 		LIST_FOREACH(cns[1], first, next, cur){
 			free(((seq_region_t *)cur->value)->chr_name);
