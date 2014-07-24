@@ -3,9 +3,9 @@
 * 
 * Author: Cancer Genome Project cgpit@sanger.ac.uk 
 * 
-* This file is part of caveman_c. 
+* This file is part of CaVEMan. 
 * 
-* caveman_c is free software: you can redistribute it and/or modify it under 
+* CaVEMan is free software: you can redistribute it and/or modify it under 
 * the terms of the GNU Affero General Public License as published by the Free 
 * Software Foundation; either version 3 of the License, or (at your option) any 
 * later version. 
@@ -36,7 +36,7 @@ static char *ref_idx = NULL;
 static char *list_loc = "splitList";
 static char *alg_bean_loc = "alg_bean";
 static char *ignore_regions_file = NULL;
-static char *caveman_cfg_ini = "caveman.cfg.ini";
+static char *CaVEManfg_ini = "caveman.cfg.ini";
 
 
 void setup_print_usage (int exit_code){
@@ -46,7 +46,7 @@ void setup_print_usage (int exit_code){
 	printf("-r  --reference-index [file]        Location of reference fasta index\n");
 	printf("-g  --ignore-regions-file [file]    Location of tsv ignore regions file\n\n");
 	printf("Optional\n");
-	printf("-c  --config-file [file]            File to write caveman run config file [default:'%s']\n",caveman_cfg_ini);
+	printf("-c  --config-file [file]            File to write caveman run config file [default:'%s']\n",CaVEManfg_ini);
 	printf("-f  --results-folder [file]         Folder to write results [default:'%s']\n",results);
 	printf("-l  --split-file [file]             File to write list of split sections [default:'%s']\n",list_loc);
 	printf("-a  --alg-bean-file [file]          Location to write alg-bean [default:'%s']\n",alg_bean_loc);
@@ -87,7 +87,7 @@ void setup_setup_options(int argc, char *argv[]){
          	break;
 
          case 'c':
-         	caveman_cfg_ini = optarg;
+         	CaVEManfg_ini = optarg;
          	break;
      			
          case 't':
@@ -154,18 +154,18 @@ int setup_main(int argc, char *argv[]){
 	//Create and write the config file in the current directory. 
 	FILE *config_read;
 	//Try reading to see if we already have one
-	if((config_read = fopen(caveman_cfg_ini,"r")) == 0){
-		FILE *config_out = fopen(caveman_cfg_ini,"w");
-		check(config_out != NULL,"Error trying to open config file location for write: %s.",caveman_cfg_ini);
+	if((config_read = fopen(CaVEManfg_ini,"r")) == 0){
+		FILE *config_out = fopen(CaVEManfg_ini,"w");
+		check(config_out != NULL,"Error trying to open config file location for write: %s.",CaVEManfg_ini);
 		int res = config_file_access_write_config_file(config_out, tum_bam_file, norm_bam_file, ref_idx, 
 			ignore_regions_file, alg_bean_loc, results, list_loc, includeSW, includeSingleEnd, includeDups);
-		check(res==0,"Problem encountered when writing new config file to to %s.",caveman_cfg_ini);
+		check(res==0,"Problem encountered when writing new config file to to %s.",CaVEManfg_ini);
 		res = fclose(config_out);	
 		check(res==0,"Error closing config file.");
 	}else{
 		int res = fclose(config_read);
 		check(res==0,"Error closing config file reader.");
-		printf("Config file file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",caveman_cfg_ini);
+		printf("Config file file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",CaVEManfg_ini);
 	}
 	
 	//Create the alg bean
