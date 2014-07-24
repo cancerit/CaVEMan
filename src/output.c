@@ -191,13 +191,13 @@ char *output_generate_CaVEMan_process_log(char *cave_version){
 
 char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species){
 	assert(bam_file != NULL);
-	char *contigs = malloc(sizeof(char) * 10000);
-	strcpy(contigs,"");
 	List *contig_list = bam_access_get_contigs_from_bam(bam_file, assembly, species);
 	check(contig_list != NULL,"Error fetching contigs from bam file.");
+	char *contigs = malloc(sizeof(char) * 1000 * List_count(contig_list));
+	strcpy(contigs,"");
 	LIST_FOREACH(contig_list, first,next,cur){
 		ref_seq_t *ref = (ref_seq_t *)cur->value;
-		char contig_str[500];
+		char contig_str[1000];
 		sprintf(contig_str,"##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n",ref->name,ref->length,ref->ass,ref->spp);
 		strcat(contigs,contig_str);
 	}
