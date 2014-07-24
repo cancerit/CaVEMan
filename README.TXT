@@ -3,9 +3,9 @@
 # 
 # Author: Cancer Genome Project cgpit@sanger.ac.uk 
 # 
-# This file is part of caveman_c. 
+# This file is part of CaVEMan. 
 # 
-# caveman_c is free software: you can redistribute it and/or modify it under 
+# CaVEMan is free software: you can redistribute it and/or modify it under 
 # the terms of the GNU Affero General Public License as published by the Free 
 # Software Foundation; either version 3 of the License, or (at your option) any 
 # later version. 
@@ -32,7 +32,7 @@
 
 
 
-caveman_c - A C implementation of the CaVEMan program. Uses an expectation maximisation 
+CaVEMan - A C implementation of the CaVEMan program. Uses an expectation maximisation 
 				approach to calling single base substitutions in paired data.
 				Designed for use with a compute farm/cluster most steps in the program make 
 				use of an index parameter. The split step is designed to divide the genome into
@@ -59,7 +59,7 @@ caveman_c - A C implementation of the CaVEMan program. Uses an expectation maxim
 
 ##Setup
 
-	Generates a config file for use with the remaining caveman_c steps (it'll save you a lot of time typing commandline args).
+	Generates a config file for use with the remaining CaVEMan steps (it'll save you a lot of time typing commandline args).
 	Also generates a file named 'alg_bean' in the run directory.
 	
 	bin/caveman setup || ./bin/setupCaveman
@@ -137,14 +137,14 @@ caveman_c - A C implementation of the CaVEMan program. Uses an expectation maxim
 
 ##Estep
 
-	The final step in calling variants using caveman_c. As was the case with the mstep, a job per 
+	The final step in calling variants using CaVEMan. As was the case with the mstep, a job per 
 	entry in the merged split list is required. Copy number (-e, -j), and normal contamination (-k) 
 	are required (See default settings for advice on obtaining results if you don't have these).
 	Each job will create several files named according to the corresponding line in the merged split file.
 	*_muts.vcf and *_snps.vcf are the calls above the given cutoffs for somatic and SNP probabilities alike. 
 	The *.no_analysis.bed file lists sections not analysed by caveman, due to being ignored or lacking coverage. 
 	Using the debugoption will output another file named *.dbg.vcf containing  a line for every position
-	in the genome that was analysed with read counts (as seen by caveman_c) and top two probabilities 
+	in the genome that was analysed with read counts (as seen by CaVEMan) and top two probabilities 
 	calculated.
 	
 	bin/caveman estep || ./bin/estepCaveman
@@ -180,7 +180,7 @@ caveman_c - A C implementation of the CaVEMan program. Uses an expectation maxim
 	Copy number files are taken in a 1-based bed style tab separated format. 
 	Where the columns are chromosome,start,stop,copynumber(integer). A separate file is required 
 	for normal and tumour. Each file should have a copy number assigned for every region requested 
-	to be analysed (NB, caveman_c will not analyse a regions where copy number is set to 0).
+	to be analysed (NB, CaVEMan will not analyse a regions where copy number is set to 0).
 	Example:
 		1	1	20000	2
 		2	1	2500	4
@@ -197,5 +197,5 @@ caveman_c - A C implementation of the CaVEMan program. Uses an expectation maxim
 
 There may be cases where copy number is not available. In order to extract the best results
 it is advised to use copy number 2 in the normal and 5 in the tumour in combination with 
-a normal contamination of 0.1 . This gives caveman_c a broad range over which variants will
+a normal contamination of 0.1 . This gives CaVEMan a broad range over which variants will
 be called compared to a copy number of 2 in the tumour. 
