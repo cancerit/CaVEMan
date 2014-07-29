@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdio.h>
@@ -51,13 +51,13 @@ static int idx;
 
 
 void split_print_usage (int exit_code){
-	printf ("Usage: caveman split -i jobindex [-f path] [-c int] [-m int] [-e int] \n\n");  
+	printf ("Usage: caveman split -i jobindex [-f path] [-c int] [-m int] [-e int] \n\n");
   	printf("-i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)\n\n");
 	printf("Optional\n");
 	printf("-f  --config-file [file]          Path to the config file produced by setup [default:'%s'].\n",config_file);
 	printf("-c  --increment [int]             Increment to use when deciding split sizes [default:%d]\n",increment);
 	printf("-m  --max-read-count [double]     Proportion of read-count to allow as a max in a split section [default:%f]\n",maxPropRdCount);
-	printf("-e  --read-count [int]            Guide for maximum read count in a section [default:%d]\n",read_count);	
+	printf("-e  --read-count [int]            Guide for maximum read count in a section [default:%d]\n",read_count);
 	printf("-h	help                          Display this usage information.\n");
   exit(exit_code);
 }
@@ -73,18 +73,18 @@ void split_setup_options(int argc, char *argv[]){
              	{"help", no_argument, 0, 'h'},
              	{ NULL, 0, NULL, 0}
    }; //End of declaring opts
-   
+
    int index = 0;
    int iarg = 0;
-   
+
    //Iterate through options
    while((iarg = getopt_long(argc, argv, "f:i:m:c:e:h",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'h':
          	split_print_usage(0);
-         	break;      	 
-     		 
+         	break;
+
       	case 'f':
       		config_file = optarg;
       		break;
@@ -92,46 +92,46 @@ void split_setup_options(int argc, char *argv[]){
       	case 'i':
       		idx = atoi(optarg);
       		break;
-      	
+
       	case 'm':
       		maxPropRdCount = atof(optarg);
-      		break;      	
-      	
+      		break;
+
       	case 'c':
       		increment = atoi(optarg);
       		break;
-      		
+
       	case 'e':
       		read_count = atoi(optarg);
       		break;
-	
+
 			case '?':
             split_print_usage (1);
             break;
-	
+
       	default:
       		split_print_usage (1);
-                           
+
    	}; // End of args switch statement
-   	
+
    }//End of iteration through options
-   
+
    //Do some checking to ensure required arguments were passed
    if(idx == NULL || idx == 0){
    	split_print_usage(1);
    }
-   
+
    if(check_exist(config_file) != 1){
    	printf("Config file %s does not appear to exist. Have you run caveman setup?\n",config_file);
    	split_print_usage(1);
    }
-   
+
    return;
 }
 
 int split_main(int argc, char *argv[]){
-	split_setup_options(argc,argv);   
-	
+	split_setup_options(argc,argv);
+
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
@@ -142,17 +142,17 @@ int split_main(int argc, char *argv[]){
 	check(cfg==0,"Error parsing config file.");
    bam_access_include_sw(includeSW);
    bam_access_include_se(includeSingleEnd);
-   bam_access_include_dup(includeDups);	
-	
+   bam_access_include_dup(includeDups);
+
    //Open reference file and read in chromosomes - getting chr name and length for this index
    int chr_length = 0;
    char *chr_name = malloc(sizeof(char *));
    int chk = 0;
    chk = fai_access_get_name_from_index(idx, ref_idx, chr_name, &chr_length);
    check(chk==0, "Error encountered trying to get chromosome name and length from FASTA index file.");
-   
+
    printf("Found chr: %s of length: %d at index %d\n",chr_name,chr_length,idx);
-    
+
    //Open a file to write sections, named according to CHR.
 	char *fname = malloc(strlen(chr_name) + strlen(list_loc) + 3);
 	check_mem(fname);
@@ -162,24 +162,24 @@ int split_main(int argc, char *argv[]){
    strcat(fname,chr_name);
    FILE *output = fopen(fname,"w");
 	free(fname);
-   check(output != NULL, "Error opening file %s for write.",fname);  
-      
+   check(output != NULL, "Error opening file %s for write.",fname);
+
    //Load in a set of ignore regions from tsv format, only require this chromosome.
    int ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
    check(ignore_reg_count >= 0,"Error trying to check the number of ignored regions for this chromosome.");
-   
+
    printf("Found %d ignored regions for chromosome %s.\n",ignore_reg_count,chr_name);
-   
+
    //Now create a store for said regions.
    struct seq_region_t **ignore_regs;
    ignore_regs = malloc(sizeof(struct seq_region_t *) *  ignore_reg_count);
    check_mem(ignore_regs);
    check(ignore_reg_access_get_ign_reg_for_chr(ignore_regions_file,chr_name,ignore_reg_count,ignore_regs)==0,"Error fetching ignored regions from file.");
-		   
+
    //Check there's not a whole chromosome block.
    if(!(ignore_reg_count == 1 && ignore_regs[0]->beg == 1 && ignore_regs[0]->end >= chr_length)){
-		//No chromosome block, so carry on.		
-		//Open bam file and iterate through chunks until we reach the cutoff.   
+		//No chromosome block, so carry on.
+		//Open bam file and iterate through chunks until we reach the cutoff.
 		chk = bam_access_openbams(norm_bam_file,tum_bam_file);
 		check(chk == 0,"Error trying to open bam files.");
 
@@ -221,7 +221,7 @@ int split_main(int argc, char *argv[]){
 					rdCount = 0;
 					continue;
 				}else{
-					last_stop = sect_stop;	
+					last_stop = sect_stop;
 					sect_stop += increment;
 					List_clear_destroy(ign_this_sect);
 				}
@@ -232,9 +232,9 @@ int split_main(int argc, char *argv[]){
 				sect_start = sect_stop+1;
 				last_stop = sect_stop;
 				sect_stop = sect_start + increment;
-				List_clear_destroy(ign_this_sect);	
-				rdCount = 0;	
-				continue;				
+				List_clear_destroy(ign_this_sect);
+				rdCount = 0;
+				continue;
 			}else if(rdCount >= read_count && rdCount <= (read_count * maxPropRdCount)){
 				split_access_print_section(output,chr_name,sect_start,sect_stop);
 				sect_start = sect_stop+1;
@@ -246,16 +246,16 @@ int split_main(int argc, char *argv[]){
 			}else{
 				sentinel("We shouldn't have reached this.");
 			}
-		} 
+		}
 		//Close bams
-		bam_access_closebams();	
+		bam_access_closebams();
    }
-   
+
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count, ignore_regs);
 	free(chr_name);
 	//Close output file
-	fclose(output);	
-   return 0;
+	fclose(output);
+  return 0;
 error:
 	if(chr_name) free(chr_name);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count, ignore_regs);
@@ -273,7 +273,7 @@ int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop, struct 
 		//Check we haven't gone back past the start of the last RG, if we have, try again!
 		if(sect_stop <= sect_start){
 			sect_stop = sect_start + new_inc;
-			new_inc = new_inc / 2; 
+			new_inc = new_inc / 2;
 			sect_stop -= new_inc;
 		}
 		//Check if stop is in an ignored region
@@ -295,7 +295,7 @@ int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop, struct 
 		List_clear_destroy(ign_this_sect);
 	}
 	return sect_stop;
-error:	
+error:
 	return -1;
 }
 
