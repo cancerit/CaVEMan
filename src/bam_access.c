@@ -101,7 +101,7 @@ static int pileup_umnorm_counts(uint32_t tid, uint32_t pos, int n, const bam_pil
    		const bam_pileup1_t *p = pl + i;
    		bam1_t *algn = p->b;
 			uint8_t cbase = bam1_seqi(bam1_seq(algn),p->qpos);
-			if((!p->is_del) && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
+			if((p->indel==0 && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
 				int loc = (pos) - tmp->beg;
 				if(tmp->base_counts[loc] == NULL || tmp->base_counts[loc] == 0){
 					tmp->base_counts[loc] = calloc(4,sizeof(int));
@@ -439,7 +439,7 @@ static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const ba
    		const bam_pileup1_t *p = pil + i;
    		bam1_t *algn = p->b;
 			uint8_t cbase = bam1_seqi(bam1_seq(algn),p->qpos);
-			if((!p->is_del) && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
+			if((p->indel==0 && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
 				//Now we add a new read pos struct to the list since the read is valid.
 				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
 				check_mem(rp);
@@ -490,7 +490,7 @@ static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1
    		const bam_pileup1_t *p = pil + i;
 			int qual = bam1_qual(p->b)[p->qpos];
 			uint8_t c = bam1_seqi(bam1_seq(p->b), p->qpos);
-			if((!p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
+			if(p->indel==0 &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
 				//Now we add a new read pos struct to the list since the read is valid.
 				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
 				check_mem(rp);
@@ -567,7 +567,6 @@ error:
 	if(bams->reads) List_clear_destroy(bams->reads);
 	return NULL;
 }
-
 
 List *bam_access_get_reads_at_this_pos(char *chr_name, int start, int stop, int sorted, alg_bean_t *bean){
 	check(norm->in != NULL,"Ensure you've called openbams first.");
