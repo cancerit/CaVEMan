@@ -68,6 +68,9 @@ static int split_size = 50000;
 static int debug=0;
 static char *assembly = NULL;
 static char *species = NULL;
+static char *norm_prot = "WGS";
+static char *tum_prot = "WGS";
+char *valid_protocols[3] = {"WGS","WXS","RNA"};
 
 void estep_print_usage (int exit_code){
 	printf ("Usage: caveman estep -i jobindex -e norm.copy.no -j tum.copy.no [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
@@ -94,6 +97,8 @@ void estep_print_usage (int exit_code){
 	printf("-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.\n");
 	printf("-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:%d].\n",normal_copy_number);
 	printf("-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:%d].\n",tumour_copy_number);
+	printf("-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WGX|RNA) [default:%s].\n",norm_prot);
+	printf("-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WGX|RNA) [default:%s].\n",tum_prot);
   printf("-h	help                                         Display this usage information.\n");
 
   exit(exit_code);
@@ -121,7 +126,9 @@ void estep_setup_options(int argc, char *argv[]){
              	{"species-assembly ", required_argument, 0, 'v'},
              	{"species", required_argument, 0, 'w'},
              	{"normal-copy-number", required_argument, 0, 'n'},
-             	{"tumour-copt-number", required_argument, 0, 't'},
+             	{"tumour-copy-number", required_argument, 0, 't'},
+             	{"normal-protocol", required_argument, 0, 'l'},
+             	{"tumour-protocol", required_argument, 0, 'r'},
              	{"help", no_argument, 0, 'h'},
              	{"debug", no_argument, 0, 's'},
 
@@ -132,27 +139,39 @@ void estep_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:sh",
+   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:r:sh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
+   		case 'l':
+				norm_prot = optarg;
+   			break;
+
+   		case 'r':
+				tum_prot = optarg;
+   			break;
+
    		case 'v':
    			assembly = optarg;
    			break;
+
    		case 'w':
    			species = optarg;
    			break;
    		case 'o':
    			probs_file = optarg;
    			break;
+
    		case 'g':
    			covariate_file = optarg;
    			break;
+
    		case 's':
    			debug = 1;
    			break;
+
    		case 'h':
-         	estep_print_usage(0);
-         	break;
+        estep_print_usage(0);
+        break;
 
       case 'e':
         norm_cn_loc = optarg;
@@ -219,11 +238,11 @@ void estep_setup_options(int argc, char *argv[]){
 				break;
 
 			case '?':
-            estep_print_usage (1);
-            break;
+        estep_print_usage (1);
+        break;
 
-      	default:
-      		estep_print_usage (1);
+      default:
+      	estep_print_usage (1);
 
    	}; // End of args switch statement
 
@@ -240,6 +259,28 @@ void estep_setup_options(int argc, char *argv[]){
    	estep_print_usage(1);
    }
 
+	 int i=0;
+	 int norm_prot_check=0;
+	 int tum_prot_check=0;
+	 for(i=0;i<3;i++){
+		if(strcmp(norm_prot,valid_protocols[i])==0){
+			norm_prot_check=1;
+		}
+		if(strcmp(tum_prot,valid_protocols[i])==0){
+			tum_prot_check=1;
+		}
+	 }
+
+   if(norm_prot_check==0){
+		printf("Normal protocol '%s' is invalid should be one of (WGS|WXS|RNA).",norm_prot);
+		estep_print_usage(1);
+   }
+
+   if(tum_prot_check==0){
+		printf("Tumour protocol '%s' is invalid should be one of (WGS|WXS|RNA).",tum_prot);
+		estep_print_usage(1);
+   }
+
    return;
 }
 
@@ -250,8 +291,9 @@ int estep_main(int argc, char *argv[]){
 	FILE *config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
 
-	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean_loc,
-								results,list_loc,&includeSW,&includeSingleEnd,&includeDups);
+	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,
+														ref_idx,ignore_regions_file,alg_bean_loc,results,list_loc,
+																							&includeSW,&includeSingleEnd,&includeDups);
 
 	check(cfg==0,"Error parsing config file.");
   bam_access_include_sw(includeSW);
@@ -269,8 +311,10 @@ int estep_main(int argc, char *argv[]){
 	fclose(alg_bean_file);
 
 	//Load in probability array
-	long double ********prob_arr = covs_access_read_probs_from_file(probs_file,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
-									List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+	long double ********prob_arr = covs_access_read_probs_from_file(probs_file,
+														List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+														List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),
+																												List_count(alg->ref_base),List_count(alg->call_base));
 
 	//Set the algorithm modifiers and open the bam files
 	//Set the min base qual in case it's been changed.
@@ -375,12 +419,14 @@ int estep_main(int argc, char *argv[]){
 	//Open files for output
 	FILE *mut_file = fopen(mut_out,"w");
 	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
-	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file, assembly, species);
+	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
+																									assembly, species, norm_prot, tum_prot);
 	check(chk_write==0,"Error writing header to muts file.");
 
 	FILE *snp_file = fopen(snp_out,"w");
 	check(snp_file != 0, "Error trying to open snp file for output: %s.",snp_out);
-	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file, assembly, species);
+	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
+																									assembly, species, norm_prot, tum_prot);
 	check(chk_write==0,"Error writing header to SNP file.");
 
 	FILE *no_analysis_file = fopen(no_analysis_file_loc,"w");
@@ -391,7 +437,8 @@ int estep_main(int argc, char *argv[]){
 	if(debug == 1){
 		debug_file = fopen(debug_out,"w");
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
-		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file, assembly, species);
+		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file,
+																									assembly, species, norm_prot, tum_prot);
 		check(chk_write==0,"Error writing header to dbg file.");
 	}
 

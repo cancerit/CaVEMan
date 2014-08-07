@@ -239,8 +239,9 @@ char *output_generate_format_lines(){
 	return format;
 }
 
-int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_loc, char *assembly, char *species){
-	check(out != NULL,"NULL file passed.");
+int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
+													char *assembly, char *species, char *norm_prot, char *tum_prot){
+	check(out != NULL,"NULL output file passed.");
 
 	char *tumour_name,*tumour_platform;
 	char *normal_name,*normal_platform;
@@ -259,6 +260,7 @@ int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_lo
 	check(res != NULL,"Error fetching tumour sample and platform from bam header.");
 	res = bam_access_sample_name_platform_from_header(norm_bam,normal_name, normal_platform);
 	check(res != NULL,"Error fetching normal sample and platform from bam header.");
+	check(strcmp(tumour_platform,normal_platform)==0,"Normal and tumour platforms don't match: '%s' ne '%s'",normal_platform,tumour_platform);
 
 	//VCF version (fileformat)
 	int write = fprintf(out,"##%s=%s\n",VCF_VERSION_KEY,VCF_VERSION_VALUE);
@@ -296,17 +298,19 @@ int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_lo
 
 	//SAMPLES
 	//Normal
-	write = fprintf(out,"##%s=<ID=%s,%s=\"Normal\",%s=.,%s=%s,%s=.,%s=%s,%s=.>\n",
+	write = fprintf(out,"##%s=<ID=%s,%s=\"Normal\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
 			VCF_SAMPLE_KEY,VCF_NORMAL_NAME,VCF_DESCRIPTION_KEY,
 			VCF_ACCESSION_KEY,VCF_PLATFORM_KEY,normal_platform,
-			VCF_PROTOCOL_KEY,VCF_INDIVIDUAL_KEY,normal_name,
+			VCF_PROTOCOL_KEY,norm_prot,
+			VCF_INDIVIDUAL_KEY,normal_name,
 			VCF_SOURCE_KEY);
 	check(write>0,"Error writing normal sample.");
 	//Tumour
-	write = fprintf(out,"##%s=<ID=%s,%s=\"Tumour\",%s=.,%s=%s,%s=.,%s=%s,%s=.>\n",
+	write = fprintf(out,"##%s=<ID=%s,%s=\"Tumour\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
 			VCF_SAMPLE_KEY,VCF_TUMOUR_NAME,VCF_DESCRIPTION_KEY,
 			VCF_ACCESSION_KEY,VCF_PLATFORM_KEY,tumour_platform,
-			VCF_PROTOCOL_KEY,VCF_INDIVIDUAL_KEY,tumour_name,
+			VCF_PROTOCOL_KEY,tum_prot,
+			VCF_INDIVIDUAL_KEY,tumour_name,
 			VCF_SOURCE_KEY);
 	check(write>0,"Error writing tumour sample.");
 

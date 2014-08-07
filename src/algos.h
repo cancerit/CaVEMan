@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef _algos_h
@@ -31,7 +31,7 @@ typedef struct estep_position_t{
 	genotype_store_t *genos;
 	int norm_cn;
 	int tum_cn;
-	int ref_base_idx;	
+	int ref_base_idx;
 	char *ref_base;
 	long double base_norm_contam;
 	genotype_t *norm_fwd_cvg;
@@ -63,6 +63,10 @@ void set_prior_mut_prob(float f);
 void set_prior_snp_prob(float f);
 void set_min_tum_cvg(int i);
 void set_min_norm_cvg(int i);
+int get_normal_cn();
+void set_normal_cn(int i);
+int get_tumour_cn();
+void set_tumour_cn(int i);
 
 float get_min_mut_prob();
 float get_min_snp_prob();

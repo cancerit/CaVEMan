@@ -287,10 +287,15 @@ char *test_output_to_file(){
 
 char *test_output_header_to_file(){
 	FILE *out = fopen(out_test_vcf,"w");
-	int chk = output_vcf_header(out, mut_tum, mut_norm, test_fai_out, NULL, NULL);
+	char *norm_protocol = "WGS";
+	char *tum_protocol = "WXS";
+	int chk = output_vcf_header(out, mut_tum, mut_norm, test_fai_out,
+																		NULL, NULL, norm_protocol, tum_protocol);
 	mu_assert(chk==0,"Error running output header method.");
 
 	fclose(out);
+
+
 
 	out = fopen(out_test_vcf,"r");
 	char exp[20000];
@@ -340,8 +345,8 @@ char *test_output_header_to_file(){
 	strcat(exp,output_generate_info_lines());
 	strcat(exp,output_generate_format_lines());
 
-	strcat(exp,"##SAMPLE=<ID=NORMAL,Description=\"Normal\",Accession=.,Platform=HiSeq,Protocol=.,SampleName=NORMALb,Source=.>\n");
-	strcat(exp,"##SAMPLE=<ID=TUMOUR,Description=\"Tumour\",Accession=.,Platform=HiSeq,Protocol=.,SampleName=TUMOURa,Source=.>\n");
+	strcat(exp,"##SAMPLE=<ID=NORMAL,Description=\"Normal\",Accession=.,Platform=HiSeq,Protocol=WGS,SampleName=NORMALb,Source=.>\n");
+	strcat(exp,"##SAMPLE=<ID=TUMOUR,Description=\"Tumour\",Accession=.,Platform=HiSeq,Protocol=WXS,SampleName=TUMOURa,Source=.>\n");
 	strcat(exp,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tNORMAL\tTUMOUR\n");
 
 	char line[1000];
