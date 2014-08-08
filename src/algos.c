@@ -610,13 +610,13 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 					check_mem(pos);
 					pos->ref_pos = pos_t->ref_pos;
 					pos->norm_cn = cn_access_get_copy_number_for_location(norm_cn,chr_name,pos_t->ref_pos,1);
-					check(pos->norm_cn != NULL,"Error fetching normal copy number for %s:%d\n",chr_name,pos_t->ref_pos);
-					if(pos->norm_cn == -1){
+					check(pos->norm_cn != -1,"Error fetching normal copy number for %s:%d\n",chr_name,pos_t->ref_pos);
+					if(pos->norm_cn < 2){
             pos->norm_cn = normal_cn;
 					}
 					pos->tum_cn = cn_access_get_copy_number_for_location(tum_cn,chr_name,pos_t->ref_pos,0);
-					check(pos->tum_cn != NULL,"Error fetching tumour copy number for %s:%d\n",chr_name,pos_t->ref_pos);
-					if(pos->tum_cn == -1){
+					check(pos->tum_cn!=-1,"Error fetching tumour copy number for %s:%d\n",chr_name,pos_t->ref_pos);
+					if(pos->tum_cn < 2){
 					  pos->tum_cn = tumour_cn;
 					}
 					char *ref_b = malloc(sizeof(char) *2);
