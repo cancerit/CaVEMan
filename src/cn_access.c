@@ -32,6 +32,12 @@ List *cns[2] = {NULL,NULL};
 int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int is_normal){
 	FILE *cn_file;
 	if(cns[is_normal] == NULL && file_loc != NULL){
+		int is_bed = 0;
+		//Check for bed extension
+		const char *ext = strrchr(file_loc, '.');
+    if(ext && ext != file_loc && strcmp(ext+1,"bed")==0){
+    	is_bed = 1;
+    }
 		cn_file = fopen(file_loc,"r");
 		check(cn_file>0,"Error trying to open copy number file for reading %s.",file_loc);
 		List *li = List_create();
@@ -42,10 +48,13 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
 			char *chr_nom = malloc(sizeof(char *));
 			int beg,end;
 			int chk = sscanf(rd,"%s\t%d\t%d\t%d",chr_nom,&beg,&end,&cop);
-			check(chk == 4,"Incorrect line parse from copy number file.\n");
+			check(chk == 4,"Incorrect line parsed from copy number file.\n");
 			seq_region_t *reg = malloc(sizeof(struct seq_region_t));
 			reg->chr_name = chr_nom;
 			reg->beg = beg;
+			if(is_bed==1){
+				reg->beg = reg->beg + 1;
+			}
 			reg->end = end;
 			reg->val = cop;
 			List_push(li,reg);
@@ -54,7 +63,7 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
 		fclose(cn_file);
 	}
 
-	int cn = -1;
+	int cn = 0;
 	if(cns[is_normal] != NULL && cn_file != NULL){
     LIST_FOREACH(cns[is_normal], first, next, cur){
       if(strcmp(((seq_region_t *)cur->value)->chr_name,chr) == 0 && pos >= ((seq_region_t *)cur->value)->beg && pos <= ((seq_region_t *)cur->value)->end){
@@ -63,11 +72,10 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
       }
     }
 	}
-
 	return cn;
 error:
 	if(cn_file) fclose(cn_file);
-	return NULL;
+	return -1;
 }
 
 void clear_copy_number_store(){

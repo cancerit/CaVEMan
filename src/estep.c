@@ -75,8 +75,8 @@ char *valid_protocols[3] = {"WGS","WXS","RNA"};
 void estep_print_usage (int exit_code){
 	printf ("Usage: caveman estep -i jobindex -e norm.copy.no -j tum.copy.no [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
 
-	printf("-e  --norm-cn [file]                             Location of normal copy number bed file\n");
-	printf("-j  --tum-cn [file]                              Location of tumour copy number bed file\n");
+	printf("-e  --norm-cn [file]                             Location of normal copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
+	printf("-j  --tum-cn [file]                              Location of tumour copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
 	printf("-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)\n\n");
 	printf("Optional\n");
 	printf("-f  --config-file [file]                         Path to the config file produced by setup. [default:'%s']\n",config_file);
