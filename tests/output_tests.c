@@ -30,12 +30,12 @@
 #include <genotype.h>
 #include <time.h>
 
-char *norm = "tests/wt.bam";
-char *tum = "tests/mt.bam";
-char *mut_norm = "tests/testing_wt.bam";
-char *mut_tum = "tests/testing_mt.bam";
-char *out_test_vcf = "tests/test_out.vcf";
-char *test_fai_out = "tests/ref.fai";
+char *norm = "testData/wt.bam";
+char *tum = "testData/mt.bam";
+char *mut_norm = "testData/testing_wt.bam";
+char *mut_tum = "testData/testing_mt.bam";
+char *out_test_vcf = "testData/test_out.vcf";
+char *test_fai_out = "testData/ref.fai";
 
 char *test_output_generate_info_lines(){
 	char *result = output_generate_info_lines();

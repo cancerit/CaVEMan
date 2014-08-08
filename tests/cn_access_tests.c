@@ -22,10 +22,10 @@
 #include "minunit.h"
 #include <cn_access.h>
 
-char *norm_cn_file = "tests/wc.cave.cn";
-char *tum_cn_file = "tests/mc.cave.cn";
-char *zeroes_cn_file = "tests/zeroes.cave.cn";
-char *zeroes_cn_bed = "tests/zeroes.cave.cn.bed";
+char *norm_cn_file = "testData/wc.cave.cn";
+char *tum_cn_file = "testData/mc.cave.cn";
+char *zeroes_cn_file = "testData/zeroes.cave.cn";
+char *zeroes_cn_bed = "testData/zeroes.cave.cn.bed";
 
 char *test_cn_access_get_copy_number_for_location(){
   int is_normal = 1;

@@ -1,31 +1,31 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "minunit.h"
 #include <covs_access.h>
 
-char *test_cov_out_loc = "tests/covs.test.out";
-char *test_cov_loc = "tests/covs.test";
-char *prob_arr_loc = "probs_arr";
-//covs test is a small array in the form... 
+char *test_cov_out_loc = "testData/covs.test.out";
+char *test_cov_loc = "testData/covs.test";
+char *prob_arr_loc = "testData/probs_arr";
+//covs test is a small array in the form...
 //arr[0][0][0][0][0][0][0][0] = 7;
 //arr[0][0][0][0][0][0][0][1] = 12;
 
@@ -111,7 +111,7 @@ char *test_covs_access_generate_probability_array(){
 	arr[0][0][0][0][0][0][3][1] = 5;
 	arr[0][0][0][0][0][0][3][2] = 0;
 	arr[0][0][0][0][0][0][3][3] = 0;
-	
+
 	long double ********probs = covs_access_generate_probability_array(arr,1, 1,  1,  1,  1,  1,  4,  4);
 	mu_assert(probs != NULL,"Array not generated.\n");
 	mu_assert(abs(probs[0][0][0][0][0][0][0][0]-logl(0.1))<0.0001,"Error in prob calculation");
@@ -130,7 +130,7 @@ char *test_covs_access_generate_probability_array(){
 	mu_assert(abs(probs[0][0][0][0][0][0][3][1]-logl(0.5))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs[0][0][0][0][0][0][3][2]-logl(0.1))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs[0][0][0][0][0][0][3][3]-logl(0.1))<0.0001,"Error in prob calculation");
-	
+
 	covs_access_free_cov_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, arr);
 	covs_access_free_prob_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, probs);
 	return NULL;
@@ -155,11 +155,11 @@ char *test_covs_access_write_read_probs_to_file(){
 	arr[0][0][0][0][0][0][3][1] = 5;
 	arr[0][0][0][0][0][0][3][2] = 0;
 	arr[0][0][0][0][0][0][3][3] = 0;
-	
+
 	char *test_out_probs = "tests/probs.test.out";
 	long double ********probs = covs_access_generate_probability_array(arr,1, 1,  1,  1,  1,  1,  4,  4);
 	covs_access_write_probs_to_file(test_out_probs,probs,1, 1,  1,  1,  1,  1,  4,  4);
-	
+
 	mu_assert(probs != NULL,"Array not generated.\n");
 	mu_assert(abs(probs[0][0][0][0][0][0][0][0]-logl(0.1))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs[0][0][0][0][0][0][0][1]-logl(0.4))<0.0001,"Error in prob calculation");
@@ -177,13 +177,13 @@ char *test_covs_access_write_read_probs_to_file(){
 	mu_assert(abs(probs[0][0][0][0][0][0][3][1]-logl(0.5))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs[0][0][0][0][0][0][3][2]-logl(0.1))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs[0][0][0][0][0][0][3][3]-logl(0.1))<0.0001,"Error in prob calculation");
-	
-	
+
+
 	long double  ********probs_2 = covs_access_read_probs_from_file(test_out_probs,1, 1,  1,  1,  1,  1,  4,  4);
 	mu_assert(probs_2 !=  NULL, "Error reading written probs array");
-	
+
 	mu_assert(cov_access_compare_two_prob_arrays(probs,probs_2,1, 1,  1,  1,  1,  1,  4,  4)==0,"Prob arrays after reading/writing do not match.");
-	
+
 	mu_assert(abs(probs_2[0][0][0][0][0][0][0][0]-logl(0.1))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs_2[0][0][0][0][0][0][0][1]-logl(0.4))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs_2[0][0][0][0][0][0][0][2]-logl(0.5))<0.0001,"Error in prob calculation");
@@ -200,8 +200,8 @@ char *test_covs_access_write_read_probs_to_file(){
 	mu_assert(abs(probs_2[0][0][0][0][0][0][3][1]-logl(0.5))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs_2[0][0][0][0][0][0][3][2]-logl(0.1))<0.0001,"Error in prob calculation");
 	mu_assert(abs(probs_2[0][0][0][0][0][0][3][3]-logl(0.1))<0.0001,"Error in prob calculation");
-	
-	
+
+
 	covs_access_free_cov_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, arr);
 	covs_access_free_prob_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, probs);
 	covs_access_free_prob_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, probs_2);
@@ -215,8 +215,8 @@ char *all_tests() {
    mu_run_test(test_covs_access_generate_probability_array);
    mu_run_test(test_cov_access_compare_two_cov_arrays);
    mu_run_test(test_covs_access_read_covs_from_file);
- 	mu_run_test(test_covs_access_write_covs_to_file); 	
- 	mu_run_test(test_covs_access_write_read_probs_to_file); 	
+ 	mu_run_test(test_covs_access_write_covs_to_file);
+ 	mu_run_test(test_covs_access_write_read_probs_to_file);
    return NULL;
 }
 

@@ -24,11 +24,11 @@
 #include <alg_bean.h>
 #include <List.h>
 
-char *bam_file = "tests/mt.bam";
-char *test_wt_bam = "tests/test_wt.bam";
-char *test_mt_bam = "tests/test_mt.bam";
-char *mut_wt_bam = "tests/testing_wt.bam";
-char *mut_mt_bam = "tests/testing_mt.bam";
+char *bam_file = "testData/mt.bam";
+char *test_wt_bam = "testData/test_wt.bam";
+char *test_mt_bam = "testData/test_mt.bam";
+char *mut_wt_bam = "testData/testing_wt.bam";
+char *mut_mt_bam = "testData/testing_mt.bam";
 
 char *test_bam_access_openbams_close_bams(){
 	bam_access_openbams(bam_file,bam_file);
