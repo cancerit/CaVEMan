@@ -56,6 +56,9 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
 				reg->beg = reg->beg + 1;
 			}
 			reg->end = end;
+			if(cop > 10) {
+			  cop=10;
+			}
 			reg->val = cop;
 			List_push(li,reg);
 		}
