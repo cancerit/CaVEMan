@@ -148,28 +148,36 @@ CaVEMan - A C implementation of the CaVEMan program. Uses an expectation maximis
 	calculated.
 	
 	bin/caveman estep || ./bin/estepCaveman
-	Usage: caveman estep -f config_file -i jobindex -e norm.copy.no -j tum.copy.no [-m int] [-k float] [-b float ] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]
+	Usage: caveman estep -i jobindex -e norm.copy.no -j tum.copy.no [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]
 
-	-f --config-file file                           Path to the config file produced by setup. [default: 'caveman.cfg.ini']
-	-e  --norm-cn [filename]                        Location of normal copy number bed file
-	-j  --tum-cn [filename]                         Location of tumour copy number bed file
-	-i  --index [int]                               Job index (e.g. from $LSB_JOBINDEX)
+		-e  --norm-cn [file]                             Location of normal copy number bed file (if the extension is not .bed the file will be treated as 1 based start)
+		-j  --tum-cn [file]                              Location of tumour copy number bed file (if the extension is not .bed the file will be treated as 1 based start)
+		-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)
 
-	Optional
-	-m --min-base-qual [int] default:11                   Minimum base quality for inclusion of a read position
-	-c --prior-mut-probability [float] default:0.000006   Prior somatic probability
-	-d --prior-snp-probability [float] default:0.000100   Prior germline mutant probability
-	-k --normal-contamination [float] default:0.100000    Normal contamination of tumour
-	-b --reference-bias [float] default:0.950000          Reference bias
-	-p --mut-probability-cutoff [float] default:0.800000  Minimum probability call for a somatic mutant position to be output
-	-q --snp-probability-cutoff [float] default:0.950000  Minimum probability call for a germline mutant position to be output
-	-x --min-tum-coverage [int] default:1                 Minimum tumour coverage for analysis of a position
-	-y --min-norm-coverage [int] default:1                Minimum normal coverage for analysis of a position
-	-a --split-size [int] default:50000                   Size of section to retrieve at a time from bam file. Allows memory footprint tuning.
-	-s --debug                                            Adds an extra output to a debug file. Every base analysed has an output
-	-g --cov-file                                         File location of the covariate array. [default: 'covs_arr']
-	-o --prob-file                                        File location of the prob array. [default: 'probs_arr']
-	-h	help                                               Display this usage information.
+		Optional
+		-f  --config-file [file]                         Path to the config file produced by setup. [default:'caveman.cfg.ini']
+		-m  --min-base-qual [int]                        Minimum base quality for inclusion of a read position [default:11]
+		-c  --prior-mut-probability [float]              Prior somatic probability [default:0.000006]
+		-d  --prior-snp-probability [float]              Prior germline mutant probability [default:0.000100]
+		-k  --normal-contamination [float]               Normal contamination of tumour [default:0.100000]
+		-b  --reference-bias [float]                     Reference bias [default:0.950000]
+		-p  --mut-probability-cutoff [float]             Minimum probability call for a somatic mutant position to be output [default:0.800000]
+		-q  --snp-probability-cutoff [float]             Minimum probability call for a germline mutant position to be output [default:0.950000]
+		-x  --min-tum-coverage [int]                     Minimum tumour coverage for analysis of a position [default:1]
+		-y  --min-norm-coverage [int]                    Minimum normal coverage for analysis of a position [default:1]
+		-a  --split-size [int]                           Size of section to retrieve at a time from bam file. Allows memory footprint tuning [default:50000].
+		-s  --debug                                      Adds an extra output to a debug file. Every base analysed has an output
+		-g  --cov-file [file]                            File location of the covariate array. [default:'covs_arr']
+		-o  --prob-file [file]                           File location of the prob array. [default:'probs_arr']
+		-v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do not contain AS and SP information.
+		-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.
+		-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:2].
+		-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:2].
+		-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WGX|RNA) [default:WGS].
+		-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WGX|RNA) [default:WGS].
+		-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the offending region will be set to this value. [default:10].
+		-h	help                                         Display this usage information.
+
 
 ####################
 ##	File Formats	##
@@ -177,13 +185,13 @@ CaVEMan - A C implementation of the CaVEMan program. Uses an expectation maximis
 
 ##Copy Number
 
-	Copy number files are taken in a 1-based bed style tab separated format. 
+	Copy number files are taken in a 1-based bed style tab separated format, or BED fromat if the suffix is .bed. 
 	Where the columns are chromosome,start,stop,copynumber(integer). A separate file is required 
 	for normal and tumour. Each file should have a copy number assigned for every region requested 
-	to be analysed (NB, CaVEMan will not analyse a regions where copy number is set to 0).
+	to be analysed (NB, CaVEMan set CN to 2 in regions where copy number is 0).
 	Example:
-		1	1	20000	2
-		2	1	2500	4
+		1	0	20000	2
+		2	0	2500	4
 		2	2501	500000	6
 		
 ##Ignored regions file
