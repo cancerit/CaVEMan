@@ -42,6 +42,8 @@ TESTS=$(patsubst %.c,%,$(TEST_SRC))
 #
 OBJS = $(SRCS:.c=.o)
 
+MD := mkdir
+
 #Build target executable
 CAVEMAN_TARGET=./bin/caveman
 UMNORM_TARGET=./bin/generateCavemanUMNormVCF
@@ -56,7 +58,7 @@ UMNORM_TARGET=./bin/generateCavemanUMNormVCF
 
 .NOTPARALLEL: test
 
-all: $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript test
+all: make_bin $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript test
 	@echo  Binaries have been compiled.
 
 $(UMNORM_TARGET): $(OBJS)
@@ -75,6 +77,9 @@ test: $(TESTS)
 coverage: CFLAGS += --coverage
 coverage: test
 
+make_bin:
+	$(MD) ./bin
+
 copyscript:
 	rsync -uE ./scripts/* ./bin/
 	chmod u+x ./bin/setupCaveman ./bin/splitCaveman ./bin/mstepCaveman ./bin/mergeCaveman ./bin/estepCaveman ./bin/mergeCavemanResults
@@ -92,6 +97,7 @@ valgrind:
 
 clean:
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
+	rm -rf ./bin
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^
