@@ -28,6 +28,7 @@
 #include <dbg.h>
 #include <file_tests.h>
 #include <covs_access.h>
+#include <cn_access.h>
 #include <alg_bean.h>
 #include <bam_access.h>
 #include <split_access.h>
@@ -70,6 +71,7 @@ static char *assembly = NULL;
 static char *species = NULL;
 static char *norm_prot = "WGS";
 static char *tum_prot = "WGS";
+static int max_copy_number = 10;
 char *valid_protocols[3] = {"WGS","WXS","RNA"};
 
 void estep_print_usage (int exit_code){
@@ -99,6 +101,7 @@ void estep_print_usage (int exit_code){
 	printf("-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:%d].\n",tumour_copy_number);
 	printf("-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WGX|RNA) [default:%s].\n",norm_prot);
 	printf("-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WGX|RNA) [default:%s].\n",tum_prot);
+	printf("-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the offending region will be set to this value. [default:%d].\n",max_copy_number);
   printf("-h	help                                         Display this usage information.\n");
 
   exit(exit_code);
@@ -129,6 +132,7 @@ void estep_setup_options(int argc, char *argv[]){
              	{"tumour-copy-number", required_argument, 0, 't'},
              	{"normal-protocol", required_argument, 0, 'l'},
              	{"tumour-protocol", required_argument, 0, 'r'},
+             	{"max-copy-number", required_argument, 0, 'M'},
              	{"help", no_argument, 0, 'h'},
              	{"debug", no_argument, 0, 's'},
 
@@ -139,7 +143,7 @@ void estep_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:r:sh",
+   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:r:sh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'l':
@@ -157,6 +161,7 @@ void estep_setup_options(int argc, char *argv[]){
    		case 'w':
    			species = optarg;
    			break;
+
    		case 'o':
    			probs_file = optarg;
    			break;
@@ -183,6 +188,10 @@ void estep_setup_options(int argc, char *argv[]){
 
       case 'f':
         config_file = optarg;
+        break;
+
+      case 'M':
+        cn_access_set_max_cn(atoi(optarg));
         break;
 
       case 'n':
