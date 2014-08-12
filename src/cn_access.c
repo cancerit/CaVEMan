@@ -28,6 +28,7 @@
 
 //Array of size 2 for normal and tumour.
 List *cns[2] = {NULL,NULL};
+static max_cn = 10;
 
 int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int is_normal){
 	FILE *cn_file;
@@ -56,6 +57,9 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
 				reg->beg = reg->beg + 1;
 			}
 			reg->end = end;
+			if(cop > max_cn) {
+			  cop=max_cn;
+			}
 			reg->val = cop;
 			List_push(li,reg);
 		}
@@ -76,6 +80,10 @@ int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int
 error:
 	if(cn_file) fclose(cn_file);
 	return -1;
+}
+
+void cn_access_set_max_cn(int max_copy_number){
+	max_cn = max_copy_number;
 }
 
 void clear_copy_number_store(){
