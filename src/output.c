@@ -240,28 +240,33 @@ char *output_generate_format_lines(){
 }
 
 int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
-													char *assembly, char *species, char *norm_prot, char *tum_prot){
+													char *assembly, char *species, char *norm_prot, char *tum_prot,
+													char *normal_platform, char *tumour_platform){
 	check(out != NULL,"NULL output file passed.");
 
-	char *tumour_name,*tumour_platform;
-	char *normal_name,*normal_platform;
+	char *tumour_name,*normal_name;
 	tumour_name = malloc(sizeof(char) * 150);
 	check_mem(tumour_name);
-	tumour_platform = malloc(sizeof(char) * 150);
-	strcpy(tumour_platform,".");
-	check_mem(tumour_platform);
 	normal_name = malloc(sizeof(char) * 150);
 	check_mem(normal_name);
-	normal_platform = malloc(sizeof(char) * 150);
-	check_mem(normal_platform);
-	strcpy(normal_platform,".");
 
-	char *res = bam_access_sample_name_platform_from_header(tum_bam,tumour_name, tumour_platform);
-	check(res != NULL,"Error fetching tumour sample and platform from bam header.");
-	res = bam_access_sample_name_platform_from_header(norm_bam,normal_name, normal_platform);
+	if(normal_platform == NULL){
+		normal_platform = malloc(sizeof(char) * 150);
+		check_mem(normal_platform);
+	}
+
+	char *res = bam_access_sample_name_platform_from_header(norm_bam,normal_name, normal_platform);
 	check(res != NULL,"Error fetching normal sample and platform from bam header.");
-	check(strcmp(tumour_platform,normal_platform)==0,"Normal and tumour platforms don't match: '%s' ne '%s'",normal_platform,tumour_platform);
 
+	if(tumour_platform == NULL){
+		tumour_platform = malloc(sizeof(char) * 150);
+		check_mem(tumour_platform);
+	}
+	res=NULL;
+	res = bam_access_sample_name_platform_from_header(tum_bam,tumour_name, tumour_platform);
+	check(res != NULL,"Error fetching tumour sample and platform from bam header.");
+
+	check(strcmp(tumour_platform,normal_platform)==0,"Normal and tumour platforms don't match: '%s' ne '%s'",normal_platform,tumour_platform);
 	//VCF version (fileformat)
 	int write = fprintf(out,"##%s=%s\n",VCF_VERSION_KEY,VCF_VERSION_VALUE);
 	check(write>0,"Error writing version.");

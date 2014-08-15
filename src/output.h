@@ -26,7 +26,8 @@
 
 int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom);
 int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
-													char *assembly, char *species, char *norm_prot, char *tum_prot);
+													char *assembly, char *species, char *norm_prot, char *tum_prot,
+													char *norm_plat, char *tum_plat);
 char *output_generate_info_lines();
 char *output_generate_format_lines();
 char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species);

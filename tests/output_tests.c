@@ -289,13 +289,16 @@ char *test_output_header_to_file(){
 	FILE *out = fopen(out_test_vcf,"w");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
+	char *norm_plat,*tum_plat;
+	norm_plat = malloc(sizeof(char)*50);
+	strcpy(norm_plat,".");
+	tum_plat = malloc(sizeof(char)*50);
+	strcpy(tum_plat,".");
 	int chk = output_vcf_header(out, mut_tum, mut_norm, test_fai_out,
-																		NULL, NULL, norm_protocol, tum_protocol);
+																		NULL, NULL, norm_protocol, tum_protocol, norm_plat, tum_plat);
 	mu_assert(chk==0,"Error running output header method.");
 
 	fclose(out);
-
-
 
 	out = fopen(out_test_vcf,"r");
 	char exp[20000];
@@ -353,6 +356,85 @@ char *test_output_header_to_file(){
 	int count = 0;
 	int exp_lines = 52;
 	char got[20000];
+	strcpy(got,"");
+	while ( fgets(line,sizeof(line),out) != NULL ){
+		mu_assert(count<=exp_lines,"Too many header lines.");
+		strcat(got,line);
+		count++;
+	}
+	if(strcmp(exp,got)!=0){
+		printf("exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
+	}
+	mu_assert(strcmp(exp,got)==0,"Header in file doesn't match.");
+	fclose(out);
+	unlink(out_test_vcf);
+
+	chk=0;
+
+	out = fopen(out_test_vcf,"w");
+
+	char *norm_plat2 = malloc(sizeof(char)*50);
+	char *tum_plat2 = malloc(sizeof(char)*50);
+
+	strcpy(norm_plat2,"TEST");
+	strcpy(tum_plat2,"TEST");
+	chk = output_vcf_header(out, mut_tum, mut_norm, test_fai_out,
+																		NULL, NULL, norm_protocol, tum_protocol, norm_plat2, tum_plat2);
+	mu_assert(chk==0,"Error running output header method.");
+
+	fclose(out);
+
+	out = fopen(out_test_vcf,"r");
+	strcpy(exp,"");
+	strcat(exp,"##fileformat=VCFv4.1\n");
+	//fileDate=20120104
+	t = time(NULL);
+	strftime(date,sizeof(date),"%Y%m%d",localtime(&t));
+	sprintf(tmp,"##fileDate=%s\n",date);
+	strcat(exp,tmp);
+	strcpy(tmp,"");
+	sprintf(tmp,"##reference=%s\n",test_fai_out);
+	strcat(exp,tmp);
+	strcpy(tmp,"");
+	sprintf(tmp, "##vcfProcessLog=<InputVCF=<.>,InputVCFSource=<CaVEMan>,InpuVCFVer=<\"%s\">,InputVCFParam=<NORMAL_CONTAMINATION=%g,REF_BIAS=%g,PRIOR_MUT_RATE=%g,PRIOR_SNP_RATE=%g,SNP_CUTOFF=%g,MUT_CUTOFF=%g>>\n",CAVEMAN_VERSION,get_norm_contam(),get_ref_bias(),get_prior_mut_prob(),get_prior_snp_prob(),get_min_snp_prob(),get_min_mut_prob());
+	strcat(exp,tmp);
+	sprintf(tmp,"##cavemanVersion=%s\n",CAVEMAN_VERSION);
+	strcat(exp,tmp);
+	strcat(exp,	"##contig=<ID=1,length=249250621,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=2,length=243199373,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=3,length=198022430,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=4,length=191154276,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=5,length=180915260,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=6,length=171115067,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=7,length=159138663,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=8,length=146364022,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=9,length=141213431,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=10,length=135534747,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=11,length=135006516,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=12,length=133851895,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=13,length=115169878,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=14,length=107349540,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=15,length=102531392,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=16,length=90354753,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=17,length=81195210,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=18,length=78077248,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=19,length=59128983,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=20,length=63025520,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=21,length=48129895,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=22,length=51304566,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=X,length=155270560,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=Y,length=59373566,assembly=37,species=HUMAN>\n");
+	strcat(exp,	"##contig=<ID=MT,length=16569,assembly=37,species=HUMAN>\n");
+
+	strcat(exp,output_generate_info_lines());
+	strcat(exp,output_generate_format_lines());
+
+	strcat(exp,"##SAMPLE=<ID=NORMAL,Description=\"Normal\",Accession=.,Platform=TEST,Protocol=WGS,SampleName=NORMALb,Source=.>\n");
+	strcat(exp,"##SAMPLE=<ID=TUMOUR,Description=\"Tumour\",Accession=.,Platform=TEST,Protocol=WXS,SampleName=TUMOURa,Source=.>\n");
+	strcat(exp,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tNORMAL\tTUMOUR\n");
+
+	count = 0;
+	exp_lines = 52;
 	strcpy(got,"");
 	while ( fgets(line,sizeof(line),out) != NULL ){
 		mu_assert(count<=exp_lines,"Too many header lines.");

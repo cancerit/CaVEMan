@@ -202,7 +202,7 @@ char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, c
 			char *tok;
 			tok = strtok(line,"\t");
 			while(tok != NULL){
-				if(strncmp("PL:",tok,(sizeof(char)*3))==0){
+				if(strcmp(plat,".")==0 && strncmp("PL:",tok,(sizeof(char)*3))==0){
 					int chk = sscanf(tok,"%*[^:]:%s",plat);
 					check(chk==1,"Error fetching platform\n");
 				}else if(strncmp("SM:",tok,(sizeof(char)*3))==0){

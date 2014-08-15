@@ -158,6 +158,7 @@ char *test_bam_access_sample_name_platform_from_header(){
 	//char *bam_file,char *sample, char *plat);
 	char *sample = malloc(sizeof(char) * 250);
 	char *plat = malloc(sizeof(char) * 250);
+	strcpy(plat,".");
 	char *exp_sampl = "TUMOURa";
 	char *exp_plat = "HiSeq";
 	//@RG	ID:1288335	PL:HiSeq	PU:9413_2	LB:TUMOURa 6766555_28085	PI:453	MI:603	DS:short	PG:1288335	SM:TUMOURa	CN:SANGER

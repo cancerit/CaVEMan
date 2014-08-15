@@ -50,6 +50,8 @@ static char *covariate_file = "covs_arr";
 static char *probs_file = "probs_arr";
 static char *norm_cn_loc = NULL;
 static char *tum_cn_loc = NULL;
+static char *norm_plat = NULL;
+static char *tum_plat = NULL;
 static float min_mut_prob = 0.8;
 static float min_snp_prob = 0.95;
 static float norm_contam = 0.1;
@@ -101,6 +103,8 @@ void estep_print_usage (int exit_code){
 	printf("-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:%d].\n",tumour_copy_number);
 	printf("-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WGX|RNA) [default:%s].\n",norm_prot);
 	printf("-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WGX|RNA) [default:%s].\n",tum_prot);
+	printf("-P  --normal-platform [string]                   Normal platform. Overrides the values retrieved from bam header.\n");
+	printf("-T  --tumour-platform [string]                   Tumour platform. Overrides the values retrieved from bam header.\n");
 	printf("-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the offending region will be set to this value. [default:%d].\n",max_copy_number);
   printf("-h	help                                         Display this usage information.\n");
 
@@ -133,6 +137,8 @@ void estep_setup_options(int argc, char *argv[]){
              	{"normal-protocol", required_argument, 0, 'l'},
              	{"tumour-protocol", required_argument, 0, 'r'},
              	{"max-copy-number", required_argument, 0, 'M'},
+             	{"normal-platform", required_argument, 0, 'P'},
+             	{"tumour-platform", required_argument, 0, 'T'},
              	{"help", no_argument, 0, 'h'},
              	{"debug", no_argument, 0, 's'},
 
@@ -143,7 +149,7 @@ void estep_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:r:sh",
+   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:P:T:r:sh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'l':
@@ -192,6 +198,14 @@ void estep_setup_options(int argc, char *argv[]){
 
       case 'M':
         cn_access_set_max_cn(atoi(optarg));
+        break;
+
+      case 'P':
+				norm_plat = optarg;
+        break;
+
+      case 'T':
+      	tum_plat = optarg;
         break;
 
       case 'n':
@@ -312,6 +326,17 @@ int estep_main(int argc, char *argv[]){
   set_normal_cn(normal_copy_number);
   set_tumour_cn(tumour_copy_number);
 
+  if(norm_plat==NULL){
+  	norm_plat = malloc(sizeof(char) * 50);
+		check_mem(norm_plat);
+		strcpy(norm_plat,".");
+  }
+  if(tum_plat==NULL){
+		tum_plat = malloc(sizeof(char) * 50);
+		check_mem(tum_plat);
+		strcpy(tum_plat,".");
+  }
+
 	//Load in alg bean
 	FILE *alg_bean_file = fopen(alg_bean_loc,"r");
 	check(alg_bean_file != 0 ,"Error trying to open alg_bean file: %s.",alg_bean_loc);
@@ -429,13 +454,15 @@ int estep_main(int argc, char *argv[]){
 	FILE *mut_file = fopen(mut_out,"w");
 	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
 	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
-																									assembly, species, norm_prot, tum_prot);
+																									assembly, species, norm_prot, tum_prot,
+																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to muts file.");
 
 	FILE *snp_file = fopen(snp_out,"w");
 	check(snp_file != 0, "Error trying to open snp file for output: %s.",snp_out);
 	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
-																									assembly, species, norm_prot, tum_prot);
+																									assembly, species, norm_prot, tum_prot,
+																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to SNP file.");
 
 	FILE *no_analysis_file = fopen(no_analysis_file_loc,"w");
@@ -447,7 +474,8 @@ int estep_main(int argc, char *argv[]){
 		debug_file = fopen(debug_out,"w");
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
 		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file,
-																									assembly, species, norm_prot, tum_prot);
+																									assembly, species, norm_prot, tum_prot,
+																									norm_plat, tum_plat);
 		check(chk_write==0,"Error writing header to dbg file.");
 	}
 
