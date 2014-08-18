@@ -20,6 +20,8 @@
 */
 
 #include "minunit.h"
+#include <math.h>
+#include <stdio.h>
 #include <covs_access.h>
 
 char *test_cov_out_loc = "testData/covs.test.out";
@@ -205,7 +207,7 @@ char *test_covs_access_write_read_probs_to_file(){
 	covs_access_free_cov_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, arr);
 	covs_access_free_prob_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, probs);
 	covs_access_free_prob_array_given_dimensions(1, 1,  1,  1,  1,  1,  4,  4, probs_2);
-	unlink(test_out_probs);
+	remove(test_out_probs);
 	return NULL;
 }
 

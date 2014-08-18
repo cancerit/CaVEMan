@@ -25,6 +25,7 @@
 #include <alg_bean.h>
 #include <getopt.h>
 #include <fai_access.h>
+#include <math.h>
 #include <file_tests.h>
 #include <ignore_reg_access.h>
 #include <split_access.h>
@@ -109,6 +110,9 @@ int merge_main(int argc, char *argv[]){
 
 	merge_setup_options(argc,argv);
 
+	alg_bean_t *alg = NULL;
+	int ********covs = NULL;
+	long double ********prob_arr = NULL;
 	int tmp = 0;
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
@@ -125,9 +129,9 @@ int merge_main(int argc, char *argv[]){
 
 	//Generate an alg bean so we know the sizes...
 	FILE *alg_file = fopen(alg_bean_loc,"r");
-	alg_bean_t *alg = alg_bean_read_file(alg_file);
+	alg = alg_bean_read_file(alg_file);
 	//Create an empty covariate array.
-	int ********covs = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+	covs = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	//Get all split sections from split file.
 	List *split_sects = split_access_get_all_split_sections(list_loc);
@@ -165,7 +169,7 @@ int merge_main(int argc, char *argv[]){
 
 
 	//Use the merged cov array to create the probabilities array.
-	long double ********prob_arr = covs_access_generate_probability_array(covs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+	prob_arr = covs_access_generate_probability_array(covs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 
 

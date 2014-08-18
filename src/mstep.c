@@ -51,7 +51,7 @@ static char alg_bean[512];// = "alg_bean";
 static char version[50];// = "alg_bean";
 static char ignore_regions_file[512];// = NULL;
 static int split_size = 50000;
-static int idx;
+static int idx = 0;
 
 void mstep_print_usage (int exit_code){
 	printf ("Usage: caveman mstep -i jobindex [-f file] [-m int] [-a int]\n\n");
@@ -115,7 +115,7 @@ void mstep_setup_options(int argc, char *argv[]){
    }//End of iteration through options
 
    //Do some checking to ensure required arguments were passed
-   if(idx == NULL || idx == 0){
+   if(idx == 0){
    	mstep_print_usage(1);
    }
 
@@ -131,6 +131,16 @@ void mstep_setup_options(int argc, char *argv[]){
 int mstep_main(int argc, char *argv[]){
 	mstep_setup_options(argc,argv);
 
+	char *fa_file = NULL;
+	int ********arr_check = NULL;
+	char *ref_seq = NULL;
+	List *these_regions = NULL;
+	struct seq_region_t **ignore_regs = NULL;
+	int ********covs = NULL;
+	FILE *alg_bean_file = NULL;
+	alg_bean_t *alg = NULL;
+
+	int ignore_reg_count = 0;
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
@@ -146,9 +156,9 @@ int mstep_main(int argc, char *argv[]){
   bam_access_include_dup(includeDups);
 
 	//Read in the alg bean
-	FILE *alg_bean_file = fopen(alg_bean,"r");
+	alg_bean_file = fopen(alg_bean,"r");
 	check(alg_bean_file != 0 ,"Error trying to open alg_bean file: %s.",alg_bean);
-	alg_bean_t *alg = alg_bean_read_file(alg_bean_file);
+	alg = alg_bean_read_file(alg_bean_file);
 	check(alg != NULL,"Error reading alg_bean from file.");
 	fclose(alg_bean_file);
 
@@ -162,7 +172,7 @@ int mstep_main(int argc, char *argv[]){
 
 	//Get the chunk of ref sequence using this split section.
 	//Strip the .fai from the fasta file.
-	char *fa_file = malloc(sizeof(char) * (strlen(ref_idx)-3));
+	fa_file = malloc(sizeof(char) * (strlen(ref_idx)-3));
 	check_mem(fa_file);
 	strncpy(fa_file,ref_idx,(strlen(ref_idx)-4));
 	fa_file[strlen(ref_idx)-4] = '\0';
@@ -178,7 +188,7 @@ int mstep_main(int argc, char *argv[]){
 	//Base qual
 	//Ref base
 	//Called base
-	int ********covs = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+	covs = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	check(covs != NULL,"Error generating initial covs array");
 
@@ -191,18 +201,17 @@ int mstep_main(int argc, char *argv[]){
 	printf("Looking at section %s:%d-%d for mstep\n",chr_name,start_zero_based+1,stop);
 
 	//Get ignored regions for section and calculate a list of sections to analyse.
-	int ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
+	ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
    check(ignore_reg_count >= 0,"Error trying to check the number of ignored regions for this chromosome.");
 
    //Now create a store for said regions.
-   struct seq_region_t **ignore_regs;
    ignore_regs = malloc(sizeof(struct seq_region_t *) *  ignore_reg_count);
    check_mem(ignore_regs);
    check(ignore_reg_access_get_ign_reg_for_chr(ignore_regions_file,chr_name,ignore_reg_count,ignore_regs)==0,"Error fetching ignored regions from file.");
 
 	//Check the contained ignored regions
 	//Resolve the ignored regions and start/stop into sections for analysis.
-	List *these_regions = ignore_reg_access_resolve_ignores_to_analysis_sections(start_zero_based+1,stop,ignore_regs,ignore_reg_count);
+	these_regions = ignore_reg_access_resolve_ignores_to_analysis_sections(start_zero_based+1,stop,ignore_regs,ignore_reg_count);
 
 	// If there's only one split it in two.
 	if(List_count(these_regions) == 1){
@@ -227,7 +236,6 @@ int mstep_main(int argc, char *argv[]){
 		}
 	}
 
-	char *ref_seq;
 	//Iterate through sections.
 	LIST_FOREACH(these_regions, first, next, cur){
 		printf("M-stepping section %s:%d-%d for mstep\n",chr_name,((seq_region_t *)cur->value)->beg,((seq_region_t *)cur->value)->end);
@@ -265,7 +273,7 @@ int mstep_main(int argc, char *argv[]){
 						List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	check(res==0,"Error writing covariate array to file.");
 	//Just to be paranoid, read it in again and check we've got the right results.
-	int ********arr_check = covs_access_read_covs_from_file(cov_file,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+	arr_check = covs_access_read_covs_from_file(cov_file,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 						List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 
 	int check_arrays = cov_access_compare_two_cov_arrays(covs,arr_check,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),

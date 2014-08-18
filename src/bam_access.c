@@ -30,8 +30,8 @@
 #include <bam_access.h>
 #include <time.h>
 
-file_holder *norm;
-file_holder *tum;
+static file_holder *norm = NULL;
+static file_holder *tum = NULL;
 int counter = -1;
 int include_sw = 0;
 int include_dup = 0;
@@ -45,8 +45,8 @@ int bam_access_openbams(char *norm_file, char *tum_file){
 	assert(tum_file != NULL);
 	//Assign memory for the file name etc holding structs
 	norm = malloc(sizeof(file_holder));
-	check_mem(norm);
 	tum = malloc(sizeof(file_holder));
+	check_mem(norm);
 	check_mem(tum);
 	//Beginning and end of tmp struct for bam access
 	norm->beg = 0; norm->end = 0x7fffffff;  // The max 32 bit integer.
@@ -215,8 +215,8 @@ char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, c
 		}
 		line = strtok(NULL,"\n");
 	}
-	check(plat!= NULL,"Platform was not found in RG line for VCF output.",plat);
-	check(sample!= NULL,"Sample name was not found in RG line for VCF output.",sample);
+	check(plat!= NULL,"Platform was not found in RG line for VCF output.");
+	check(sample!= NULL,"Sample name was not found in RG line for VCF output.");
 	samclose(bam);
 	return "";
 error:
@@ -569,11 +569,11 @@ error:
 }
 
 List *bam_access_get_reads_at_this_pos(char *chr_name, int start, int stop, int sorted, alg_bean_t *bean){
-	check(norm->in != NULL,"Ensure you've called openbams first.");
-	check(tum->in != NULL,"Ensure you've called openbams first.");
+	assert(norm->in != NULL);
+	assert(tum->in != NULL);
 	List *norm_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,norm,1);
-	check(norm_rds != NULL,"Error retrieving normal reads.");
 	List *tum_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,tum,0);
+	check(norm_rds != NULL,"Error retrieving normal reads.");
 	check(tum_rds != NULL,"Error retrieving tumour reads.");
 	//Now merge the two sorted lists into one.
 	List *merged_sorted = List_merge(norm_rds,tum_rds,bam_access_compare_read_pos_t);
@@ -595,7 +595,7 @@ int bam_access_get_count_with_bam(char *chr_name, int start, int stop, file_hold
 	tmp.beg = fh->beg; tmp.end = fh->end;
 	tmp.in = fh->in;
 	int ref;
-	bam_plbuf_t *buf;
+	bam_plbuf_t *buf = NULL;
 	char *region;
 	char sta[20];
 	region = malloc(sizeof(chr_name)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
@@ -638,11 +638,13 @@ void bam_access_min_base_qual(int qual){
 
 List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	assert(bam_loc != NULL);
-	samfile_t *bam = samopen(bam_loc, "rb", 0);
+	char *line = NULL;
+	List *li = NULL;
+	samfile_t *bam =  NULL;
+	bam = samopen(bam_loc, "rb", 0);
 	check(bam != 0,"Bam file %s failed to open to read header.",bam_loc);
 	char *head_txt = bam->header->text;
-	List *li = List_create();
-	char *line;
+	li = List_create();
 	line = strtok(head_txt,"\n");
 	while(line != NULL){
 		//Check for a read group line

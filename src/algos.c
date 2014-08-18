@@ -128,10 +128,11 @@ void set_min_norm_cvg(int i){
 
 int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, int from, int to, char *ref_base, int split_size){
 	//Fetch all reads for this pos? Or a struct for a single read at that position?
-	List *reads;
+	List *reads = NULL;
+	char *cbase = NULL;
 	char *ref_b = malloc(sizeof(char) *2);
 	check_mem(ref_b);
-	char *cbase = malloc(sizeof(char)*2) ;
+	cbase = malloc(sizeof(char)*2) ;
 	check_mem(cbase);
 
 	int start = from;
@@ -551,14 +552,49 @@ error:
 	return -1;
 }
 
+int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type){
+	//Check top genotype isn't reference, if that's the case it we already print the second genotype
+	if(pos->top_geno->tum_geno->var_base != pos->ref_base[0]){
+		if(genotype_get_base_count(pos->norm_fwd_cvg,pos->top_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->top_geno->tum_geno->var_base)>0){
+			return 1;
+		}
+		//If the genotype demonstrates no alleles for the top genotype variant base try the second genotype variant base.
+		if(genotype_get_base_count(pos->norm_fwd_cvg,pos->sec_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->sec_geno->tum_geno->var_base)==0){
+			//If we now have a match, swap the top and second genotypes and warn
+			fprintf(stderr,"WARNING (%s output): Unable to find top genotype variant base present in tumour  allele counts, swapping top and second genotype for position %s:%d\n",type,chr_name,pos->ref_pos);
+			combined_genotype_t *tmp = pos->top_geno;
+			pos->top_geno = pos->sec_geno;
+			pos->sec_geno = tmp;
+			return 1;
+		}
+		//Failed to find either first or second most probable genotype alleles so we ignore this position and warn about it.
+		fprintf(stderr,"WARNING (%s output): Unable to find variant alleles present in tumour allele counts for either top or second genotype. Ignoring position %s:%d\n",type,chr_name,pos->ref_pos);
+		return 0;
+	}else{
+		//We already have a 'normal' top genotype, so check the second genotype variant base has alleles.
+		if(genotype_get_base_count(pos->norm_fwd_cvg,pos->sec_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->sec_geno->tum_geno->var_base)>0){
+			//If we now have a match, swap the top and second genotypes and warn
+			fprintf(stderr,"WARNING (%s output): Top genotype was normal, but second genotype has variant base alleles, swapping top and second genotypes for position %s:%d\n",type,chr_name,pos->ref_pos);
+			combined_genotype_t *tmp = pos->top_geno;
+			pos->top_geno = pos->sec_geno;
+			pos->sec_geno = tmp;
+			return 1;
+		}
+		//No varaint base for the second genotype found. Ignore position.
+		fprintf(stderr,"WARNING (%s output): Unable to find second genotype variant base present in tumour allele counts whilst top genotype was normal, ignoring position %s:%d\n",type,chr_name,pos->ref_pos);
+		return 0;
+	}
+
+}
+
 int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char *chr_name, int from, int to,
 						char *ref_base, char *norm_cn, char *tum_cn, FILE *snp_out, FILE *tum_out, FILE *debug_output, int split_size){
 
-	List *reads;
+	List *reads = NULL;
 	//If this region is larger than n bases, split it into regions of length n.
 	int start = from;
 	int stop;
-	estep_position_t *pos;
+	estep_position_t *pos = NULL;
 
 	//estep_position_t **positions;
 	for(start=from;start<=to;start+=(split_size+1)){
@@ -592,11 +628,15 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 							int rounded_snp = (int)(round(floorl(pos->total_snp_prob*100 + 0.5)));
 							if(rounded_mut >= ((int)(min_m_prob * 100))){
 							//if((((floorl(pos->total_mut_prob*100 + 0.5)/100) - (long double)min_m_prob)) >= (long double)0){
-								int write = output_vcf_variant_position(pos,tum_out,chr_name);
-								check(write==0,"Error writing mutation to file.");
+								if(algos_check_var_position_alleles(pos,chr_name,"SOMATIC")==1){
+									int write = output_vcf_variant_position(pos,tum_out,chr_name);
+									check(write==0,"Error writing mutation to file.");
+								}
 							}else if(rounded_snp >= (int)(min_s_prob * 100)){
-								int write = output_vcf_variant_position(pos,snp_out,chr_name);
-								check(write==0,"Error writing germline to file.");
+								if(algos_check_var_position_alleles(pos,chr_name,"SNP")==1){
+									int write = output_vcf_variant_position(pos,snp_out,chr_name);
+									check(write==0,"Error writing germline to file.");
+								}
 							}
 							if(debug_output != NULL){
 								int write = output_vcf_variant_position(pos,debug_output,chr_name);
@@ -710,11 +750,15 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 				int rounded_snp = (int)(round(floorl(pos->total_snp_prob*100 + 0.5)));
 				if(rounded_mut >= ((int)(min_m_prob * 100))){
 				//if((((floorl(pos->total_mut_prob*100 + 0.5)/100) - (long double)min_m_prob)) >= (long double)0){
-					int write = output_vcf_variant_position(pos,tum_out,chr_name);
-					check(write==0,"Error writing mutation to file.");
+					if(algos_check_var_position_alleles(pos,chr_name,"SOMATIC")==1){
+						int write = output_vcf_variant_position(pos,tum_out,chr_name);
+						check(write==0,"Error writing mutation to file.");
+					}
 				}else if(rounded_snp >= (int)(min_s_prob * 100)){
-					int write = output_vcf_variant_position(pos,snp_out,chr_name);
-					check(write==0,"Error writing germline to file.");
+					if(algos_check_var_position_alleles(pos,chr_name,"SNP")==1){
+						int write = output_vcf_variant_position(pos,snp_out,chr_name);
+						check(write==0,"Error writing germline to file.");
+					}
 				}
 				if(debug_output != NULL){
 					int write = output_vcf_variant_position(pos,debug_output,chr_name);

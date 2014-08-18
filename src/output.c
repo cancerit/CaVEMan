@@ -51,8 +51,6 @@ static const char *VCF_INPUTVERSION_KEY = "InpuVCFVer";
 static const char *VCF_INPUTPARAMS_KEY = "InputVCFParam";
 static const char *VCF_FORMAT_KEY = "FORMAT";
 static const char *VCF_INFO_KEY = "INFO";
-static const char *VCF_PEDIGREE_KEY= "PEDIGREE";
-static const char *VCF_FILE_KEY = "File";
 static const char *VCF_VAR_FORMAT_LINE = "GT:FAZ:FCZ:FGZ:FTZ:RAZ:RCZ:RGZ:RTZ:PM";
 static const char *VCF_FORMAT_A_FWD_COUNT = "ID=FAZ,Number=1,Type=Integer,Description=\"Reads presenting a A for this position, forward strand\"";
 static const char *VCF_FORMAT_C_FWD_COUNT = "ID=FCZ,Number=1,Type=Integer,Description=\"Reads presenting a C for this position, forward strand\"";
@@ -64,9 +62,7 @@ static const char *VCF_FORMAT_G_REV_COUNT = "ID=RGZ,Number=1,Type=Integer,Descri
 static const char *VCF_FORMAT_T_REV_COUNT = "ID=RTZ,Number=1,Type=Integer,Description=\"Reads presenting a T for this position, reverse strand\"";
 static const char *VCF_FORMAT_MUT_ALL_PROP = "ID=PM,Number=1,Type=Float,Description=\"Proportion of mut allele\"";
 static const char *VCF_FORMAT_GENOTYPE = "ID=GT,Number=1,Type=String,Description=\"Genotype\"";
-static const char *VCF_INFO_DBSNP = "ID=DB,Number=0,Type=Flag,Description=\"dbSNP membership, build 129\"";
 static const char *VCF_INFO_TOTAL_DEPTH = "ID=DP,Number=1,Type=Integer,Description=\"Total Depth\"";
-static const char *VCF_INFO_RMS_BQ = "ID=BQ,Number=1,Type=Float,Description=\"RMS base quality at this position\"";
 static const char *VCF_INFO_MUT_PROB_SUM = "ID=MP,Number=1,Type=Float,Description=\"Sum of CaVEMan somatic genotype probabilities\"";
 static const char *VCF_INFO_SNP_PROB_SUM = "ID=GP,Number=1,Type=Float,Description=\"Sum of CaVEMan germline genotype probabilities\"";
 static const char *VCF_INFO_TOP_GENO = "ID=TG,Number=1,Type=String,Description=\"Most probable genotype as called by CaVEMan\"";
@@ -101,19 +97,26 @@ void output_set_genotype_representations_for_genotype_t(genotype_t *geno,char re
 }
 
 int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
+	assert(pos != NULL);
+	assert(out != NULL);
+	assert(chrom != NULL);
 
-	check(pos != NULL,"NULL position struct passed.");
-	check(out != NULL,"NULL file passed.");
-	check(chrom != NULL,"NULL chromosome name passed.");
-	if(pos->top_geno->tum_geno->var_base != pos->ref_base[0]){
-		int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
-		check(write>0,"Error initial vcf variant line, top mutant genotype.");
-	}else{
-		int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->sec_geno->tum_geno->var_base);
-		check(write>0,"Error writing initial vcf variant line, second mutant genotype.");
-	}
+	char *top_ref = NULL;
+	char *top_tum = NULL;
+	char *sec_ref = NULL;
+	char *sec_tum = NULL;
+
+	//if(pos->top_geno->tum_geno->var_base != pos->ref_base[0]){
+	//	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
+	//	check(write>0,"Error writing initial vcf variant line, top mutant genotype.");
+	//}//else{
+	//	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->sec_geno->tum_geno->var_base);
+	//	check(write>0,"Error writing initial vcf variant line, second mutant genotype.");
+	//}
+	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
+	//	check(write>0,"Error writing initial vcf variant line, top mutant genotype.");
 	//total depth seen by CaVEMan
-	int write = fprintf(out,"DP=%d;",(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
+	write = fprintf(out,"DP=%d;",(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
 								+genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg)));
 	check(write>0,"Error writing info line.");
 	//Total somatic prob
@@ -123,10 +126,10 @@ int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
 	write = fprintf(out,"GP=%5.1Le;",pos->total_snp_prob);
 	check(write>0,"Error writing info line snp_prob.");
 	//Top genotype and second genotype info
-	char *top_ref = genotype_get_genotype_t_as_string(pos->top_geno->norm_geno);
-	char *top_tum = genotype_get_genotype_t_as_string(pos->top_geno->tum_geno);
-	char *sec_ref = genotype_get_genotype_t_as_string(pos->sec_geno->norm_geno);
-	char *sec_tum = genotype_get_genotype_t_as_string(pos->sec_geno->tum_geno);
+	top_ref = genotype_get_genotype_t_as_string(pos->top_geno->norm_geno);
+	top_tum = genotype_get_genotype_t_as_string(pos->top_geno->tum_geno);
+	sec_ref = genotype_get_genotype_t_as_string(pos->sec_geno->norm_geno);
+	sec_tum = genotype_get_genotype_t_as_string(pos->sec_geno->tum_geno);
 	write = fprintf(out,"TG=%s/%s;TP=%5.1Le;SG=%s/%s;SP=%5.1Le\t",
 						top_ref,top_tum,pos->top_geno->prob,
 						sec_ref,sec_tum,pos->sec_geno->prob);
@@ -242,12 +245,15 @@ char *output_generate_format_lines(){
 int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
 													char *assembly, char *species, char *norm_prot, char *tum_prot,
 													char *normal_platform, char *tumour_platform){
-	check(out != NULL,"NULL output file passed.");
 
-	char *tumour_name,*normal_name;
-	tumour_name = malloc(sizeof(char) * 150);
+	assert(out != NULL);
+	char *contigs = NULL;
+	char *info = NULL;
+	char *process = NULL;
+	char *format = NULL;
+	char *tumour_name = malloc(sizeof(char) * 150);
+	char *normal_name = malloc(sizeof(char) * 150);
 	check_mem(tumour_name);
-	normal_name = malloc(sizeof(char) * 150);
 	check_mem(normal_name);
 
 	if(normal_platform == NULL){
@@ -281,23 +287,23 @@ int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_lo
 	check(write>0,"Error writing reference.");
 	//vcfProcessLog for CaVEMan
 	char *cave_version = CAVEMAN_VERSION;
-	char *process = output_generate_CaVEMan_process_log(cave_version);
+	process = output_generate_CaVEMan_process_log(cave_version);
 	write = fprintf(out,"%s",process);
 	check(write>0,"Error writing CaVEMan version.");
 
 	//Add reference sequence headers
-	char *contigs = output_generate_reference_contig_lines(tum_bam, assembly, species);
+	contigs = output_generate_reference_contig_lines(tum_bam, assembly, species);
 	check(contigs != NULL,"Error fetching contigs from bam file.");
 	write = fprintf(out,"%s",contigs);
 	check(write>0,"Error writing contigs.");
 
 	//INFO lines
-	char *info = output_generate_info_lines();
+	info = output_generate_info_lines();
 	write = fprintf(out,"%s",info);
 	check(write>0,"Error writing INFO.");
 
 	//FORMAT
-	char *format = output_generate_format_lines();
+	format = output_generate_format_lines();
 	write = fprintf(out,"%s",format);
 	check(write>0,"Error writing FORMAT.");
 

@@ -311,6 +311,20 @@ void estep_setup_options(int argc, char *argv[]){
 int estep_main(int argc, char *argv[]){
 	estep_setup_options(argc, argv);
 
+	long double ********prob_arr = NULL;
+	alg_bean_t *alg = NULL;
+	char *fa_file = NULL;
+	int ignore_reg_count = 0;
+	List *these_regions = NULL;
+	struct seq_region_t **ignore_regs = NULL;
+	char no_analysis_file_loc[500];
+	FILE *no_analysis_file = NULL;
+	List *no_analysis_list = NULL;
+	char *ref_seq = NULL;
+	FILE *debug_file = NULL;
+	FILE *snp_file = NULL;
+	FILE *mut_file = NULL;
+
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
@@ -343,12 +357,12 @@ int estep_main(int argc, char *argv[]){
 	//Load in alg bean
 	FILE *alg_bean_file = fopen(alg_bean_loc,"r");
 	check(alg_bean_file != 0 ,"Error trying to open alg_bean file: %s.",alg_bean_loc);
-	alg_bean_t *alg = alg_bean_read_file(alg_bean_file);
+	alg = alg_bean_read_file(alg_bean_file);
 	check(alg != NULL,"Error reading alg_bean from file.");
 	fclose(alg_bean_file);
 
 	//Load in probability array
-	long double ********prob_arr = covs_access_read_probs_from_file(probs_file,
+	prob_arr = covs_access_read_probs_from_file(probs_file,
 														List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 														List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),
 																												List_count(alg->ref_base),List_count(alg->call_base));
@@ -380,7 +394,7 @@ int estep_main(int argc, char *argv[]){
 
 	//Get the chunk of ref sequence using this split section.
 	//Strip the .fai from the fasta file.
-	char *fa_file = malloc(sizeof(char) * (strlen(ref_idx)-3));
+	fa_file = malloc(sizeof(char) * (strlen(ref_idx)-3));
 	check_mem(fa_file);
 	strncpy(fa_file,ref_idx,(strlen(ref_idx)-4));
 	fa_file[strlen(ref_idx)-4] = '\0';
@@ -388,15 +402,14 @@ int estep_main(int argc, char *argv[]){
 
 	//Get ignored regions contained in split section
 	//Get ignored regions for section and calculate a list of sections to analyse.
-	int ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
+	ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
    check(ignore_reg_count >= 0,"Error trying to check the number of ignored regions for this chromosome.");
 
    //A list structure to store the ignored regions and skipped bases.
-   List *no_analysis_list = List_create();
+   no_analysis_list = List_create();
    output_set_no_analysis_section_list(no_analysis_list);
 
    //Now create a store for said regions.
-   struct seq_region_t **ignore_regs;
    ignore_regs = malloc(sizeof(struct seq_region_t *) *  ignore_reg_count);
    check_mem(ignore_regs);
    check(ignore_reg_access_get_ign_reg_for_chr(ignore_regions_file,chr_name,ignore_reg_count,ignore_regs)==0,"Error fetching ignored regions from file.");
@@ -404,7 +417,7 @@ int estep_main(int argc, char *argv[]){
 	//Create a list of sections to analyse.
 	//Check the contained ignored regions
 	//Resolve the ignored regions and start/stop into sections for analysis.
-	List *these_regions = ignore_reg_access_resolve_ignores_to_analysis_sections(start_zero_based+1,stop,ignore_regs,ignore_reg_count);
+	these_regions = ignore_reg_access_resolve_ignores_to_analysis_sections(start_zero_based+1,stop,ignore_regs,ignore_reg_count);
 
 	//Add each of these ignored regions to the no analysis list
 	int i=0;
@@ -439,7 +452,6 @@ int estep_main(int argc, char *argv[]){
 	char snp_out[500];
 	char mut_out[500];
 	char debug_out[500];
-	char no_analysis_file_loc[500];
 
 	int chk = sprintf(snp_out,"%s/%s/%d_%d.snps.vcf",results,chr_name,start_zero_based+1,stop);
 	check(chk>0,"Error generating snp output file location.");
@@ -454,25 +466,24 @@ int estep_main(int argc, char *argv[]){
 	check(chk>0,"Error generating no analysis file location.");
 
 	//Open files for output
-	FILE *mut_file = fopen(mut_out,"w");
+	mut_file = fopen(mut_out,"w");
 	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
 	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
 																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to muts file.");
 
-	FILE *snp_file = fopen(snp_out,"w");
+	snp_file = fopen(snp_out,"w");
 	check(snp_file != 0, "Error trying to open snp file for output: %s.",snp_out);
 	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
 																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to SNP file.");
 
-	FILE *no_analysis_file = fopen(no_analysis_file_loc,"w");
+	no_analysis_file = fopen(no_analysis_file_loc,"w");
 	check(no_analysis_file != 0, "Error trying to open no analysis file for output: %s.",no_analysis_file_loc);
 	output_set_no_analysis_file(no_analysis_file);
 
-	FILE *debug_file = NULL;
 	if(debug == 1){
 		debug_file = fopen(debug_out,"w");
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
@@ -484,7 +495,6 @@ int estep_main(int argc, char *argv[]){
 
 
 	//Iterate through analysis sections
-	char *ref_seq;
 	//Iterate through sections.
 	LIST_FOREACH(these_regions, first, next, cur){
 		printf("Estep section %s:%d-%d\n",chr_name,((seq_region_t *)cur->value)->beg,((seq_region_t *)cur->value)->end);

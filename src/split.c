@@ -48,7 +48,7 @@ static char list_loc[512];// = "splitList";
 static char alg_bean_loc[512];// = "alg_bean";
 static char version[50];// = "alg_bean";
 static char ignore_regions_file[512];// = NULL;
-static int idx;
+static int idx = 0;
 
 
 void split_print_usage (int exit_code){
@@ -118,7 +118,7 @@ void split_setup_options(int argc, char *argv[]){
    }//End of iteration through options
 
    //Do some checking to ensure required arguments were passed
-   if(idx == NULL || idx == 0){
+   if(idx == 0){
    	split_print_usage(1);
    }
 
@@ -132,7 +132,9 @@ void split_setup_options(int argc, char *argv[]){
 
 int split_main(int argc, char *argv[]){
 	split_setup_options(argc,argv);
-
+	struct seq_region_t **ignore_regs = NULL;
+	int ignore_reg_count = 0;
+	char *chr_name = malloc(sizeof(char *));
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
@@ -150,7 +152,6 @@ int split_main(int argc, char *argv[]){
 
 	//Open reference file and read in chromosomes - getting chr name and length for this index
 	int chr_length = 0;
-	char *chr_name = malloc(sizeof(char *));
 	int chk = 0;
 	chk = fai_access_get_name_from_index(idx, ref_idx, chr_name, &chr_length);
 	check(chk==0, "Error encountered trying to get chromosome name and length from FASTA index file.");
@@ -169,13 +170,12 @@ int split_main(int argc, char *argv[]){
    check(output != NULL, "Error opening file %s for write.",fname);
 
    //Load in a set of ignore regions from tsv format, only require this chromosome.
-   int ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
+   ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
    check(ignore_reg_count >= 0,"Error trying to check the number of ignored regions for this chromosome.");
 
    printf("Found %d ignored regions for chromosome %s.\n",ignore_reg_count,chr_name);
 
    //Now create a store for said regions.
-   struct seq_region_t **ignore_regs;
    ignore_regs = malloc(sizeof(struct seq_region_t *) *  ignore_reg_count);
    check_mem(ignore_regs);
    check(ignore_reg_access_get_ign_reg_for_chr(ignore_regions_file,chr_name,ignore_reg_count,ignore_regs)==0,"Error fetching ignored regions from file.");

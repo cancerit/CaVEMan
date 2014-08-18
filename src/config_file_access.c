@@ -20,6 +20,7 @@
 */
 
 #include <assert.h>
+#include <stdlib.h>
 #include <config_file_access.h>
 #include <dbg.h>
 

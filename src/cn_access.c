@@ -28,10 +28,10 @@
 
 //Array of size 2 for normal and tumour.
 List *cns[2] = {NULL,NULL};
-static max_cn = 10;
+static int max_cn = 10;
 
 int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int is_normal){
-	FILE *cn_file;
+	FILE *cn_file = NULL;
 	if(cns[is_normal] == NULL && file_loc != NULL){
 		int is_bed = 0;
 		//Check for bed extension

@@ -45,7 +45,7 @@ char *test_cn_access_get_copy_number_for_location(){
   clear_copy_number_store();
 
   //Test outside the boundary of the file to assert 0 is returned.
-  pos = 10000000000;
+  pos = 999999999;
   res = cn_access_get_copy_number_for_location(tum_cn_file,chr,pos,is_normal);
   mu_assert(res!=-1,"Problem opening normal cn file file for reading.");
   mu_assert(res==0,"Wrong copy number found using boundary outside the file.");

@@ -29,11 +29,10 @@
 #include <output.h>
 #include <List.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <time.h>
 #include <fai_access.h>
 
-static unsigned int section = 250000;
-static unsigned int read_count = 1000000;
 static int min_base_qual = 0;
 static char *bam_file_locs;// = NULL;
 static char *split_file_loc;// = NULL;
@@ -52,10 +51,10 @@ static const char *PERMITTED_PROTOCOLS[2] = {WHOLE_GENOME_PROTOCOL,EXOME_PROTOCO
 static const char *PERMITTED_PLATFORMS[1] = {ILLUMINA_PLATFORM};
 static const int MAX_SECTION_SIZE = 2000000;
 
-static const char *VCF_FILE_FORMAT = "##fileformat=VCFv4.1\n";
+static const char *VCF_FILE_FORMAT = "##fileformat=VCFv4.1";
 static const char *VCF_FILE_DATE = "##fileDate=%s\n";
-static const char *VCF_SOURCE = "##source_%s";
-static const char *VCF_SOURCE_2 =".1=generateCvemanVCFUnmatchedNormalPanel\n";
+static const char *VCF_SOURCE = "##source_";
+static const char *VCF_SOURCE_2 = ".1=generateCavemanVCFUnmatchedNormalPanel";
 static const char *VCF_INFO = "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Total Depth\">\n";
 static const char *VCF_FORMAT_GENO = "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
 static const char *VCF_A_ALL = "##FORMAT=<ID=AZ,Number=1,Type=Integer,Description=\"Count of A alleles at this position\">\n";
@@ -225,7 +224,8 @@ error:
 
 int gen_panel_write_VCF_header(List *samples,FILE *vcf_out){
 	//Print header to VCF output file
-	check(fprintf(vcf_out,VCF_FILE_FORMAT)>0,"Error writing file format line to VCF");
+	char *contigs = NULL;
+	check(fprintf(vcf_out,"%s\n",VCF_FILE_FORMAT)>0,"Error writing file format line to VCF");
 
 	char date[50];
 	time_t current_time;
@@ -233,17 +233,16 @@ int gen_panel_write_VCF_header(List *samples,FILE *vcf_out){
 	strftime(date,sizeof(date),"%Y%m%d",localtime(&current_time));
 
 	check(fprintf(vcf_out,VCF_FILE_DATE,date)>0,"Error writing file date line to VCF");
-	check(fprintf(vcf_out,VCF_SOURCE,date)>0,"Error writing source line to VCF");
-	check(fprintf(vcf_out,VCF_SOURCE_2)>0,"Error writing source line to VCF");
-	char *contigs = output_generate_reference_contig_lines(((sample_bam *)samples->first->value)->bam_file, species_vers, species);
+	check(fprintf(vcf_out,"%s%s%s\n",VCF_SOURCE,date,VCF_SOURCE_2)>0,"Error writing source line to VCF");
+	contigs = output_generate_reference_contig_lines(((sample_bam *)samples->first->value)->bam_file, species_vers, species);
 	check(contigs!=NULL,"Error calculating contig lines for VCF");
-	check(fprintf(vcf_out,contigs)>0,"Error writing contig lines to VCF");
-	check(fprintf(vcf_out,VCF_INFO)>0,"Error writing info line to VCF");
-	check(fprintf(vcf_out,VCF_FORMAT_GENO)>0,"Error writing format line to VCF");
-	check(fprintf(vcf_out,VCF_A_ALL)>0,"Error writing A allele format line to VCF");
-	check(fprintf(vcf_out,VCF_C_ALL)>0,"Error writing C allele format line to VCF");
-	check(fprintf(vcf_out,VCF_G_ALL)>0,"Error writing G allele format line to VCF");
-	check(fprintf(vcf_out,VCF_T_ALL)>0,"Error writing T allele format line to VCF");
+	check(fprintf(vcf_out,"%s",contigs)>0,"Error writing contig lines to VCF");
+	check(fprintf(vcf_out,"%s",VCF_INFO)>0,"Error writing info line to VCF");
+	check(fprintf(vcf_out,"%s",VCF_FORMAT_GENO)>0,"Error writing format line to VCF");
+	check(fprintf(vcf_out,"%s",VCF_A_ALL)>0,"Error writing A allele format line to VCF");
+	check(fprintf(vcf_out,"%s",VCF_C_ALL)>0,"Error writing C allele format line to VCF");
+	check(fprintf(vcf_out,"%s",VCF_G_ALL)>0,"Error writing G allele format line to VCF");
+	check(fprintf(vcf_out,"%s",VCF_T_ALL)>0,"Error writing T allele format line to VCF");
 	check(gen_panel_write_sample_lines(samples,vcf_out)==0,"Error writing sample lines to VCF");
 	check(fprintf(vcf_out,VCF_HEADER,sample_names)>0,"Error writing file format line to VCF");
 	free(contigs);
@@ -256,12 +255,12 @@ error:
 List *gen_panel_get_list_of_samples_and_locs(){
 	//Create list of sample names & bam files, at the same time converting sample_names to a tab separated string.
 	List *samples = NULL;
+	char *sampchar = NULL;
+	char *bamchar = NULL;
 	samples = List_create();
 	//Iterate through list of sample_names using comma as separator
 	char *new_sample_names = malloc((strlen(sample_names)+1) * sizeof(char));
 	check_mem(new_sample_names);
-	char *sampchar;
-	char *bamchar;
 	sampchar = strtok(sample_names,",");
 	while(sampchar != NULL){
 		struct sample_bam *this_samp = malloc(sizeof(struct sample_bam));
@@ -288,9 +287,9 @@ List *gen_panel_get_list_of_samples_and_locs(){
     	printf("Bam file %s does not appear to exist.\n",((sample_bam *)cur->value)->bam_file);
    		gen_panel_print_usage(1);
    	}
-   	int chk=0;
+   	char *chk=NULL;
    	chk=strcat(new_sample_names,((sample_bam *)cur->value)->sample_name);
-   	check(chk>0,"Error appending new sample names.");
+   	check(chk!=NULL,"Error appending new sample names.");
    	if(cur->next != NULL){
    		strcat(new_sample_names,"\t");
    	}
@@ -378,7 +377,7 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 		write = fprintf(vcf_out,VCF_VAR_LINE_MID,sum);
 		check(write>0,"Error writing VCF middle of variant line for position %d.",start+i);
 		write = 0;
-		write = fprintf(vcf_out,last_of_line);
+		write = fprintf(vcf_out,"%s",last_of_line);
 		check(write>0,"Error writing VCF end of variant line for position %d.",start+i);
 		free(last_of_line);
 	}
@@ -411,11 +410,13 @@ int main(int argc, char *argv[]){
 	char chr_name[50];
 	int start_zero_based = 0;
 	int stop = 0;
+	List *samples = NULL;
+
 	split_access_get_section_from_index(split_file_loc,chr_name,&start_zero_based,&stop,idx);
 	check(stop > 0,"Error fetching region from split file.");
 	check(chr_name != NULL, "Error fetching region from split file.");
 
-	List *samples = gen_panel_get_list_of_samples_and_locs();
+	samples = gen_panel_get_list_of_samples_and_locs();
 	check(samples != NULL,"Error retrieving sample and bam location list from command line.");
 
 	//Open output file

@@ -187,6 +187,8 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
 	//Use a store of copy number then reference base to get the list (if it doesn't exist we create it).
 	//Use the copy number to store the location in the cn-cache array. if it's not there or NULL we default to the creation.
 	int bs=0;
+	List *unique = NULL;
+
 	if(geno_cache[copy_num] != NULL){
 		//This size will always be 4 and ordered by ref_base;
 		for (bs=0; bs<4; bs++){
@@ -240,7 +242,7 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
       }
 	}
 
-	List *unique = genotype_generate_unique_genotype_list(genos);
+	unique = genotype_generate_unique_genotype_list(genos);
 
 	//Now we have a list of genotypes we calculate variant base and variant base proportion.
 	LIST_FOREACH(unique, first, next, cur){
@@ -414,6 +416,11 @@ void genotype_set_snp_and_mut_genotypes(List *norm_genos, List *tum_genos, int n
 	int somatic_count = 0;
 	int het_count = 0;
 	int hom_count = 0;
+
+	combined_genotype_t **somatic_combos = NULL;
+	combined_genotype_t **het_snp_combos = NULL;
+	combined_genotype_t **hom_snp_combos = NULL;
+
 	List *hom_snps = List_create();
 	List *het_snps = List_create();
 	List *somatics = List_create();
@@ -445,13 +452,13 @@ void genotype_set_snp_and_mut_genotypes(List *norm_genos, List *tum_genos, int n
 	check_mem(het_snp_norm_genotypes);
 	int het_norm_count = List_count(het_snps_norm);
 	genotype_fill_het_snp_norms_list(het_snps_norm,het_snp_norm_genotypes);
-	combined_genotype_t **somatic_combos = malloc(sizeof(combined_genotype_t *) * somatic_count);
+	somatic_combos = malloc(sizeof(combined_genotype_t *) * somatic_count);
 	check_mem(somatic_combos);
 	memset(somatic_combos,0,(sizeof(combined_genotype_t *) * somatic_count));
-	combined_genotype_t **het_snp_combos = malloc(sizeof(combined_genotype_t *) * het_count);
+	het_snp_combos = malloc(sizeof(combined_genotype_t *) * het_count);
 	check_mem(het_snp_combos);
 	memset(het_snp_combos,0,(sizeof(combined_genotype_t *) * het_count));
-	combined_genotype_t **hom_snp_combos = malloc(sizeof(combined_genotype_t *) * hom_count);
+	hom_snp_combos = malloc(sizeof(combined_genotype_t *) * hom_count);
 	check_mem(hom_snp_combos);
 	memset(hom_snp_combos,0,(sizeof(combined_genotype_t *) * hom_count));
 

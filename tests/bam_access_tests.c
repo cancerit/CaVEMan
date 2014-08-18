@@ -128,7 +128,6 @@ char *test_bam_access_get_reads_at_this_pos(){
 	bam_access_openbams(mut_wt_bam,mut_mt_bam);
 	test_bean = alg_bean_generate_default_alg_bean(mut_wt_bam,mut_mt_bam);
 	got = bam_access_get_reads_at_this_pos("1", 192462357, 192462357,1,test_bean);
-	printf("READS: %d\n",List_count(got));
 	mu_assert(List_count(got)==77,"Wrong number of reads fetched from know mutant bam files.");
 	int norm_count = 0;
 	int tum_count = 0;

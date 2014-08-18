@@ -103,18 +103,6 @@ char *test_algos_mstep_read_position_two(){
 	return NULL;
 }
 
-char *test_algos_mstep_real_data(){
-	alg_bean_t *alg = alg_bean_generate_default_alg_bean(mut_norm,mut_tum);
-	mu_assert(bam_access_openbams(mut_norm, mut_tum)==0,"Bams not opened.\n");
-	int ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
-				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	mu_assert(arr != NULL,"Array not properly created.\n");
-	char *chr = "1";
-	int from = 192462357;
-	int to = 192462357;
-	return NULL;
-}
-
 int estep_no_analysis(){
 	FILE *alg_file = fopen(mut_alg,"r");
 	check(bam_access_openbams(mut_norm, mut_tum)==0,"Bams not opened.");
@@ -234,9 +222,28 @@ char *test_algos_calculate_per_base_normal_contamination(){
 }
 
 int test_finalise(){
+	genotype_t *som_tum2 = NULL;
+	combined_genotype_t *ref = NULL;
+	combined_genotype_t *het = NULL;
+	combined_genotype_t *hom = NULL;
+	combined_genotype_t *som = NULL;
+	combined_genotype_t *som2 = NULL;
+
+	genotype_t *ref_norm = NULL;
+	genotype_t *ref_tum = NULL;
+	genotype_t *som_tum = NULL;
+	genotype_t *het_norm = NULL;
+	genotype_t *het_tum = NULL;
+	genotype_t *hom_norm = NULL;
+	genotype_t *hom_tum = NULL;
+
+	combined_genotype_t **het_snp_genotypes = NULL;
+	combined_genotype_t **hom_snp_genotypes = NULL;
+	combined_genotype_t **somatic_genotypes = NULL;
+
 	estep_position_t *pos = malloc(sizeof(estep_position_t));
-	check_mem(pos);
 	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
+	check_mem(pos);
 	check_mem(pos);
 
 	char ref_base = 'C';
@@ -245,32 +252,32 @@ int test_finalise(){
 	int het_count = 1;
 	int hom_count = 1;
 	int somatic_count = 1;
-	combined_genotype_t *ref = malloc(sizeof(combined_genotype_t));
+	ref = malloc(sizeof(combined_genotype_t));
 	check_mem(ref);
-	combined_genotype_t *het = malloc(sizeof(combined_genotype_t));
+	het = malloc(sizeof(combined_genotype_t));
 	check_mem(het);
-	combined_genotype_t *hom = malloc(sizeof(combined_genotype_t));
+	hom = malloc(sizeof(combined_genotype_t));
 	check_mem(hom);
-	combined_genotype_t *som = malloc(sizeof(combined_genotype_t));
+	som = malloc(sizeof(combined_genotype_t));
 	check_mem(som);
-	combined_genotype_t *som2 = malloc(sizeof(combined_genotype_t));
+	som2 = malloc(sizeof(combined_genotype_t));
 	check_mem(som2);
 
-	genotype_t *ref_norm = genotype_init_genotype();
+	ref_norm = genotype_init_genotype();
 	genotype_set_base_count(ref_norm, ref_base, 2);
-	genotype_t *ref_tum = genotype_init_genotype();
+	ref_tum = genotype_init_genotype();
 	genotype_set_base_count(ref_tum, ref_base, 2);
-	genotype_t *som_tum = genotype_init_genotype();
+	som_tum = genotype_init_genotype();
 	genotype_set_base_count(som_tum, mut_base, 2);
-	genotype_t *het_norm = genotype_init_genotype();
+	het_norm = genotype_init_genotype();
 	genotype_set_base_count(het_norm, ref_base, 1);
 	genotype_set_base_count(het_norm, mut_base, 1);
-	genotype_t *het_tum = genotype_init_genotype();
+	het_tum = genotype_init_genotype();
 	genotype_set_base_count(het_tum, ref_base, 1);
 	genotype_set_base_count(het_tum, mut_base, 1);
-	genotype_t *hom_norm = genotype_init_genotype();
+	hom_norm = genotype_init_genotype();
 	genotype_set_base_count(hom_norm, mut_base, 2);
-	genotype_t *hom_tum = genotype_init_genotype();
+	hom_tum = genotype_init_genotype();
 	genotype_set_base_count(hom_tum, mut_base, 2);
 
 	ref->norm_geno = ref_norm;
@@ -289,13 +296,13 @@ int test_finalise(){
 	hom->tum_geno = hom_tum;
 	hom->prob = logl(0.0000125);
 
-	combined_genotype_t **het_snp_genotypes = malloc(sizeof(combined_genotype_t *) * het_count);
+	het_snp_genotypes = malloc(sizeof(combined_genotype_t *) * het_count);
 	check_mem(het_snp_genotypes);
 	het_snp_genotypes[0] = het;
-	combined_genotype_t **hom_snp_genotypes = malloc(sizeof(combined_genotype_t *) * hom_count);
+	hom_snp_genotypes = malloc(sizeof(combined_genotype_t *) * hom_count);
 	check_mem(hom_snp_genotypes);
 	hom_snp_genotypes[0] = hom;
-	combined_genotype_t **somatic_genotypes = malloc(sizeof(combined_genotype_t *) * somatic_count);
+	somatic_genotypes = malloc(sizeof(combined_genotype_t *) * somatic_count);
 	check_mem(somatic_genotypes);
 	somatic_genotypes[0] = som;
 
@@ -328,7 +335,7 @@ int test_finalise(){
 	//Now with 2 somatics to ensure correct sum etc.
 	somatic_count = 2;
 
-	genotype_t *som_tum2 = genotype_init_genotype();
+	som_tum2 = genotype_init_genotype();
 	genotype_set_base_count(som_tum2, mut_base, 1);
 	genotype_set_base_count(som_tum2, ref_base, 1);
 
@@ -445,6 +452,26 @@ int test_per_read_estep(){
 	int ref_base_idx = 1;
 	char cbase = 'T';
 	long double base_norm_contam = 0.4;
+
+	combined_genotype_t *ref = NULL;
+	combined_genotype_t *het = NULL;
+	combined_genotype_t *hom = NULL;
+	combined_genotype_t *som = NULL;
+	combined_genotype_t *het_norms = NULL;
+
+	genotype_t *ref_norm = NULL;
+	genotype_t *ref_tum = NULL;
+	genotype_t *som_tum = NULL;
+	genotype_t *het_norm = NULL;
+	genotype_t *het_tum = NULL;
+	genotype_t *hom_norm = NULL;
+	genotype_t *hom_tum = NULL;
+
+	combined_genotype_t **het_snp_genotypes = NULL;
+	combined_genotype_t **hom_snp_genotypes = NULL;
+	combined_genotype_t **somatic_genotypes = NULL;
+	combined_genotype_t **het_norm_genotypes = NULL;
+
 	read_pos_t *norm_read = malloc(sizeof(read_pos_t));
 	norm_read->ref_base_probs[0] = (long double) logl(0.000552201);
 	norm_read->ref_base_probs[1] = (long double) logl(0.000552201);
@@ -471,44 +498,44 @@ int test_per_read_estep(){
 	int hom_count = 1;
 	int somatic_count = 1;
 	int het_norm_count = 1;
-	combined_genotype_t *ref = malloc(sizeof(combined_genotype_t));
+	ref = malloc(sizeof(combined_genotype_t));
 	check_mem(ref);
-	combined_genotype_t *het = malloc(sizeof(combined_genotype_t));
+	het = malloc(sizeof(combined_genotype_t));
 	check_mem(het);
-	combined_genotype_t *hom = malloc(sizeof(combined_genotype_t));
+	hom = malloc(sizeof(combined_genotype_t));
 	check_mem(hom);
-	combined_genotype_t *som = malloc(sizeof(combined_genotype_t));
+	som = malloc(sizeof(combined_genotype_t));
 	check_mem(som);
-	combined_genotype_t *het_norms = malloc(sizeof(combined_genotype_t));
+	het_norms = malloc(sizeof(combined_genotype_t));
 	check_mem(het_norms);
 
-	genotype_t *ref_norm = genotype_init_genotype();
+	ref_norm = genotype_init_genotype();
 	genotype_set_base_count(ref_norm, ref_base, 2);
 	ref_norm->var_base_idx = 1;
 	ref_norm->var_base_prop = 0;
-	genotype_t *ref_tum = genotype_init_genotype();
+	ref_tum = genotype_init_genotype();
 	genotype_set_base_count(ref_tum, ref_base, 2);
 	ref_tum->var_base_idx = 1;
 	ref_tum->var_base_prop = 0;
-	genotype_t *som_tum = genotype_init_genotype();
+	som_tum = genotype_init_genotype();
 	genotype_set_base_count(som_tum, mut_base, 2);
 	som_tum->var_base_idx = 3;
 	som_tum->var_base_prop = 1;
-	genotype_t *het_norm = genotype_init_genotype();
+	het_norm = genotype_init_genotype();
 	genotype_set_base_count(het_norm, ref_base, 1);
 	genotype_set_base_count(het_norm, mut_base, 1);
 	het_norm->var_base_idx = 3;
 	het_norm->var_base_prop = 0.5;
-	genotype_t *het_tum = genotype_init_genotype();
+	het_tum = genotype_init_genotype();
 	genotype_set_base_count(het_tum, ref_base, 1);
 	genotype_set_base_count(het_tum, mut_base, 1);
 	het_tum->var_base_idx = 3;
 	het_tum->var_base_prop = 0.5;
-	genotype_t *hom_norm = genotype_init_genotype();
+	hom_norm = genotype_init_genotype();
 	genotype_set_base_count(hom_norm, mut_base, 2);
 	hom_norm->var_base_idx = 3;
 	hom_norm->var_base_prop = 1;
-	genotype_t *hom_tum = genotype_init_genotype();
+	hom_tum = genotype_init_genotype();
 	genotype_set_base_count(hom_tum, mut_base, 2);
 	hom_tum->var_base_idx = 3;
 	hom_tum->var_base_prop = 1;
@@ -532,16 +559,16 @@ int test_per_read_estep(){
 	het_norms->norm_geno = het_norm;
 	het_norms->prob = 0.0;
 
-	combined_genotype_t **het_snp_genotypes = malloc(sizeof(combined_genotype_t *) * het_count);
+	het_snp_genotypes = malloc(sizeof(combined_genotype_t *) * het_count);
 	check_mem(het_snp_genotypes);
 	het_snp_genotypes[0] = het;
-	combined_genotype_t **hom_snp_genotypes = malloc(sizeof(combined_genotype_t *) * hom_count);
+	hom_snp_genotypes = malloc(sizeof(combined_genotype_t *) * hom_count);
 	check_mem(hom_snp_genotypes);
 	hom_snp_genotypes[0] = hom;
-	combined_genotype_t **somatic_genotypes = malloc(sizeof(combined_genotype_t *) * somatic_count);
+	somatic_genotypes = malloc(sizeof(combined_genotype_t *) * somatic_count);
 	check_mem(somatic_genotypes);
 	somatic_genotypes[0] = som;
-	combined_genotype_t **het_norm_genotypes = malloc(sizeof(combined_genotype_t *) * het_norm_count);
+	het_norm_genotypes = malloc(sizeof(combined_genotype_t *) * het_norm_count);
 	check_mem(het_norm_genotypes);
 	het_norm_genotypes[0] = het_norms;
 
@@ -625,16 +652,41 @@ int test_estep_pos(){
 	int ref_base_idx = 1;
 	char cbase = 'T';
 	long double base_norm_contam = 0.4;
-	int ref_pos = 10;
+
+	genotype_store_t *genos = NULL;
+	estep_position_t *pos = NULL;
+
+	combined_genotype_t *ref = NULL;
+	combined_genotype_t *het = NULL;
+	combined_genotype_t *hom = NULL;
+	combined_genotype_t *som = NULL;
+	combined_genotype_t *het_norms = NULL;
+
+	genotype_t *ref_norm = NULL;
+	genotype_t *ref_tum = NULL;
+	genotype_t *som_tum = NULL;
+	genotype_t *het_norm = NULL;
+	genotype_t *het_tum = NULL;
+	genotype_t *hom_norm = NULL;
+	genotype_t *hom_tum = NULL;
+
+	combined_genotype_t **het_snp_genotypes = NULL;
+	combined_genotype_t **hom_snp_genotypes = NULL;
+	combined_genotype_t **somatic_genotypes = NULL;
+	combined_genotype_t **het_norm_genotypes = NULL;
+
+
 	read_pos_t *norm_read = malloc(sizeof(read_pos_t));
+	read_pos_t *tum_read = malloc(sizeof(read_pos_t));
+	check_mem(tum_read);
+	check_mem(norm_read);
 	norm_read->ref_base_probs[0] = (long double) logl(0.000552201);
 	norm_read->ref_base_probs[1] = (long double) logl(0.000552201);
 	norm_read->ref_base_probs[2] = (long double) logl(0.000404538);
 	norm_read->ref_base_probs[3] = (long double) logl(0.000552201);
 	norm_read->called_base = cbase;
 	norm_read->normal = 1;
-	check_mem(norm_read);
-	read_pos_t *tum_read = malloc(sizeof(read_pos_t));
+
 	tum_read->called_base = cbase;
 	tum_read->normal = 0;
 	tum_read->ref_base_probs[0] = (long double) logl(0.000552201);
@@ -642,10 +694,10 @@ int test_estep_pos(){
 	tum_read->ref_base_probs[2] = (long double) logl(0.000404538);
 	tum_read->ref_base_probs[3] = (long double) logl(0.000552201);
 
-	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
+	genos = malloc(sizeof(genotype_store_t));
 	check_mem(genos);
 
-	estep_position_t *pos = malloc(sizeof(estep_position_t));
+	pos = malloc(sizeof(estep_position_t));
 	check_mem(pos);
 
 
@@ -656,44 +708,44 @@ int test_estep_pos(){
 	int hom_count = 1;
 	int somatic_count = 1;
 	int het_norm_count = 1;
-	combined_genotype_t *ref = malloc(sizeof(combined_genotype_t));
+	ref = malloc(sizeof(combined_genotype_t));
 	check_mem(ref);
-	combined_genotype_t *het = malloc(sizeof(combined_genotype_t));
+	het = malloc(sizeof(combined_genotype_t));
 	check_mem(het);
-	combined_genotype_t *hom = malloc(sizeof(combined_genotype_t));
+	hom = malloc(sizeof(combined_genotype_t));
 	check_mem(hom);
-	combined_genotype_t *som = malloc(sizeof(combined_genotype_t));
+	som = malloc(sizeof(combined_genotype_t));
 	check_mem(som);
-	combined_genotype_t *het_norms = malloc(sizeof(combined_genotype_t));
+	het_norms = malloc(sizeof(combined_genotype_t));
 	check_mem(het_norms);
 
-	genotype_t *ref_norm = genotype_init_genotype();
+	ref_norm = genotype_init_genotype();
 	genotype_set_base_count(ref_norm, ref_base, 2);
 	ref_norm->var_base_idx = 1;
 	ref_norm->var_base_prop = 0;
-	genotype_t *ref_tum = genotype_init_genotype();
+	ref_tum = genotype_init_genotype();
 	genotype_set_base_count(ref_tum, ref_base, 2);
 	ref_tum->var_base_idx = 1;
 	ref_tum->var_base_prop = 0;
-	genotype_t *som_tum = genotype_init_genotype();
+	som_tum = genotype_init_genotype();
 	genotype_set_base_count(som_tum, mut_base, 2);
 	som_tum->var_base_idx = 3;
 	som_tum->var_base_prop = 1;
-	genotype_t *het_norm = genotype_init_genotype();
+	het_norm = genotype_init_genotype();
 	genotype_set_base_count(het_norm, ref_base, 1);
 	genotype_set_base_count(het_norm, mut_base, 1);
 	het_norm->var_base_idx = 3;
 	het_norm->var_base_prop = 0.5;
-	genotype_t *het_tum = genotype_init_genotype();
+	het_tum = genotype_init_genotype();
 	genotype_set_base_count(het_tum, ref_base, 1);
 	genotype_set_base_count(het_tum, mut_base, 1);
 	het_tum->var_base_idx = 3;
 	het_tum->var_base_prop = 0.5;
-	genotype_t *hom_norm = genotype_init_genotype();
+	hom_norm = genotype_init_genotype();
 	genotype_set_base_count(hom_norm, mut_base, 2);
 	hom_norm->var_base_idx = 3;
 	hom_norm->var_base_prop = 1;
-	genotype_t *hom_tum = genotype_init_genotype();
+	hom_tum = genotype_init_genotype();
 	genotype_set_base_count(hom_tum, mut_base, 2);
 	hom_tum->var_base_idx = 3;
 	hom_tum->var_base_prop = 1;
@@ -717,16 +769,16 @@ int test_estep_pos(){
 	het_norms->norm_geno = het_norm;
 	het_norms->prob = 0.0;
 
-	combined_genotype_t **het_snp_genotypes = malloc(sizeof(combined_genotype_t *) * het_count);
+	het_snp_genotypes = malloc(sizeof(combined_genotype_t *) * het_count);
 	check_mem(het_snp_genotypes);
 	het_snp_genotypes[0] = het;
-	combined_genotype_t **hom_snp_genotypes = malloc(sizeof(combined_genotype_t *) * hom_count);
+	hom_snp_genotypes = malloc(sizeof(combined_genotype_t *) * hom_count);
 	check_mem(hom_snp_genotypes);
 	hom_snp_genotypes[0] = hom;
-	combined_genotype_t **somatic_genotypes = malloc(sizeof(combined_genotype_t *) * somatic_count);
+	somatic_genotypes = malloc(sizeof(combined_genotype_t *) * somatic_count);
 	check_mem(somatic_genotypes);
 	somatic_genotypes[0] = som;
-	combined_genotype_t **het_norm_genotypes = malloc(sizeof(combined_genotype_t *) * het_norm_count);
+	het_norm_genotypes = malloc(sizeof(combined_genotype_t *) * het_norm_count);
 	check_mem(het_norm_genotypes);
 	het_norm_genotypes[0] = het_norms;
 
