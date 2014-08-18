@@ -46,6 +46,7 @@ static char results[512];// = "results";
 static char ref_idx[512];// = "";
 static char list_loc[512];// = "splitList";
 static char alg_bean_loc[512];// = "alg_bean";
+static char version[50];
 static char *covariate_file = "covs_arr";
 static char *probs_file = "probs_arr";
 static char *norm_cn_loc = NULL;
@@ -316,7 +317,9 @@ int estep_main(int argc, char *argv[]){
 
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,
 														ref_idx,ignore_regions_file,alg_bean_loc,results,list_loc,
-																							&includeSW,&includeSingleEnd,&includeDups);
+																							&includeSW,&includeSingleEnd,&includeDups,version);
+
+	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
 
 	check(cfg==0,"Error parsing config file.");
   bam_access_include_sw(includeSW);

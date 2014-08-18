@@ -48,6 +48,7 @@ static char results[512];// = "results";
 static char ref_idx[512];// = "";
 static char list_loc[512];// = "splitList";
 static char alg_bean[512];// = "alg_bean";
+static char version[50];// = "alg_bean";
 static char ignore_regions_file[512];// = NULL;
 static int split_size = 50000;
 static int idx;
@@ -135,12 +136,14 @@ int mstep_main(int argc, char *argv[]){
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
 
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean,
-								results,list_loc,&includeSW,&includeSingleEnd,&includeDups);
+								results,list_loc,&includeSW,&includeSingleEnd,&includeDups,version);
+
+	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
 
 	check(cfg==0,"Error parsing config file.");
-   bam_access_include_sw(includeSW);
-   bam_access_include_se(includeSingleEnd);
-   bam_access_include_dup(includeDups);
+  bam_access_include_sw(includeSW);
+  bam_access_include_se(includeSingleEnd);
+  bam_access_include_dup(includeDups);
 
 	//Read in the alg bean
 	FILE *alg_bean_file = fopen(alg_bean,"r");

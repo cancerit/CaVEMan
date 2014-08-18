@@ -45,6 +45,7 @@ char *test_config_file_access_read_config_file(){
 	char *alg_bean_loc = malloc(sizeof(char) * 50);
 	char *results = malloc(sizeof(char) * 50);
 	char *list_loc = malloc(sizeof(char) * 50);
+	char *version = malloc(sizeof(char) * 50);
 	int includeSW = 1;
 	int includeSingleEnd = 1;
 	int includeDups = 1;
@@ -52,7 +53,7 @@ char *test_config_file_access_read_config_file(){
 	FILE *config = fopen(cfg_file,"r");
 	mu_assert(config!= NULL,"Problem opening config file for reading.");
 	int run = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean_loc,
-										results,list_loc,&includeSW,&includeSingleEnd,&includeDups);
+										results,list_loc,&includeSW,&includeSingleEnd,&includeDups,version);
 
 	mu_assert(run==0,"Error reading config file.");
 	fclose(config);
@@ -66,6 +67,7 @@ char *test_config_file_access_read_config_file(){
 	mu_assert(includeSW==0,"Error with SW include");
 	mu_assert(includeSingleEnd==0,"Error with SE include");
 	mu_assert(includeDups==0,"Error with duplicates include");
+	mu_assert(strcmp(version,"TEST_VERSION")==0,"Error with version");
 
 	return NULL;
 }
@@ -78,6 +80,7 @@ char *test_config_file_access_write_config_file(){
 	char *alg_bean_loc = malloc(sizeof(char) * 50);
 	char *results = malloc(sizeof(char) * 50);
 	char *list_loc = malloc(sizeof(char) * 50);
+	char *version = malloc(sizeof(char) * 50);
 	int includeSW = 1;
 	int includeSingleEnd = 1;
 	int includeDups = 1;
@@ -90,7 +93,7 @@ char *test_config_file_access_write_config_file(){
 	FILE *config = fopen(cfg_file_write,"r");
 	mu_assert(config!= NULL,"Problem opening config file for reading.");
 	int run = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean_loc,
-										results,list_loc,&includeSW,&includeSingleEnd,&includeDups);
+										results,list_loc,&includeSW,&includeSingleEnd,&includeDups,version);
 
 	mu_assert(run==0,"Error reading config file.");
 	fclose(config);
@@ -102,6 +105,7 @@ char *test_config_file_access_write_config_file(){
 	mu_assert(strcmp(alg_bean_loc,"alg_bean_test")==0,"Error with alg bean path");
 	mu_assert(strcmp(results,"results_test")==0,"Error with results file path");
 	mu_assert(strcmp(list_loc,"splitList_test")==0,"Error with split file path");
+	mu_assert(strcmp(version,CAVEMAN_VERSION)==0,"Error with version");
 	mu_assert(includeSW==0,"Error with SW include");
 	mu_assert(includeSingleEnd==0,"Error with SE include");
 	mu_assert(includeDups==0,"Error with duplicates include");

@@ -38,7 +38,7 @@ static int includeSingleEnd = 0;
 static int includeDups = 0;
 static unsigned int increment = 250000;
 static unsigned int read_count = 1000000;
-static double maxPropRdCount = 1.5;
+static double maxPropRdCount = 1.1;
 static char tum_bam_file[512];
 static char norm_bam_file[512];
 static char *config_file = "caveman.cfg.ini";
@@ -46,6 +46,7 @@ static char results[512];// = "results";
 static char ref_idx[512];// = "";
 static char list_loc[512];// = "splitList";
 static char alg_bean_loc[512];// = "alg_bean";
+static char version[50];// = "alg_bean";
 static char ignore_regions_file[512];// = NULL;
 static int idx;
 
@@ -137,23 +138,26 @@ int split_main(int argc, char *argv[]){
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
 
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean_loc,
-								results,list_loc,&includeSW,&includeSingleEnd,&includeDups);
+								results,list_loc,&includeSW,&includeSingleEnd,&includeDups,version);
+
+
+	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
 
 	check(cfg==0,"Error parsing config file.");
-   bam_access_include_sw(includeSW);
-   bam_access_include_se(includeSingleEnd);
-   bam_access_include_dup(includeDups);
+  bam_access_include_sw(includeSW);
+  bam_access_include_se(includeSingleEnd);
+  bam_access_include_dup(includeDups);
 
-   //Open reference file and read in chromosomes - getting chr name and length for this index
-   int chr_length = 0;
-   char *chr_name = malloc(sizeof(char *));
-   int chk = 0;
-   chk = fai_access_get_name_from_index(idx, ref_idx, chr_name, &chr_length);
-   check(chk==0, "Error encountered trying to get chromosome name and length from FASTA index file.");
+	//Open reference file and read in chromosomes - getting chr name and length for this index
+	int chr_length = 0;
+	char *chr_name = malloc(sizeof(char *));
+	int chk = 0;
+	chk = fai_access_get_name_from_index(idx, ref_idx, chr_name, &chr_length);
+	check(chk==0, "Error encountered trying to get chromosome name and length from FASTA index file.");
 
-   printf("Found chr: %s of length: %d at index %d\n",chr_name,chr_length,idx);
+	printf("Found chr: %s of length: %d at index %d\n",chr_name,chr_length,idx);
 
-   //Open a file to write sections, named according to CHR.
+	 //Open a file to write sections, named according to CHR.
 	char *fname = malloc(strlen(chr_name) + strlen(list_loc) + 3);
 	check_mem(fname);
    //Create filename here through name concatenation.
