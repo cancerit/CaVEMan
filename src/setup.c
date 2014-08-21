@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdio.h>
@@ -35,16 +35,20 @@ static char *results = "results";
 static char *ref_idx = NULL;
 static char *list_loc = "splitList";
 static char *alg_bean_loc = "alg_bean";
+static char *norm_copy_no = NULL;
+static char *tum_copy_no = NULL;
 static char *ignore_regions_file = NULL;
 static char *CaVEManfg_ini = "caveman.cfg.ini";
 
 
 void setup_print_usage (int exit_code){
-	printf ("Usage: caveman setup -t tum.bam -n norm.bam -r reference.fa.fai -g ignore_regions.tab [-f path] [-l path] [-a path] [-wzu]\n\n");
+	printf ("Usage: caveman setup -t tum.bam -n norm.bam -r reference.fa.fai -g ignore_regions.tab -e tum_cn.bed -j norm_cn.bed [-f path] [-l path] [-a path] [-wzu]\n\n");
 	printf("-t  --tumour-bam [file]             Location of tumour bam\n");
 	printf("-n  --normal-bam [file]             Location of normal bam\n");
 	printf("-r  --reference-index [file]        Location of reference fasta index\n");
-	printf("-g  --ignore-regions-file [file]    Location of tsv ignore regions file\n\n");
+	printf("-g  --ignore-regions-file [file]    Location of tsv ignore regions file\n");
+	printf("-e  --tumour-copy-no-file [file]    Location of tumour copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
+	printf("-j  --normal-copy-no-file [file]    Location of normal copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
 	printf("Optional\n");
 	printf("-c  --config-file [file]            File to write caveman run config file [default:'%s']\n",CaVEManfg_ini);
 	printf("-f  --results-folder [file]         Folder to write results [default:'%s']\n",results);
@@ -71,78 +75,89 @@ void setup_setup_options(int argc, char *argv[]){
 		{"include-duplicates", no_argument, 0, 'u'},
 		{"config-file",required_argument, 0,'c'},
 		{"ignore-regions-file", required_argument, 0, 'g'},
+		{"tumour-copy-no-file", required_argument, 0, 'e'},
+		{"normal-copy-no-file", required_argument, 0, 'j'},
 		{"help", no_argument, 0, 'h'},
 		{ NULL, 0, NULL, 0}
    }; //End of declaring opts
-   
+
    int index = 0;
    int iarg = 0;
-   
+
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "t:n:r:f:a:l:g:c:wzuh",
+   while((iarg = getopt_long(argc, argv, "t:n:r:f:a:l:e:j:g:c:wzuh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
-   		case 'h':
-         	setup_print_usage(0);
-         	break;
+				case 'h':
+					setup_print_usage(0);
+					break;
 
-         case 'c':
-         	CaVEManfg_ini = optarg;
-         	break;
-     			
-         case 't':
-         	tum_bam_file = optarg;
-            break;
-         	
-         case 'n':
-         	norm_bam_file = optarg;
-            break;
-            
-         case 'g':
-         	ignore_regions_file = optarg;
-            break;
-         
-         case 'r':
-         	ref_idx = optarg;
-         	break;
-      	
-      	case 'f':
-      		results = optarg;
-      		break;
-      		
-      	case 'a':
-      		alg_bean_loc = optarg;
-      		break;
-      		
-      	case 'l':
-      		list_loc = optarg;
-      		break;    	
+				case 'c':
+					CaVEManfg_ini = optarg;
+					break;
 
-      	case 'w':
-      		includeSW = 1;
-      		break;
-      		
-      	case 'z':
-      		includeSingleEnd = 1;
-      		break;
-      		
-      	case 'u':
-      		includeDups = 1;
-      		break;
-	
-			case '?':
-            setup_print_usage (1);
-            break;
-	
+				case 't':
+					tum_bam_file = optarg;
+					break;
+
+				case 'n':
+					norm_bam_file = optarg;
+					break;
+
+				case 'g':
+					ignore_regions_file = optarg;
+					break;
+
+				case 'j':
+					norm_copy_no = optarg;
+					break;
+
+				case 'e':
+					tum_copy_no = optarg;
+					break;
+
+				case 'r':
+					ref_idx = optarg;
+					break;
+
+				case 'f':
+					results = optarg;
+					break;
+
+				case 'a':
+					alg_bean_loc = optarg;
+					break;
+
+				case 'l':
+					list_loc = optarg;
+					break;
+
+				case 'w':
+					includeSW = 1;
+					break;
+
+				case 'z':
+					includeSingleEnd = 1;
+					break;
+
+				case 'u':
+					includeDups = 1;
+					break;
+
+				case '?':
+					setup_print_usage (1);
+					break;
+
       	default:
       		setup_print_usage (1);
-                           
+
    	}; // End of args switch statement
-   	
+
    }//End of iteration through options
-   
+
    //Do some checking to ensure required arguments were passed
-   if(tum_bam_file == NULL || norm_bam_file == NULL || ref_idx  == NULL || ignore_regions_file == NULL ){
+   if(tum_bam_file == NULL || norm_bam_file == NULL || ref_idx  == NULL
+   			|| ignore_regions_file == NULL || norm_copy_no == NULL || tum_copy_no == NULL){
    	setup_print_usage(1);
    }
    return;
@@ -150,24 +165,25 @@ void setup_setup_options(int argc, char *argv[]){
 
 int setup_main(int argc, char *argv[]){
 	setup_setup_options(argc,argv);
-	
-	//Create and write the config file in the current directory. 
+
+	//Create and write the config file in the current directory.
 	FILE *config_read;
 	//Try reading to see if we already have one
 	if((config_read = fopen(CaVEManfg_ini,"r")) == 0){
 		FILE *config_out = fopen(CaVEManfg_ini,"w");
 		check(config_out != NULL,"Error trying to open config file location for write: %s.",CaVEManfg_ini);
-		int res = config_file_access_write_config_file(config_out, tum_bam_file, norm_bam_file, ref_idx, 
-			ignore_regions_file, alg_bean_loc, results, list_loc, includeSW, includeSingleEnd, includeDups);
+		int res = config_file_access_write_config_file(config_out, tum_bam_file, norm_bam_file, ref_idx,
+																		ignore_regions_file, alg_bean_loc, results, list_loc, includeSW,
+																					includeSingleEnd, includeDups, norm_copy_no, tum_copy_no);
 		check(res==0,"Problem encountered when writing new config file to to %s.",CaVEManfg_ini);
-		res = fclose(config_out);	
+		res = fclose(config_out);
 		check(res==0,"Error closing config file.");
 	}else{
 		int res = fclose(config_read);
 		check(res==0,"Error closing config file reader.");
 		printf("Config file file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",CaVEManfg_ini);
 	}
-	
+
 	//Create the alg bean
 	FILE *bean_read;
 	if((bean_read = fopen(alg_bean_loc,"r")) == 0){
@@ -182,10 +198,10 @@ int setup_main(int argc, char *argv[]){
 		check(res==0,"Error closing alg bean file reader.");
 		printf("Alg bean file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",alg_bean_loc);
 	}
-	
+
 	return 0;
-	
+
 error:
 	return -1;
-		
+
 }
