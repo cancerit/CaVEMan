@@ -39,7 +39,8 @@ int ignore_reg_access_get_ign_reg_count_for_chr(char *ign_file, char *chr){
 	char rd[200];
 	while(fgets(rd, 200, file) != NULL){
 		check(rd != NULL,"Invalid line read in ignored region file.");
-		char *chr_nom = malloc(sizeof(char *));
+		char *chr_nom = malloc(sizeof(char)*50);
+		check_mem(chr_nom);
 		int chk = sscanf(rd,"%s",chr_nom);
 		check(chk == 1,"Incorrect line read.\n");
 		if(strcmp(chr_nom,chr) == 0){
@@ -87,7 +88,8 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
 	char rd[200];
 	while(fgets(rd, 200, file) != NULL){
 		check(rd != NULL,"Invalid line read in ignored region file.");
-		char *chr_nom = malloc(sizeof(char *));
+		char *chr_nom = malloc(sizeof(char)*50);
+		check_mem(chr_nom);
 		int beg,end;
 		int chk = sscanf(rd,"%s\t%d\t%d",chr_nom,&beg,&end);
 		if(chk==3){
