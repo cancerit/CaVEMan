@@ -95,10 +95,32 @@ char *test_cn_access_get_copy_number_for_location_bed(){
   return NULL;
 }
 
+char *test_cn_access_get_mean_cn_for_range(){
+	int exp_mean = 3;
+	int start = 114629220;
+	int stop = 152555165;
+	char *chr = "1";
+	int got = cn_access_get_mean_cn_for_range(tum_cn_file,chr,start,stop,1);
+	mu_assert(got==exp_mean,"Test tumour mean cn 3");
+	got=0;
+	got = cn_access_get_mean_cn_for_range(tum_cn_file,chr,start,stop,0);
+	mu_assert(got==exp_mean,"Test normal mean cn 3");
+
+	chr = "4";
+	start = 34779055;
+	stop = 34824724;
+	got = cn_access_get_mean_cn_for_range(tum_cn_file,chr,start,stop,0);
+	mu_assert(got==exp_mean, "Test normal mean cn 2");
+	exp_mean = 2;
+
+	return NULL;
+}
+
 char *all_tests() {
    mu_suite_start();
    mu_run_test(test_cn_access_get_copy_number_for_location);
    mu_run_test(test_cn_access_get_copy_number_for_location_zeroes);
+   mu_run_test(test_cn_access_get_mean_cn_for_range);
    return NULL;
 }
 
