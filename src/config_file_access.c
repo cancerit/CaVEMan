@@ -148,7 +148,7 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 	//Potentially non existant, so create it first
 	int dir = mkdir(results,S_IRWXU);
 	if(dir==0){
-		printf("Created results directory '%s'.",results);
+		printf("Created results directory '%s'.\n",results);
 	}
 	ptr = realpath(results,results_real);
 	check(ptr!=NULL,"Error getting real path for results folder %s.",results);
