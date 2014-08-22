@@ -22,6 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>
+#include <limits.h>
+#include <assert.h>
 #include <dbg.h>
 #include <alg_bean.h>
 #include <config_file_access.h>
@@ -29,16 +31,16 @@
 static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
-static char *tum_bam_file = NULL;
-static char *norm_bam_file = NULL;
-static char *results = "results";
+static char *tum_bam_file;
+static char *norm_bam_file;
+static char *results = "./results";
 static char *ref_idx = NULL;
-static char *list_loc = "splitList";
-static char *alg_bean_loc = "alg_bean";
-static char *norm_copy_no = NULL;
-static char *tum_copy_no = NULL;
-static char *ignore_regions_file = NULL;
-static char *CaVEManfg_ini = "caveman.cfg.ini";
+static char *list_loc = "./splitList";
+static char *alg_bean_loc = "./alg_bean";
+static char *norm_copy_no;
+static char *tum_copy_no ;
+static char *ignore_regions_file;
+static char *CaVEManfg_ini = "./caveman.cfg.ini";
 
 
 void setup_print_usage (int exit_code){
@@ -168,39 +170,44 @@ int setup_main(int argc, char *argv[]){
 
 	//Create and write the config file in the current directory.
 	FILE *config_read;
+	char CaVEMancfg_ini[PATH_MAX+1];
+	char *ptr = realpath(CaVEManfg_ini,CaVEMancfg_ini);
+	check(ptr!=NULL,"Error assigning real path for caveman config file %s.",CaVEManfg_ini);
+	char alg_bean_file[PATH_MAX+1];
+	ptr = realpath(alg_bean_loc,alg_bean_file);
+	check(ptr!=NULL,"Error assigning real path for alg bean file %s.",alg_bean_loc);
+
 	//Try reading to see if we already have one
-	if((config_read = fopen(CaVEManfg_ini,"r")) == 0){
+	if((config_read = fopen(CaVEMancfg_ini,"r")) == 0){
 		FILE *config_out = fopen(CaVEManfg_ini,"w");
-		check(config_out != NULL,"Error trying to open config file location for write: %s.",CaVEManfg_ini);
+		check(config_out != NULL,"Error trying to open config file location for write: %s.",CaVEMancfg_ini);
 		int res = config_file_access_write_config_file(config_out, tum_bam_file, norm_bam_file, ref_idx,
-																		ignore_regions_file, alg_bean_loc, results, list_loc, includeSW,
+																		ignore_regions_file, alg_bean_file, results, list_loc, includeSW,
 																					includeSingleEnd, includeDups, norm_copy_no, tum_copy_no);
-		check(res==0,"Problem encountered when writing new config file to to %s.",CaVEManfg_ini);
+		check(res==0,"Problem encountered when writing new config file to to %s.",CaVEMancfg_ini);
 		res = fclose(config_out);
 		check(res==0,"Error closing config file.");
 	}else{
 		int res = fclose(config_read);
 		check(res==0,"Error closing config file reader.");
-		printf("Config file file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",CaVEManfg_ini);
+		printf("Config file file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",CaVEMancfg_ini);
 	}
-
 	//Create the alg bean
 	FILE *bean_read;
-	if((bean_read = fopen(alg_bean_loc,"r")) == 0){
-		FILE *bean_out = fopen(alg_bean_loc,"w");
-		check(bean_out != NULL,"Error trying to open alg_bean file location for write: %s.",alg_bean_loc);
+	if((bean_read = fopen(alg_bean_file,"r")) == 0){
+		FILE *bean_out = fopen(alg_bean_file,"w");
+		check(bean_out != NULL,"Error trying to open alg_bean file location for write: %s.",alg_bean_file);
 		int res = alg_bean_create_default_file(bean_out,norm_bam_file,tum_bam_file);
-		check(res==0,"Problem encountered when writing new alg bean to %s.",alg_bean_loc);
+		check(res==0,"Problem encountered when writing new alg bean to %s.",alg_bean_file);
 		res = fclose(bean_out);
 		check(res==0,"Error closing alg bean file.");
 	}else{
 		int res = fclose(bean_read);
 		check(res==0,"Error closing alg bean file reader.");
-		printf("Alg bean file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",alg_bean_loc);
+		printf("Alg bean file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",alg_bean_file);
 	}
 
 	return 0;
-
 error:
 	return -1;
 
