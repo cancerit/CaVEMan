@@ -48,8 +48,8 @@ int config_file_access_read_config_file(FILE *file, char *tum_bam_file, char *no
 			int *includeSingleEnd, int *includeDups, char *version, char *norm_cn, char *tum_cn)
 {
 
-	norm_cn = NULL;
-	tum_cn = NULL;
+	int found_norm_cn = 0;
+	int found_tum_cn = 0;
 	char line [ 3074 ];
 	while ( fgets(line,sizeof(line),file) != NULL ){
 		char key[ 16];
@@ -99,6 +99,12 @@ int config_file_access_read_config_file(FILE *file, char *tum_bam_file, char *no
 		}
 	}
 
+	if(found_norm_cn==0){
+		norm_cn = NULL;
+	}
+	if(found_tum_cn==0){
+		tum_cn = NULL;
+	}
 	return 0;
 error:
 	return -1;
@@ -117,14 +123,14 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 							int includeSingleEnd, int includeDups, char *norm_cn, char *tum_cn)
 {
 	assert(tum_bam_file != NULL && norm_bam_file != NULL && ref_idx != NULL && ignore_regions_file != NULL
-				&& alg_bean_loc != NULL && results != NULL && list_loc != NULL && norm_cn != NULL && tum_cn != NULL);
+				&& alg_bean_loc != NULL && results != NULL && list_loc != NULL);
 
 	char real_tum_bam[PATH_MAX+1];
 	char real_norm_bam[PATH_MAX+1];
 	char results_real[PATH_MAX+1];
 	char list_loc_real[PATH_MAX+1];
-	char norm_cn_real[PATH_MAX+1] = NULL;
-	char tum_cn_real[PATH_MAX+1] = NULL;
+	char norm_cn_real[PATH_MAX+1];
+	char tum_cn_real[PATH_MAX+1];
 	char ignore_regions_real[PATH_MAX+1];
 	char ref_index_real[PATH_MAX+1];
 	char alg_bean_real[PATH_MAX+1];
