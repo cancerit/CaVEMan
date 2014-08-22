@@ -26,10 +26,10 @@
 
 int config_file_access_read_config_file(FILE *file, char *tum_bam_file, char *norm_bam_file, char *ref_idx,
 			char *ignore_regions_file, char *alg_bean_loc, char *results, char *list_loc, int *includeSW,
-			int *includeSingleEnd, int *includeDups, char *version);
+			int *includeSingleEnd, int *includeDups, char *version, char *norm_cn, char *tum_cn);
 
 int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *norm_bam_file, char *ref_idx,
 			char *ignore_regions_file, char *alg_bean_loc, char *results, char *list_loc, int includeSW,
-			int includeSingleEnd, int includeDups);
+			int includeSingleEnd, int includeDups, char *norm_cn, char *tum_cn);
 
 #endif
