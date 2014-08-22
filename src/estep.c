@@ -49,8 +49,8 @@ static char alg_bean_loc[512];// = "alg_bean";
 static char version[50];
 static char *covariate_file = "covs_arr";
 static char *probs_file = "probs_arr";
-static char *norm_cn_loc = NULL;
-static char *tum_cn_loc = NULL;
+static char norm_cn_loc[512];
+static char tum_cn_loc[512];
 static char *norm_plat = NULL;
 static char *tum_plat = NULL;
 static float min_mut_prob = 0.8;
@@ -78,10 +78,7 @@ static int max_copy_number = 10;
 char *valid_protocols[3] = {"WGS","WXS","RNA"};
 
 void estep_print_usage (int exit_code){
-	printf ("Usage: caveman estep -i jobindex -e norm.copy.no -j tum.copy.no [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
-
-	printf("-e  --norm-cn [file]                             Location of normal copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
-	printf("-j  --tum-cn [file]                              Location of tumour copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
+	printf ("Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
 	printf("-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)\n\n");
 	printf("Optional\n");
 	printf("-f  --config-file [file]                         Path to the config file produced by setup. [default:'%s']\n",config_file);
@@ -128,8 +125,6 @@ void estep_setup_options(int argc, char *argv[]){
              	{"snp-probability-cutoff", required_argument, 0, 'q'},
              	{"min-tum-coverage", required_argument, 0, 'x'},
              	{"min-norm-coverage", required_argument, 0, 'y'},
-             	{"norm-cn", required_argument, 0, 'e'},
-             	{"tum-cn", required_argument, 0, 'j'},
              	{"split-size", required_argument, 0, 'a'},
              	{"species-assembly ", required_argument, 0, 'v'},
              	{"species", required_argument, 0, 'w'},
@@ -150,7 +145,7 @@ void estep_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:P:T:r:sh",
+   while((iarg = getopt_long(argc, argv, "x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:P:T:r:sh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'l':
@@ -183,14 +178,6 @@ void estep_setup_options(int argc, char *argv[]){
 
    		case 'h':
         estep_print_usage(0);
-        break;
-
-      case 'e':
-        norm_cn_loc = optarg;
-        break;
-
-      case 'j':
-        tum_cn_loc = optarg;
         break;
 
       case 'f':
@@ -328,10 +315,9 @@ int estep_main(int argc, char *argv[]){
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
-
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,
 														ref_idx,ignore_regions_file,alg_bean_loc,results,list_loc,
-																							&includeSW,&includeSingleEnd,&includeDups,version);
+																					&includeSW,&includeSingleEnd,&includeDups,version,norm_cn_loc,tum_cn_loc);
 
 	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
 
