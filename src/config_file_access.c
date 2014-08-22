@@ -47,6 +47,9 @@ int config_file_access_read_config_file(FILE *file, char *tum_bam_file, char *no
 			char *ignore_regions_file, char *alg_bean_loc, char *results, char *list_loc, int *includeSW,
 			int *includeSingleEnd, int *includeDups, char *version, char *norm_cn, char *tum_cn)
 {
+
+	norm_cn = NULL;
+	tum_cn = NULL;
 	char line [ 3074 ];
 	while ( fgets(line,sizeof(line),file) != NULL ){
 		char key[ 16];
@@ -120,8 +123,8 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 	char real_norm_bam[PATH_MAX+1];
 	char results_real[PATH_MAX+1];
 	char list_loc_real[PATH_MAX+1];
-	char norm_cn_real[PATH_MAX+1];
-	char tum_cn_real[PATH_MAX+1];
+	char norm_cn_real[PATH_MAX+1] = NULL;
+	char tum_cn_real[PATH_MAX+1] = NULL;
 	char ignore_regions_real[PATH_MAX+1];
 	char ref_index_real[PATH_MAX+1];
 	char alg_bean_real[PATH_MAX+1];
@@ -132,12 +135,16 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 	ptr = realpath(norm_bam_file,real_norm_bam);
 	check(ptr!=NULL,"Error getting real path for norm bam file %s.",norm_bam_file);
 	ptr=NULL;
-	ptr = realpath(norm_cn,norm_cn_real);
-	check(ptr!=NULL,"Error getting real path for normal cn file %s.",norm_cn);
-	ptr=NULL;
-	ptr = realpath(tum_cn,tum_cn_real);
-	check(ptr!=NULL,"Error getting real path for tumour cn file %s.",tum_cn);
-	ptr=NULL;
+	if(norm_cn != NULL){
+		ptr = realpath(norm_cn,norm_cn_real);
+		check(ptr!=NULL,"Error getting real path for normal cn file %s.",norm_cn);
+		ptr=NULL;
+	}
+	if(tum_cn != NULL){
+		ptr = realpath(tum_cn,tum_cn_real);
+		check(ptr!=NULL,"Error getting real path for tumour cn file %s.",tum_cn);
+		ptr=NULL;
+	}
 	ptr = realpath(ignore_regions_file,ignore_regions_real);
 	check(ptr!=NULL,"Error getting real path for ignore region file %s.",ignore_regions_file);
 	ptr=NULL;
@@ -196,10 +203,14 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 	check(res>=0,"Error writing inclue single end to config file.");
 	res = fprintf(file,"%s=%d\n",DUP_KEY,includeDups);
 	check(res>=0,"Error writing include duplicates file to config file.");
-	res = fprintf(file,"%s=%s\n",NORM_CN_KEY,norm_cn_real);
-	check(res>=0,"Error writing normal cn file to config file.");
-	res = fprintf(file,"%s=%s\n",TUM_CN_KEY,tum_cn_real);
-	check(res>=0,"Error writing tumour cn file to config file.");
+	if(norm_cn_real != NULL){
+		res = fprintf(file,"%s=%s\n",NORM_CN_KEY,norm_cn_real);
+		check(res>=0,"Error writing normal cn file to config file.");
+	}
+	if(tum_cn_real != NULL){
+		res = fprintf(file,"%s=%s\n",TUM_CN_KEY,tum_cn_real);
+		check(res>=0,"Error writing tumour cn file to config file.");
+	}
 	//Finally print the version for version checking.
 	res = fprintf(file,"%s=%s\n",VERSION_KEY,CAVEMAN_VERSION);
 	check(res>=0,"Error writing version information to config file.");

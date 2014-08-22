@@ -48,9 +48,7 @@ void setup_print_usage (int exit_code){
 	printf("-t  --tumour-bam [file]             Location of tumour bam\n");
 	printf("-n  --normal-bam [file]             Location of normal bam\n");
 	printf("-r  --reference-index [file]        Location of reference fasta index\n");
-	printf("-g  --ignore-regions-file [file]    Location of tsv ignore regions file\n");
-	printf("-e  --tumour-copy-no-file [file]    Location of tumour copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
-	printf("-j  --normal-copy-no-file [file]    Location of normal copy number bed file (if the extension is not .bed the file will be treated as 1 based start)\n");
+	printf("-g  --ignore-regions-file [file]    Location of tsv ignore regions file\n\n");
 	printf("Optional\n");
 	printf("-c  --config-file [file]            File to write caveman run config file [default:'%s']\n",CaVEManfg_ini);
 	printf("-f  --results-folder [file]         Folder to write results [default:'%s']\n",results);
@@ -59,6 +57,8 @@ void setup_print_usage (int exit_code){
 	printf("-w  --include-smith-waterman        Include SW mapped reads in the analysis\n");
 	printf("-z  --include-single-end            Use single end reads for this analysis\n");
 	printf("-u  --include-duplicates            Include reads marked as duplicates in the analysis\n");
+		printf("-e  --tumour-copy-no-file [file]    Location of tumour copy number bed file (if the extension is not .bed the file will be treated as 1 based start). If no copy number file is supplied then the default cn of 2 will be used\n");
+	printf("-j  --normal-copy-no-file [file]    Location of normal copy number bed file (if the extension is not .bed the file will be treated as 1 based start). If no copy number file is supplied then the default cn of 2 will be used\n");
 	printf("-h	--help                          Display this usage information.\n");
   exit(exit_code);
 }
@@ -159,7 +159,7 @@ void setup_setup_options(int argc, char *argv[]){
 
    //Do some checking to ensure required arguments were passed
    if(tum_bam_file == NULL || norm_bam_file == NULL || ref_idx  == NULL
-   			|| ignore_regions_file == NULL || norm_copy_no == NULL || tum_copy_no == NULL){
+   			|| ignore_regions_file == NULL){
    	setup_print_usage(1);
    }
    return;

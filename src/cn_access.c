@@ -33,8 +33,8 @@ static int max_cn = 10;
 
 int cn_access_populate_cn(char *file_loc,int is_normal){
 	assert(file_loc != NULL);
-	FILE *cn_file = NULL;
 	if(cns[is_normal] != NULL) return 1;
+	FILE *cn_file = NULL;
 	int is_bed = 0;
 	//Check for bed extension
 	const char *ext = strrchr(file_loc, '.');
@@ -89,9 +89,8 @@ int cn_access_get_mean_cn_for_range(char *file_loc,char *chr,int start,int stop,
 	if(file_loc != NULL){
 		int pop_cn_chk = cn_access_populate_cn(file_loc,is_normal);
 		check(pop_cn_chk==1,"Error populating copy number from file %s.",file_loc);
-	}else{
-		return 0;
 	}
+
 	int total_cn = 0;
 	int count_cn_entries = 0;
 	if(cns[is_normal] != NULL){
