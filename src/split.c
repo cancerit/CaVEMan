@@ -32,13 +32,14 @@
 #include <split_access.h>
 #include <bam_access.h>
 #include <config_file_access.h>
+#include <cn_access.h>
 
 static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
 static unsigned int increment = 250000;
-static unsigned int read_count = 1000000;
-static double maxPropRdCount = 1.1;
+static unsigned int max_read_count = 1000000;
+static double maxPropRdCount = 1.5;
 static char tum_bam_file[512];
 static char norm_bam_file[512];
 static char *config_file = "caveman.cfg.ini";
@@ -48,17 +49,19 @@ static char list_loc[512];// = "splitList";
 static char alg_bean_loc[512];// = "alg_bean";
 static char version[50];// = "alg_bean";
 static char ignore_regions_file[512];// = NULL;
+static char norm_cn_loc[512];
+static char tum_cn_loc[512];
 static int idx = 0;
 
 
 void split_print_usage (int exit_code){
 	printf ("Usage: caveman split -i jobindex [-f path] [-c int] [-m int] [-e int] \n\n");
-  	printf("-i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)\n\n");
+  printf("-i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)\n\n");
 	printf("Optional\n");
 	printf("-f  --config-file [file]          Path to the config file produced by setup [default:'%s'].\n",config_file);
 	printf("-c  --increment [int]             Increment to use when deciding split sizes [default:%d]\n",increment);
 	printf("-m  --max-read-count [double]     Proportion of read-count to allow as a max in a split section [default:%f]\n",maxPropRdCount);
-	printf("-e  --read-count [int]            Guide for maximum read count in a section [default:%d]\n",read_count);
+	printf("-e  --read-count [int]            Guide for maximum read count in a section [default:%d]\n",max_read_count);
 	printf("-h	help                          Display this usage information.\n");
   exit(exit_code);
 }
@@ -103,7 +106,7 @@ void split_setup_options(int argc, char *argv[]){
       		break;
 
       	case 'e':
-      		read_count = atoi(optarg);
+      		max_read_count = atoi(optarg);
       		break;
 
 			case '?':
@@ -130,6 +133,11 @@ void split_setup_options(int argc, char *argv[]){
    return;
 }
 
+int round_divide_integer(int dividend, int divisor)
+{
+    return (dividend + (divisor / 2)) / divisor;
+}
+
 int split_main(int argc, char *argv[]){
 	split_setup_options(argc,argv);
 	struct seq_region_t **ignore_regs = NULL;
@@ -140,7 +148,7 @@ int split_main(int argc, char *argv[]){
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
 
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean_loc,
-								results,list_loc,&includeSW,&includeSingleEnd,&includeDups,version);
+								results,list_loc,&includeSW,&includeSingleEnd,&includeDups,version,norm_cn_loc,tum_cn_loc);
 
 
 	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
@@ -179,7 +187,8 @@ int split_main(int argc, char *argv[]){
    ignore_regs = malloc(sizeof(struct seq_region_t *) *  ignore_reg_count);
    check_mem(ignore_regs);
    check(ignore_reg_access_get_ign_reg_for_chr(ignore_regions_file,chr_name,ignore_reg_count,ignore_regs)==0,"Error fetching ignored regions from file.");
-
+		int mean_reg_cn_tum = 0;
+		//int mean_reg_cn_norm = 0;cn_access(tum_cn_loc,chr_name,last_stop+1,sect_stop);
    //Check there's not a whole chromosome block.
    if(!(ignore_reg_count == 1 && ignore_regs[0]->beg == 1 && ignore_regs[0]->end >= chr_length)){
 		//No chromosome block, so carry on.
@@ -212,10 +221,12 @@ int split_main(int argc, char *argv[]){
 				sect_stop = overlap->end;
 				List_push(ign_this_sect,overlap);
 			}
+
 			rdCount += get_read_counts_with_ignore(ign_this_sect,last_stop+1,sect_stop,chr_name);
+			mean_reg_cn_tum = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,last_stop+1,sect_stop,0);
 			List_destroy(contained);
 			check(rdCount >= 0,"Problem retrieving reads for section.");
-			if(rdCount < read_count){
+			if(rdCount < (max_read_count/round_divide_integer(mean_reg_cn_tum,2))){
 				if(sect_stop >= chr_length){
 					split_access_print_section(output,chr_name,sect_start,sect_stop);
 					sect_start = sect_stop+1;
@@ -229,8 +240,8 @@ int split_main(int argc, char *argv[]){
 					sect_stop += increment;
 					List_clear_destroy(ign_this_sect);
 				}
-			}else if(rdCount > (read_count * maxPropRdCount)){
-				sect_stop = shrink_section_to_size(chr_name,sect_start,sect_stop,ignore_regs,ignore_reg_count);
+			}else if(rdCount > ((max_read_count/round_divide_integer(mean_reg_cn_tum,2)) * maxPropRdCount)){
+				sect_stop = shrink_section_to_size(chr_name,sect_start,sect_stop,ignore_regs,ignore_reg_count,rdCount);
 				check(sect_stop > 0,"Error resizing over sized section.");
 				split_access_print_section(output,chr_name,sect_start,sect_stop);
 				sect_start = sect_stop+1;
@@ -239,7 +250,8 @@ int split_main(int argc, char *argv[]){
 				List_clear_destroy(ign_this_sect);
 				rdCount = 0;
 				continue;
-			}else if(rdCount >= read_count && rdCount <= (read_count * maxPropRdCount)){
+			}else if(rdCount >= (int)(max_read_count/round_divide_integer(mean_reg_cn_tum,2))
+									&& rdCount <= ((int)(max_read_count/round_divide_integer(mean_reg_cn_tum,2)) * maxPropRdCount)){
 				split_access_print_section(output,chr_name,sect_start,sect_stop);
 				sect_start = sect_stop+1;
 				last_stop = sect_stop;
@@ -267,11 +279,13 @@ error:
 	return -1;
 }
 
-int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop, struct seq_region_t **ignore_regs, int ignore_reg_count){
-	int read_num = (read_count * maxPropRdCount) + 1;
+int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop, struct seq_region_t **ignore_regs,
+																	int ignore_reg_count, int read_num){
 	int new_inc = increment;
 	new_inc /= 16;
-	while(read_num > (int)(read_count * maxPropRdCount)){
+	int mean_reg_cn_tum = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,sect_start,sect_stop,0);
+	//int mean_reg_cn_norm = 0;
+	while(read_num > (round_divide_integer( max_read_count,round_divide_integer(mean_reg_cn_tum,2)) * maxPropRdCount)){
 		List *ign_this_sect = List_create();
 		sect_stop -= new_inc;
 		//Check we haven't gone back past the start of the last RG, if we have, try again!
@@ -294,6 +308,8 @@ int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop, struct 
 			List_push(ign_this_sect,overlap);
 		}
 		read_num = get_read_counts_with_ignore(ign_this_sect,sect_start,sect_stop,chr_name);
+		mean_reg_cn_tum = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,sect_start,sect_stop,0);
+	  //mean_reg_cn_norm = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,last_stop+1,sect_stop,1);
 		free(contained);
 		check(read_num >= 0,"Problem retrieving reads for section.");
 		List_clear_destroy(ign_this_sect);

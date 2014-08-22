@@ -27,5 +27,6 @@
 int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos,int is_normal);
 void clear_copy_number_store();
 void cn_access_set_max_cn(int max_copy_number);
+int cn_access_get_mean_cn_for_range(char *file_loc,char *chr,int start,int stop,int is_normal);
 
 #endif
