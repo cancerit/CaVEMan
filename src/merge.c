@@ -43,6 +43,8 @@ static char version[50];
 static char *covariate_file = "covs_arr";
 static char *probs_file = "probs_arr";
 static long double maxNonRefProbability = 0.25;
+static char norm_cn_loc[512];
+static char tum_cn_loc[512];
 
 void merge_print_usage (int exit_code){
 	printf ("Usage: caveman merge [-f file] [-c file] [-p file] \n\n");
@@ -121,7 +123,7 @@ int merge_main(int argc, char *argv[]){
 	char ignore_regions_file[512];
 
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean_loc,
-								results,list_loc,&tmp,&tmp,&tmp,version);
+								results,list_loc,&tmp,&tmp,&tmp,version,norm_cn_loc,tum_cn_loc);
 
 	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
 
