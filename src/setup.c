@@ -171,6 +171,20 @@ int setup_main(int argc, char *argv[]){
 	//Create and write the config file in the current directory.
 	FILE *config_read;
 	char CaVEMancfg_ini[PATH_MAX+1];
+	config_read = fopen(CaVEManfg_ini,"r");
+	check(config_read != NULL,"Error trying to check config file location existance: %s.",CaVEMancfg_ini);
+	if(config_read == 0){
+		FILE *config_create;
+		config_create = fopen(CaVEManfg_ini,"w");
+		check(config_create != NULL,"Error trying to initially create config file location for write: %s.",CaVEMancfg_ini);
+		fclose(config_create);
+		int res = fclose(config_create);
+		check(res==0,"Error closing config file writer after initially creating config file.");
+	}else{
+		int res = fclose(config_read);
+		check(res==0,"Error closing config file writer when checking for existance.");
+		printf("Config file file: '%s' already exists. Overwriting\n",CaVEMancfg_ini);
+	}
 	char *ptr = realpath(CaVEManfg_ini,CaVEMancfg_ini);
 	check(ptr!=NULL,"Error assigning real path for caveman config file %s.",CaVEManfg_ini);
 	char alg_bean_file[PATH_MAX+1];
@@ -178,20 +192,15 @@ int setup_main(int argc, char *argv[]){
 	check(ptr!=NULL,"Error assigning real path for alg bean file %s.",alg_bean_loc);
 
 	//Try reading to see if we already have one
-	if((config_read = fopen(CaVEMancfg_ini,"r")) == 0){
-		FILE *config_out = fopen(CaVEManfg_ini,"w");
-		check(config_out != NULL,"Error trying to open config file location for write: %s.",CaVEMancfg_ini);
-		int res = config_file_access_write_config_file(config_out, tum_bam_file, norm_bam_file, ref_idx,
-																		ignore_regions_file, alg_bean_file, results, list_loc, includeSW,
-																					includeSingleEnd, includeDups, norm_copy_no, tum_copy_no);
-		check(res==0,"Problem encountered when writing new config file to to %s.",CaVEMancfg_ini);
-		res = fclose(config_out);
-		check(res==0,"Error closing config file.");
-	}else{
-		int res = fclose(config_read);
-		check(res==0,"Error closing config file reader.");
-		printf("Config file file: '%s' already exists.\nDelete it if you want a new one created, or CaVEMan will reuse this one.\n",CaVEMancfg_ini);
-	}
+	FILE *config_out = fopen(CaVEManfg_ini,"w");
+	check(config_out != NULL,"Error trying to open config file location for write: %s.",CaVEMancfg_ini);
+	int res = config_file_access_write_config_file(config_out, tum_bam_file, norm_bam_file, ref_idx,
+																	ignore_regions_file, alg_bean_file, results, list_loc, includeSW,
+																				includeSingleEnd, includeDups, norm_copy_no, tum_copy_no);
+	check(res==0,"Problem encountered when writing new config file to to %s.",CaVEMancfg_ini);
+	res = fclose(config_out);
+	check(res==0,"Error closing config file.");
+
 	//Create the alg bean
 	FILE *bean_read;
 	if((bean_read = fopen(alg_bean_file,"r")) == 0){
