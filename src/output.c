@@ -329,9 +329,7 @@ int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_lo
 	write = fprintf(out,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\t%s\n",VCF_NORMAL_NAME,VCF_TUMOUR_NAME);
 	check(write>0,"Error writing column header line.");
 	free(tumour_name);
-	free(tumour_platform);
 	free(normal_name);
-	free(normal_platform);
 	free(contigs);
 	free(info);
 	free(format);
@@ -343,9 +341,7 @@ error:
 	if(format) free(format);
 	if(process) free(process);
 	if(tumour_name) free(tumour_name);
-	if(tumour_platform) free(tumour_platform);
 	if(normal_name) free(normal_name);
-	if(normal_platform) free(normal_platform);
 	return -1;
 }
 

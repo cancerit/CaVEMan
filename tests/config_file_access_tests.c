@@ -23,6 +23,7 @@
 #include <config_file_access.h>
 #include <string.h>
 #include <limits.h>
+#include <unistd.h>
 #include <stdlib.h>
 
 char *cfg_file = "./testData/test.cfg";
