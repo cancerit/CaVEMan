@@ -172,8 +172,7 @@ int setup_main(int argc, char *argv[]){
 	FILE *config_read;
 	char CaVEMancfg_ini[PATH_MAX+1];
 	config_read = fopen(CaVEManfg_ini,"r");
-	check(config_read != NULL,"Error trying to check config file location existance: %s.",CaVEManfg_ini);
-	if(config_read == 0){
+	if(config_read == NULL){
 		FILE *config_create;
 		config_create = fopen(CaVEManfg_ini,"w");
 		check(config_create != NULL,"Error trying to initially create config file location for write: %s.",CaVEManfg_ini);
