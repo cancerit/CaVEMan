@@ -176,17 +176,31 @@ int setup_main(int argc, char *argv[]){
 		FILE *config_create;
 		config_create = fopen(CaVEManfg_ini,"w");
 		check(config_create != NULL,"Error trying to initially create config file location for write: %s.",CaVEManfg_ini);
-		fclose(config_create);
 		int res = fclose(config_create);
 		check(res==0,"Error closing config file writer after initially creating config file.");
 	}else{
 		int res = fclose(config_read);
-		check(res==0,"Error closing config file writer when checking for existance.");
+		check(res==0,"Error closing config file reader when checking for existance.");
 		printf("Config file file: '%s' already exists. Overwriting\n",CaVEManfg_ini);
 	}
 	char *ptr = realpath(CaVEManfg_ini,CaVEMancfg_ini);
 	check(ptr!=NULL,"Error assigning real path for caveman config file %s.",CaVEManfg_ini);
+
+
 	char alg_bean_file[PATH_MAX+1];
+	FILE *alg_check_read;
+	alg_check_read = fopen(alg_bean_loc,"r");
+	if(alg_check_read == NULL){
+		FILE *alg_create;
+		alg_create = fopen(alg_bean_loc,"w");
+		check(alg_create != NULL,"Error trying to initially create alg_bean location for write: %s.",alg_bean_loc);
+		int res = fclose(alg_create);
+		check(res==0,"Error closing config file writer after initially creating alb_bean file.");
+	}else{
+		int res = fclose(alg_check_read);
+		check(res==0,"Error closing alg_bean reader when checking for existance.");
+		printf("Alg bean file: '%s' already exists. Overwriting\n",alg_bean_loc);
+	}
 	ptr = realpath(alg_bean_loc,alg_bean_file);
 	check(ptr!=NULL,"Error assigning real path for alg bean file %s.",alg_bean_loc);
 
