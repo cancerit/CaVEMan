@@ -172,18 +172,18 @@ int setup_main(int argc, char *argv[]){
 	FILE *config_read;
 	char CaVEMancfg_ini[PATH_MAX+1];
 	config_read = fopen(CaVEManfg_ini,"r");
-	check(config_read != NULL,"Error trying to check config file location existance: %s.",CaVEMancfg_ini);
+	check(config_read != NULL,"Error trying to check config file location existance: %s.",CaVEManfg_ini);
 	if(config_read == 0){
 		FILE *config_create;
 		config_create = fopen(CaVEManfg_ini,"w");
-		check(config_create != NULL,"Error trying to initially create config file location for write: %s.",CaVEMancfg_ini);
+		check(config_create != NULL,"Error trying to initially create config file location for write: %s.",CaVEManfg_ini);
 		fclose(config_create);
 		int res = fclose(config_create);
 		check(res==0,"Error closing config file writer after initially creating config file.");
 	}else{
 		int res = fclose(config_read);
 		check(res==0,"Error closing config file writer when checking for existance.");
-		printf("Config file file: '%s' already exists. Overwriting\n",CaVEMancfg_ini);
+		printf("Config file file: '%s' already exists. Overwriting\n",CaVEManfg_ini);
 	}
 	char *ptr = realpath(CaVEManfg_ini,CaVEMancfg_ini);
 	check(ptr!=NULL,"Error assigning real path for caveman config file %s.",CaVEManfg_ini);
