@@ -555,13 +555,13 @@ error:
 int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type){
 	//Check top genotype isn't reference, if that's the case it we already print the second genotype
 	if(pos->top_geno->tum_geno->var_base != pos->ref_base[0]){
-		if(genotype_get_base_count(pos->norm_fwd_cvg,pos->top_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->top_geno->tum_geno->var_base)>0){
+		if(genotype_get_base_count(pos->tum_fwd_cvg,pos->top_geno->tum_geno->var_base)+genotype_get_base_count(pos->tum_rev_cvg,pos->top_geno->tum_geno->var_base)>0){
 			return 1;
 		}
 		//If the genotype demonstrates no alleles for the top genotype variant base try the second genotype variant base.
-		if(genotype_get_base_count(pos->norm_fwd_cvg,pos->sec_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->sec_geno->tum_geno->var_base)==0){
+		if(genotype_get_base_count(pos->tum_fwd_cvg,pos->sec_geno->tum_geno->var_base)+genotype_get_base_count(pos->tum_rev_cvg,pos->sec_geno->tum_geno->var_base)>0){
 			//If we now have a match, swap the top and second genotypes and warn
-			fprintf(stderr,"WARNING (%s output): Unable to find top genotype variant base present in tumour  allele counts, swapping top and second genotype for position %s:%d\n",type,chr_name,pos->ref_pos);
+			fprintf(stderr,"WARNING (%s output): Unable to find top genotype variant base present in tumour allele counts, swapping top and second genotype for position %s:%d\n",type,chr_name,pos->ref_pos);
 			combined_genotype_t *tmp = pos->top_geno;
 			pos->top_geno = pos->sec_geno;
 			pos->sec_geno = tmp;
@@ -572,7 +572,7 @@ int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char
 		return 0;
 	}else{
 		//We already have a 'normal' top genotype, so check the second genotype variant base has alleles.
-		if(genotype_get_base_count(pos->norm_fwd_cvg,pos->sec_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->sec_geno->tum_geno->var_base)>0){
+		if(genotype_get_base_count(pos->tum_fwd_cvg,pos->sec_geno->tum_geno->var_base)+genotype_get_base_count(pos->tum_rev_cvg,pos->sec_geno->tum_geno->var_base)>0){
 			//If we now have a match, swap the top and second genotypes and warn
 			fprintf(stderr,"WARNING (%s output): Top genotype was normal, but second genotype has variant base alleles, swapping top and second genotypes for position %s:%d\n",type,chr_name,pos->ref_pos);
 			combined_genotype_t *tmp = pos->top_geno;

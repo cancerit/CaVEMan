@@ -889,6 +889,139 @@ char *test_algos_run_per_position_estep_maths(){
 	return NULL;
 }
 
+char *test_algos_check_var_position_alleles(){
+	char *type = "TEST_SOMATIC";
+	char *chr_name = "TEST_CHR";
+	int ref_pos = 10;
+
+	combined_genotype_t *ref = NULL;
+	combined_genotype_t *som = NULL;
+
+	genotype_t *ref_norm = NULL;
+	genotype_t *ref_tum = NULL;
+	genotype_t *som_tum = NULL;
+	genotype_t *alt_som_tum = NULL;
+
+	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
+	estep_position_t *pos = malloc(sizeof(estep_position_t));
+	check_mem(genos);
+	check_mem(pos);
+
+
+	char ref_base = 'C';
+	char mut_base = 'T';
+	char wrong_mut_base = 'G';
+
+	double top_prob = 0.95;
+	double sec_prob = 0.05;
+
+	pos->ref_pos = ref_pos;
+	pos->ref_base = "C";
+
+	ref = malloc(sizeof(combined_genotype_t));
+	check_mem(ref);
+	som = malloc(sizeof(combined_genotype_t));
+	check_mem(som);
+
+	ref_norm = genotype_init_genotype();
+	genotype_set_base_count(ref_norm, ref_base, 2);
+	ref_norm->var_base_idx = 1;
+	ref_norm->var_base = ref_base;
+	ref_norm->var_base_prop = 0;
+	ref_tum = genotype_init_genotype();
+	genotype_set_base_count(ref_tum, ref_base, 2);
+	ref_tum->var_base_idx = 1;
+	ref_tum->var_base = ref_base;
+	ref_tum->var_base_prop = 0;
+	som_tum = genotype_init_genotype();
+	genotype_set_base_count(som_tum, mut_base, 2);
+	som_tum->var_base_idx = 3;
+	som_tum->var_base = mut_base;
+	som_tum->var_base_prop = 1;
+
+	som->norm_geno = ref_norm;
+	som->tum_geno = som_tum;
+	som->prob = top_prob;
+
+	ref->norm_geno = ref_norm;
+	ref->tum_geno = ref_tum;
+	ref->prob	= sec_prob;
+
+
+	pos->norm_fwd_cvg = genotype_init_genotype();
+	genotype_set_base_count(pos->norm_fwd_cvg, 'A', 0);
+	genotype_set_base_count(pos->norm_fwd_cvg, 'C', 20);
+	genotype_set_base_count(pos->norm_fwd_cvg, 'G', 0);
+	genotype_set_base_count(pos->norm_fwd_cvg, 'T', 0);
+	pos->norm_rev_cvg = genotype_init_genotype();
+	genotype_set_base_count(pos->norm_rev_cvg, 'A', 0);
+	genotype_set_base_count(pos->norm_rev_cvg, 'C', 6);
+	genotype_set_base_count(pos->norm_rev_cvg, 'G', 0);
+	genotype_set_base_count(pos->norm_rev_cvg, 'T', 0);
+	pos->tum_fwd_cvg = genotype_init_genotype();
+	genotype_set_base_count(pos->tum_fwd_cvg, 'A', 0);
+	genotype_set_base_count(pos->tum_fwd_cvg, 'C', 0);
+	genotype_set_base_count(pos->tum_fwd_cvg, 'G', 0);
+	genotype_set_base_count(pos->tum_fwd_cvg, 'T', 1);
+	pos->tum_rev_cvg = genotype_init_genotype();
+	genotype_set_base_count(pos->tum_rev_cvg, 'A', 0);
+	genotype_set_base_count(pos->tum_rev_cvg, 'C', 0);
+	genotype_set_base_count(pos->tum_rev_cvg, 'G', 0);
+	genotype_set_base_count(pos->tum_rev_cvg, 'T', 2);
+
+	pos->top_geno = som;
+	pos->sec_geno = ref;
+
+	int result = algos_check_var_position_alleles(pos, chr_name, type);
+	mu_assert(result == 1,"Somatic, homozygous counts check 1");
+	mu_assert(pos->top_geno->prob==top_prob,"Top probability unchanged");
+	mu_assert(pos->sec_geno->prob==sec_prob,"Second probability unchanged");
+
+
+	//We just reverse top and second genos to check top genotype is normal.
+	pos->top_geno = ref;
+	pos->sec_geno = som;
+	result = algos_check_var_position_alleles(pos, chr_name, type);
+	mu_assert(result == 1,"Somatic, homozygous counts check 2");
+	mu_assert(pos->top_geno->prob==top_prob,"Top probability changed as normal top genotype");
+	mu_assert(pos->sec_geno->prob==sec_prob,"Second probability changed as normal top genotype");
+
+
+	//TODO top geno and second geno swap
+	alt_som_tum = genotype_init_genotype();
+	genotype_set_base_count(alt_som_tum, wrong_mut_base, 2);
+	alt_som_tum->var_base_idx = 2;
+	alt_som_tum->var_base = wrong_mut_base;
+	alt_som_tum->var_base_prop = 1;
+
+	som->norm_geno = ref_norm;
+	som->tum_geno = som_tum;
+	som->prob = sec_prob;
+
+	ref->norm_geno = ref_norm;
+	ref->tum_geno = alt_som_tum;
+	ref->prob	= top_prob;
+
+	pos->top_geno = ref;
+	pos->sec_geno = som;
+
+	result = algos_check_var_position_alleles(pos, chr_name, type);
+
+	mu_assert(result == 1,"Somatic, homozygous counts check 3");
+	mu_assert(pos->top_geno->prob==sec_prob,"Top probability changed as erroneous top genotype");
+	mu_assert(pos->sec_geno->prob==top_prob,"Second probability changed as erroneous top genotype");
+
+	//TODO complete failure.
+	pos->top_geno = ref;
+	pos->sec_geno = ref;
+
+	result = algos_check_var_position_alleles(pos, chr_name, type);
+	mu_assert(result == 0,"Genotype check fail");
+	return NULL;
+error:
+	return "Failed mem check";
+}
+
 char *all_tests() {
    mu_suite_start();
    mu_run_test(test_algos_mstep_read_position);
@@ -899,6 +1032,7 @@ char *all_tests() {
    mu_run_test(test_algos_run_per_position_estep_maths);
    mu_run_test(test_algos_estep_read_position_real_data_no_analysis);
    mu_run_test(test_algos_estep_read_position);
+   mu_run_test(test_algos_check_var_position_alleles);
    return NULL;
 }
 
