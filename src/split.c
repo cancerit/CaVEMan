@@ -135,6 +135,9 @@ void split_setup_options(int argc, char *argv[]){
 
 int round_divide_integer(int dividend, int divisor)
 {
+		if(dividend == 0 || divisor == 0){
+			return 1;
+		}
     return (dividend + (divisor / 2)) / divisor;
 }
 
