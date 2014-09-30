@@ -3,14 +3,14 @@ VERSION_STRING := $(shell cat ${VERSION_FILE})
 VERSION := $(subst currentVersion=,,$(VERSION_STRING))
 
 #Compiler
-CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"'
+CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"' -g
 
-#CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"' -pg
+#CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"' -g
 
 #compiler flags
 # -g adds debug info to the executable file
 # -Wall turns on most warnings from compiler
-CFLAGS = -g -Wall
+CFLAGS = -Wall
 
 #Define locations of header files
 OPTINC?= -I$(SAMTOOLS)/
@@ -24,7 +24,7 @@ LFLAGS ?= -L$(SAMTOOLS)
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS = -lbam -lpthread -lz -lm
+LIBS =-lhts -lbam -lpthread -lz -lm
 
 # define the C source files
 SRCS = ./src/file_tests.c ./src/List.c ./src/List_algos.c ./src/bam_access.c ./src/config_file_access.c ./src/fai_access.c ./src/ignore_reg_access.c ./src/alg_bean.c ./src/split_access.c ./src/covs_access.c ./src/cn_access.c ./src/genotype.c ./src/algos.c ./src/output.c ./src/setup.c ./src/split.c ./src/mstep.c ./src/merge.c ./src/estep.c

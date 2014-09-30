@@ -972,7 +972,7 @@ char *test_algos_check_var_position_alleles(){
 	pos->top_geno = som;
 	pos->sec_geno = ref;
 
-	int result = algos_check_var_position_alleles(pos, chr_name, type);
+	int result = algos_check_var_position_alleles(pos, chr_name, type,0);
 	mu_assert(result == 1,"Somatic, homozygous counts check 1");
 	mu_assert(pos->top_geno->prob==top_prob,"Top probability unchanged");
 	mu_assert(pos->sec_geno->prob==sec_prob,"Second probability unchanged");
@@ -981,7 +981,7 @@ char *test_algos_check_var_position_alleles(){
 	//We just reverse top and second genos to check top genotype is normal.
 	pos->top_geno = ref;
 	pos->sec_geno = som;
-	result = algos_check_var_position_alleles(pos, chr_name, type);
+	result = algos_check_var_position_alleles(pos, chr_name, type,0);
 	mu_assert(result == 1,"Somatic, homozygous counts check 2");
 	mu_assert(pos->top_geno->prob==top_prob,"Top probability changed as normal top genotype");
 	mu_assert(pos->sec_geno->prob==sec_prob,"Second probability changed as normal top genotype");
@@ -1005,7 +1005,7 @@ char *test_algos_check_var_position_alleles(){
 	pos->top_geno = ref;
 	pos->sec_geno = som;
 
-	result = algos_check_var_position_alleles(pos, chr_name, type);
+	result = algos_check_var_position_alleles(pos, chr_name, type,0);
 
 	mu_assert(result == 1,"Somatic, homozygous counts check 3");
 	mu_assert(pos->top_geno->prob==sec_prob,"Top probability changed as erroneous top genotype");
@@ -1015,7 +1015,7 @@ char *test_algos_check_var_position_alleles(){
 	pos->top_geno = ref;
 	pos->sec_geno = ref;
 
-	result = algos_check_var_position_alleles(pos, chr_name, type);
+	result = algos_check_var_position_alleles(pos, chr_name, type,0);
 	mu_assert(result == 0,"Genotype check fail");
 	return NULL;
 error:

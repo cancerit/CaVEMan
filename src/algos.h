@@ -50,18 +50,20 @@ int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, 
 int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char *chr_name, int from, int to, char *ref_base,
 												char *norm_cn, char *tum_cn, FILE *snp_out, FILE *tum_out, FILE *dbg, int split_size);
 
-int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type);
+int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type, uint8_t warnings);
 inline long double algos_calculate_per_base_normal_contamination(int norm_copy_no,int tum_copy_no);
 inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor);
 inline int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int ref_base_idx, long double base_norm_contam);
 inline void algos_run_per_position_estep_maths(estep_position_t *pos);
 
+void set_snp_warnings();
 void set_min_mut_prob(float f);
 void set_min_snp_prob(float f);
 void set_norm_contam(float f);
 void set_ref_bias(float f);
 void set_prior_mut_prob(float f);
 void set_prior_snp_prob(float f);
+void set_max_tum_cvg(int i);
 void set_min_tum_cvg(int i);
 void set_min_norm_cvg(int i);
 int get_normal_cn();

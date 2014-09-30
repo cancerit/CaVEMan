@@ -61,6 +61,7 @@ static float prior_mut_prob = 0.000006;
 static float prior_snp_prob = 0.0001;
 static int min_tum_cvg = 1;
 static int min_norm_cvg = 1;
+static int estep_max_tumour_coverage = 25000;
 static int normal_copy_number = 2;
 static int tumour_copy_number = 2;
 static int includeSW = 0;
@@ -135,6 +136,7 @@ void estep_setup_options(int argc, char *argv[]){
              	{"max-copy-number", required_argument, 0, 'M'},
              	{"normal-platform", required_argument, 0, 'P'},
              	{"tumour-platform", required_argument, 0, 'T'},
+             	{"snp-warnings", no_argument, 0, 'S'},
              	{"help", no_argument, 0, 'h'},
              	{"debug", no_argument, 0, 's'},
 
@@ -248,6 +250,10 @@ void estep_setup_options(int argc, char *argv[]){
 				split_size = atoi(optarg);
 				break;
 
+			case 'S':
+				set_snp_warnings();
+				break;
+
 			case '?':
         estep_print_usage (1);
         break;
@@ -291,6 +297,8 @@ void estep_setup_options(int argc, char *argv[]){
 		printf("Tumour protocol '%s' is invalid should be one of (WGS|WXS|RNA).",tum_prot);
 		estep_print_usage(1);
    }
+
+   set_max_tum_cvg(estep_max_tumour_coverage);
 
    return;
 }
@@ -517,8 +525,8 @@ int estep_main(int argc, char *argv[]){
 	fclose(no_analysis_file);
 	//cleanup
 	List_clear_destroy(these_regions);
-	List_clear_destroy(no_analysis_list);
 	free(fa_file);
+	free(no_analysis_list);
 	bam_access_closebams();
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count,ignore_regs);
 	covs_access_free_prob_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
