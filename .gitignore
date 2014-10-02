@@ -1,5 +1,4 @@
-/bin/caveman
-/bin/generateCavemanUMNormVCF
+/bin
 /src/*.o
 /tests/*_tests
 /samtools/
