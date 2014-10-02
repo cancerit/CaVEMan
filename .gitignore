@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 bin/
 src/*.o
 tests/alg_bean_tests
@@ -13,3 +14,10 @@ tests/output_tests
 tests/split_access_tests
 tests/tests_log
 
+=======
+/bin
+/src/*.o
+/tests/*_tests
+/samtools/
+/tests/tests_log
+>>>>>>> e4d46f853c5a47a0e575f797e9868db0cb905db1
