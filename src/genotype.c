@@ -39,7 +39,7 @@ List *genotype_hard_copy_genotype_t_list(List *new_list, List *old){
 	return new_list;
 }
 
-void genotype_add_base_to_count(genotype_t *geno, char base){
+void genotype_add_base_to_count(genotype_t *geno, const char base){
 	assert(geno != NULL);
 	switch(base){
 		case 'A':
@@ -67,7 +67,7 @@ error:
 	return;
 }
 
-void genotype_set_base_count(genotype_t *geno, char base, int count){
+void genotype_set_base_count(genotype_t *geno, const char base, int count){
 	assert(geno != NULL);
 	switch(base){
 		case 'A':
@@ -92,7 +92,7 @@ void genotype_set_base_count(genotype_t *geno, char base, int count){
 	return;
 }
 
-int genotype_get_base_count(genotype_t *geno, char base){
+int genotype_get_base_count(genotype_t *geno, const char base){
 	assert(geno != NULL);
 	switch(base){
 		case 'A':
@@ -272,7 +272,7 @@ error:
 	return NULL;
 }
 
-long double genotype_get_var_base_proportion(genotype_t *gen, char ref_base, int copy_num){
+long double genotype_get_var_base_proportion(genotype_t *gen, const char ref_base, int copy_num){
 	if(genotype_get_base_count(gen,ref_base) == copy_num){
 		return (long double)0;
 	}
@@ -310,7 +310,7 @@ error:
 	return NULL;
 }
 
-char genotype_get_var_base(genotype_t *geno, char ref_base){
+char genotype_get_var_base(genotype_t *geno, const char ref_base){
 	int i=0;
 	for(i=0; i<4; i++){
 		if(ref_base != bases[i] && genotype_get_base_count(geno,bases[i]) > 0){
@@ -336,7 +336,7 @@ error:
 	return NULL;
 }
 
-genotype_t *genotype_find_ref_genotype(List *tum_genos,int tum_cn,char ref_base){
+genotype_t *genotype_find_ref_genotype(List *tum_genos,int tum_cn, const char ref_base){
 	LIST_FOREACH(tum_genos, first, next, cur){
 		genotype_t *tum = (genotype_t *) cur->value;
 		if(genotype_get_base_count(tum, ref_base) == tum_cn){
@@ -346,7 +346,7 @@ genotype_t *genotype_find_ref_genotype(List *tum_genos,int tum_cn,char ref_base)
 	return NULL;
 }
 
-List *genotype_calculate_related_genotypes(genotype_t *norm,List *tum_genos,int *count, int tum_cn, char ref_base){
+List *genotype_calculate_related_genotypes(genotype_t *norm,List *tum_genos,int *count, int tum_cn, const char ref_base){
 	assert(norm != NULL);
 	assert(tum_genos != NULL);
 	//Iterate through each tumour genotype and see if it can fit with the normal genotype passed. If it can, add it to the list.

@@ -31,7 +31,7 @@
 List *cns[2] = {NULL,NULL};
 static int max_cn = 10;
 
-int cn_access_populate_cn(char *file_loc,int is_normal){
+int cn_access_populate_cn(char *file_loc,uint8_t is_normal){
 	assert(file_loc != NULL);
 	if(cns[is_normal] != NULL) return 1;
 	FILE *cn_file = NULL;
@@ -74,7 +74,7 @@ error:
 
 }
 
-int check_overlap(int reg_start, int reg_stop, int start, int stop){
+int check_overlap(int reg_start, int reg_stop, uint32_t start, uint32_t stop){
 	if(	(reg_start>=start && reg_stop<=stop) || //Region contained
 					(start >= reg_start && start <= reg_stop) ||//overlaps start
 					(stop >= reg_start && stop <= reg_stop)||//overlaps end
@@ -85,7 +85,7 @@ int check_overlap(int reg_start, int reg_stop, int start, int stop){
 	return 0;
 }
 
-int cn_access_get_mean_cn_for_range(char *file_loc,char *chr,int start,int stop,int is_normal){
+int8_t cn_access_get_mean_cn_for_range(char *file_loc,char *chr,uint32_t start,uint32_t stop,uint8_t is_normal){
 	if(file_loc != NULL){
 		int pop_cn_chk = cn_access_populate_cn(file_loc,is_normal);
 		check(pop_cn_chk==1,"Error populating copy number from file %s.",file_loc);
@@ -115,7 +115,7 @@ error:
 
 }
 
-int cn_access_get_copy_number_for_location(char *file_loc,char *chr,int pos, int is_normal){
+int8_t cn_access_get_copy_number_for_location(char *file_loc,char *chr,uint32_t pos, uint8_t is_normal){
 	if(file_loc != NULL){
 		int pop_cn_chk = cn_access_populate_cn(file_loc,is_normal);
 		check(pop_cn_chk==1,"Error populating copy number from file %s.",file_loc);

@@ -22,6 +22,7 @@
 #include "minunit.h"
 #include <bam_access.h>
 #include <alg_bean.h>
+#include <ctype.h>
 #include <List.h>
 
 char *bam_file = "testData/mt.bam";
@@ -134,10 +135,10 @@ char *test_bam_access_get_reads_at_this_pos(){
 	LIST_FOREACH(got, first, next, cur){
 		read_pos_t *rp = (read_pos_t *)cur->value;
 		if(rp->normal==1){
-			mu_assert(rp->called_base=='C',"Wrong called base in normal.");
+			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C',"Wrong called base in normal.");
 			norm_count++;
 		}else{
-			mu_assert(rp->called_base=='C'||rp->called_base=='A',"Wrong tumour called base.");
+			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C'||toupper(bam_nt16_rev_table[rp->called_base])=='A',"Wrong tumour called base.");
 			tum_count++;
 		}
 	}

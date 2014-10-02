@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef _genotype_h
@@ -28,9 +28,9 @@ typedef struct genotype_t{
 	int a_count;
 	int c_count;
 	int g_count;
-	int t_count;	
+	int t_count;
+	int8_t var_base_idx;
 	char var_base;
-	int var_base_idx;
 	long double var_base_prop;
 }genotype_t;
 
@@ -41,22 +41,22 @@ typedef struct combined_genotype_t{
 }combined_genotype_t;
 
 typedef struct genotype_store_t{
-	List *normal_genos;
-	List *tumour_genos;	
-	combined_genotype_t *ref_genotype;
 	long double ref_geno_norm_prob;
 	long double ref_geno_tum_prob;
-	combined_genotype_t **het_snp_norm_genotypes;
 	int het_norm_count;
-	combined_genotype_t **het_snp_genotypes;
 	int het_count;
-	combined_genotype_t **hom_snp_genotypes;
 	int hom_count;
-	combined_genotype_t **somatic_genotypes;
 	int somatic_count;
 	int tum_max;
 	int norm_max;
 	int total_max;
+	List *normal_genos;
+	List *tumour_genos;
+	combined_genotype_t *ref_genotype;
+	combined_genotype_t **het_snp_norm_genotypes;
+	combined_genotype_t **het_snp_genotypes;
+	combined_genotype_t **hom_snp_genotypes;
+	combined_genotype_t **somatic_genotypes;
 }genotype_store_t;
 
 int genotype_equals(genotype_t *g_a, genotype_t *g_b);

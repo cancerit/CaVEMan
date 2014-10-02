@@ -25,35 +25,36 @@
 #include <alg_bean.h>
 #include <genotype.h>
 #include <bam_access.h>
+#include <stdint.h>
 
 typedef struct estep_position_t{
-	int ref_pos;
-	genotype_store_t *genos;
-	int norm_cn;
-	int tum_cn;
-	int ref_base_idx;
-	char *ref_base;
+	uint8_t norm_cn;
+	uint8_t tum_cn;
+	int8_t ref_base_idx;
+	uint32_t ref_pos;
+	uint32_t total_cvg_tum;
+	uint32_t total_cvg_norm;
 	long double base_norm_contam;
+	long double total_snp_prob;
+	long double total_mut_prob;
 	genotype_t *norm_fwd_cvg;
 	genotype_t *norm_rev_cvg;
 	genotype_t *tum_fwd_cvg;
 	genotype_t *tum_rev_cvg;
-	int total_cvg_tum;
-	int total_cvg_norm;
-	long double total_snp_prob;
-	long double total_mut_prob;
 	combined_genotype_t *top_geno;
 	combined_genotype_t *sec_geno;
+	genotype_store_t *genos;
+	char *ref_base;
 } estep_position_t;
 
-int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, int from, int to, char *ref_base, int split_size);
-int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char *chr_name, int from, int to, char *ref_base,
+int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size);
+int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char *chr_name, uint32_t from, uint32_t to, char *ref_base,
 												char *norm_cn, char *tum_cn, FILE *snp_out, FILE *tum_out, FILE *dbg, int split_size);
 
 int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type, uint8_t warnings);
-inline long double algos_calculate_per_base_normal_contamination(int norm_copy_no,int tum_copy_no);
+inline long double algos_calculate_per_base_normal_contamination(uint8_t norm_copy_no,uint8_t tum_copy_no);
 inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor);
-inline int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int ref_base_idx, long double base_norm_contam);
+inline int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int8_t ref_base_idx, long double base_norm_contam);
 inline void algos_run_per_position_estep_maths(estep_position_t *pos);
 
 void set_snp_warnings();
