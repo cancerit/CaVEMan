@@ -1,11 +1,9 @@
-VERSION_FILE=version.properties
-VERSION_STRING := $(shell cat ${VERSION_FILE})
-VERSION := $(subst currentVersion=,,$(VERSION_STRING))
+CAVEMAN_VERSION=1.4.0
 
 #Compiler
-CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"' -g
+CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
 
-#CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"' -g
+#CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
 
 #compiler flags
 # -g adds debug info to the executable file
@@ -13,13 +11,13 @@ CC = gcc -O3 -DCAVEMAN_VERSION='"$(VERSION)"' -g
 CFLAGS = -Wall
 
 #Define locations of header files
-OPTINC?= -I$(SAMTOOLS)/
+OPTINC?= -I$(SAMTOOLS)/ -I$(HTSLIB)/ -I$(HTSLIB)/htslib
 INCLUDES= -Isrc $(OPTINC) -rdynamic
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS ?= -L$(SAMTOOLS)
+LFLAGS ?= -L$(SAMTOOLS) -L$(HTSLIB)
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname
@@ -58,7 +56,7 @@ UMNORM_TARGET=./bin/generateCavemanUMNormVCF
 
 .NOTPARALLEL: test
 
-all: clean make_bin $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript test
+all: clean make_bin $(CAVEMAN_TARGET) $(UMNORM_TARGET) $(MEM_TARGET) copyscript test
 	@echo  Binaries have been compiled.
 
 $(UMNORM_TARGET): $(OBJS)
