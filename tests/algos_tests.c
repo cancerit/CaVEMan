@@ -450,8 +450,11 @@ char *test_finalise_probabilities_and_find_top_prob(){
 
 int test_per_read_estep(){
 	int ref_base_idx = 1;
-	char cbase = 'T';
+	unsigned char cbase = 'T';
 	long double base_norm_contam = 0.4;
+
+	long double ldone = (long double) logl(0.000552201);
+	long double ldtwo = (long double) logl(0.000404538);
 
 	combined_genotype_t *ref = NULL;
 	combined_genotype_t *het = NULL;
@@ -473,20 +476,20 @@ int test_per_read_estep(){
 	combined_genotype_t **het_norm_genotypes = NULL;
 
 	read_pos_t *norm_read = malloc(sizeof(read_pos_t));
-	norm_read->ref_base_probs[0] = (long double) logl(0.000552201);
-	norm_read->ref_base_probs[1] = (long double) logl(0.000552201);
-	norm_read->ref_base_probs[2] = (long double) logl(0.000404538);
-	norm_read->ref_base_probs[3] = (long double) logl(0.000552201);
-	norm_read->called_base = cbase;
+	norm_read->ref_base_probs[0] = &ldone;
+	norm_read->ref_base_probs[1] = &ldone;
+	norm_read->ref_base_probs[2] = &ldtwo;
+	norm_read->ref_base_probs[3] = &ldone;
+	norm_read->called_base = bam_nt16_table[cbase];
 	norm_read->normal = 1;
 	check_mem(norm_read);
 	read_pos_t *tum_read = malloc(sizeof(read_pos_t));
-	tum_read->called_base = cbase;
+	tum_read->called_base = bam_nt16_table[cbase];
 	tum_read->normal = 0;
-	tum_read->ref_base_probs[0] = (long double) logl(0.000552201);
-	tum_read->ref_base_probs[1] = (long double) logl(0.000552201);
-	tum_read->ref_base_probs[2] = (long double) logl(0.000404538);
-	tum_read->ref_base_probs[3] = (long double) logl(0.000552201);
+	tum_read->ref_base_probs[0] = &ldone;
+	tum_read->ref_base_probs[1] = &ldone;
+	tum_read->ref_base_probs[2] = &ldtwo;
+	tum_read->ref_base_probs[3] = &ldone;
 
 	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
 	check_mem(genos);
@@ -650,8 +653,11 @@ char *test_algos_run_per_read_estep_maths(){
 
 int test_estep_pos(){
 	int ref_base_idx = 1;
-	char cbase = 'T';
+	unsigned char cbase = 'T';
 	long double base_norm_contam = 0.4;
+
+	long double ldone =(long double) logl(0.000552201);
+	long double ldtwo =(long double) logl(0.000404538);
 
 	genotype_store_t *genos = NULL;
 	estep_position_t *pos = NULL;
@@ -680,19 +686,19 @@ int test_estep_pos(){
 	read_pos_t *tum_read = malloc(sizeof(read_pos_t));
 	check_mem(tum_read);
 	check_mem(norm_read);
-	norm_read->ref_base_probs[0] = (long double) logl(0.000552201);
-	norm_read->ref_base_probs[1] = (long double) logl(0.000552201);
-	norm_read->ref_base_probs[2] = (long double) logl(0.000404538);
-	norm_read->ref_base_probs[3] = (long double) logl(0.000552201);
-	norm_read->called_base = cbase;
+	norm_read->ref_base_probs[0] = &ldone;
+	norm_read->ref_base_probs[1] = &ldone;
+	norm_read->ref_base_probs[2] = &ldtwo;
+	norm_read->ref_base_probs[3] = &ldone;
+	norm_read->called_base = bam_nt16_table[cbase];
 	norm_read->normal = 1;
 
-	tum_read->called_base = cbase;
+	tum_read->called_base = bam_nt16_table[cbase];
 	tum_read->normal = 0;
-	tum_read->ref_base_probs[0] = (long double) logl(0.000552201);
-	tum_read->ref_base_probs[1] = (long double) logl(0.000552201);
-	tum_read->ref_base_probs[2] = (long double) logl(0.000404538);
-	tum_read->ref_base_probs[3] = (long double) logl(0.000552201);
+	tum_read->ref_base_probs[0] = &ldone;
+	tum_read->ref_base_probs[1] = &ldone;
+	tum_read->ref_base_probs[2] = &ldtwo;
+	tum_read->ref_base_probs[3] = &ldone;
 
 	genos = malloc(sizeof(genotype_store_t));
 	check_mem(genos);

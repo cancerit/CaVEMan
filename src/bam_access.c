@@ -37,7 +37,7 @@ int include_sw = 0;
 int include_dup = 0;
 int include_se = 0;
 int min_base_qual = 10;
-int isnorm = 0;
+uint8_t isnorm = 0;
 char norm_char[5];
 
 int bam_access_openbams(char *norm_file, char *tum_file){
@@ -123,7 +123,7 @@ error:
   return -1;
 }
 
-file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, int start, int end){
+file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint32_t start, uint32_t end){
 	//Open bam related stuff
 	assert(norm_file != NULL);
 	//Assign memory for the file name etc holding structs
@@ -288,7 +288,7 @@ void bam_access_closebams(){
 	return;
 }
 
-int bam_access_get_count_for_region(char *chr_name, int start, int stop){
+int bam_access_get_count_for_region(char *chr_name, uint32_t start, uint32_t stop){
 	assert(chr_name != NULL);
 	int count = bam_access_get_count_with_bam(chr_name,start,stop,tum);
 	check(count >= 0,"Invalid count returned from tum.");
@@ -433,6 +433,7 @@ static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const ba
 	//Finally check the base quality is more than or equal to the min base quality and it's not an 'N'.
    file_holder *tmp = (file_holder*)data;
    char *nom = malloc(sizeof(char) * 350);
+   check_mem(nom);
    if ((pos+1) > tmp->beg && pos+1 <= tmp->end) {
    	int i=0;
    	for(i=0;i<n;i++){
@@ -446,7 +447,7 @@ static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const ba
 				rp->rd_len = bam_cigar2qlen(&algn->core,bam1_cigar(algn));
 				rp->ref_pos = pos+1;
 				rp->rd_pos = p->qpos+1;
-				rp->called_base = toupper(bam_nt16_rev_table[cbase]);
+				rp->called_base = cbase;
 				rp->map_qual = algn->core.qual;
 				rp->base_qual = bam1_qual(algn)[p->qpos];
 				//Check strandedness
@@ -465,17 +466,19 @@ static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const ba
 				nom = strcpy(nom,bam_aux2Z(bam_aux_get(algn,"RG")));
 				nom = strcat(nom,"_");
 				nom = strcat(nom,norm_char);
-				rp->lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
-				check(rp->lane_i>=0,"Error calculating lane index %s.",nom);
+				int lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
+				check(lane_i>=0,"Error calculating lane index %s.",nom);
+				rp->lane_i = lane_i;
 				rp->normal = isnorm;
 				List_push(tmp->reads,rp);
 			}
 		}//End of iteration through each pileup read in this pos.
-		free(nom);
 	}
+	free(nom);
 	return 0;
 error:
-   return 0;
+	if(nom) free(nom);
+  return 0;
 }
 
 // callback for bam_plbuf_init()
@@ -497,7 +500,7 @@ static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1
 				rp->rd_len = bam_cigar2qlen(&p->b->core,bam1_cigar(p->b));
 				rp->ref_pos = (int)pos+1;
 				rp->rd_pos = p->qpos+1;
-				rp->called_base = toupper(bam_nt16_rev_table[c]);
+				rp->called_base = c;
 				rp->map_qual = p->b->core.qual;
 				rp->base_qual = qual;
 				//Check strandedness
@@ -516,13 +519,11 @@ static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1
 				nom = strcpy(nom,bam_aux2Z(bam_aux_get(p->b,"RG")));
 				nom = strcat(nom,"_");
 				nom = strcat(nom,norm_char);
-				rp->lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
-				check(rp->lane_i>=0,"Error calculating lane index %s.",nom);
+				int lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
+				check(lane_i>=0,"Error calculating lane index %s.",nom);
+				rp->lane_i = lane_i;
 				rp->normal = isnorm;
 				List_insert_sorted(tmp->reads, rp, (List_compare)bam_access_compare_read_pos_t);
-
-				//List_push(tmp->reads,rp);
-
 			}
 		}//End of iteration through each pileup read in this pos.
 		free(nom);
@@ -532,12 +533,13 @@ error:
    return 0;
 }
 
-List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, int start, int stop, int sorted, alg_bean_t *bean, file_holder* bams, int normal){
+List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop,
+																uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
 	//Pileup and populate the list with valid reads.
-	char *region;
+	char *region = NULL;
 	char sta[20];
 	region = malloc(sizeof(chr_name)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
-	sprintf(region,"%s:%d-%d",chr_name,start,stop);
+	sprintf(region,"%s:%lu-%lu",chr_name,(long unsigned int)start,(long unsigned int)stop);
 	bams->beg = start;
 	bams->end = stop;
 	bams->reads = List_create();
@@ -545,7 +547,7 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, int start, int sto
 	int ref;
 	bam_plbuf_t *buf;
 	isnorm = normal;
-	sprintf(norm_char,"%i",normal);
+	sprintf(norm_char,"%i",(int)normal);
 	// parse the tumour region
 	bam_parse_region(bams->in->header, region, &ref,
 						 &bams->beg, &bams->end);
@@ -568,12 +570,15 @@ error:
 	return NULL;
 }
 
-List *bam_access_get_reads_at_this_pos(char *chr_name, int start, int stop, int sorted, alg_bean_t *bean){
+List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean){
 	assert(norm->in != NULL);
 	assert(tum->in != NULL);
-	List *norm_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,norm,1);
-	List *tum_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,tum,0);
+	List *norm_rds = NULL;
+	List *tum_rds = NULL;
+
+	norm_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,norm,1);
 	check(norm_rds != NULL,"Error retrieving normal reads.");
+	tum_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,tum,0);
 	check(tum_rds != NULL,"Error retrieving tumour reads.");
 	//Now merge the two sorted lists into one.
 	List *merged_sorted = List_merge(norm_rds,tum_rds,bam_access_compare_read_pos_t);
@@ -589,7 +594,7 @@ error:
 	return NULL;
 }
 
-int bam_access_get_count_with_bam(char *chr_name, int start, int stop, file_holder *fh){
+int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop, file_holder *fh){
 	counter = 0;
 	tmpstruct_t tmp;
 	tmp.beg = fh->beg; tmp.end = fh->end;
