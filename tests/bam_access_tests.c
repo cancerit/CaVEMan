@@ -24,6 +24,7 @@
 #include <alg_bean.h>
 #include <ctype.h>
 #include <List.h>
+#include <ctype.h>
 
 char *bam_file = "testData/mt.bam";
 char *test_wt_bam = "testData/test_wt.bam";
@@ -55,13 +56,20 @@ char *test_list_algos_List_insert_sorted(){
 	read_pos_t *p5 = malloc(sizeof(read_pos_t));
 	read_pos_t *p6 = malloc(sizeof(read_pos_t));
 	read_pos_t *p7 = malloc(sizeof(read_pos_t));
-	p1->ref_pos = 6;
-	p2->ref_pos = 7;
-	p3->ref_pos = 2;
-	p4->ref_pos = 4;
-	p5->ref_pos = 3;
-	p6->ref_pos = 5;
-	p7->ref_pos = 1;
+	unsigned long int on = 1;
+	unsigned long int tw = 2;
+	unsigned long int th = 3;
+	unsigned long int fo = 4;
+	unsigned long int fi = 5;
+	unsigned long int si = 6;
+	unsigned long int se = 7;
+	p1->ref_pos = si;
+	p2->ref_pos = se;
+	p3->ref_pos = tw;
+	p4->ref_pos = fo;
+	p5->ref_pos = th;
+	p6->ref_pos = fi;
+	p7->ref_pos = on;
 	List_insert_sorted(li, p1, (List_compare) bam_access_compare_read_pos_t_test);
 	List_insert_sorted(li, p2, (List_compare) bam_access_compare_read_pos_t_test);
 	List_insert_sorted(li, p3, (List_compare) bam_access_compare_read_pos_t_test);
@@ -73,7 +81,7 @@ char *test_list_algos_List_insert_sorted(){
 	mu_assert(li->first != NULL, "NULL list->first found.");
 	mu_assert(li->last != NULL, "NULL list->last found.");
 	mu_assert(List_count(li) == 7,"Incorrect number of elements in list.");
-	int i=1;
+	unsigned long int i=1;
 	LIST_FOREACH(li, first, next, cur) {
 		mu_assert(((read_pos_t *)cur->value)->ref_pos == i,"Incorrect number in sorted order.");
 		i++;

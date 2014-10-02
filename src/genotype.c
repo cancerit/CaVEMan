@@ -263,7 +263,6 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
 	}
 
 	geno_cache[copy_num][bs] = unique;
-
 	return unique;
 
 error:

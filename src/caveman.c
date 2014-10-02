@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <setup.h>
@@ -45,14 +45,14 @@ void setup_options(int argc, char *argv[]){
              	{"mstep", no_argument, 0, 'm'},
              	{"merge", no_argument, 0, 'e'},
              	{"estep", no_argument, 0, 't'},    */
-             	{"help", no_argument, 0, 'h'}, 
-             	{"version", no_argument, 0, 'v'},               	        	
+             	{"help", no_argument, 0, 'h'},
+             	{"version", no_argument, 0, 'v'},
              	{ NULL, 0, NULL, 0}
    }; //End of declaring opts
-   
+
    int index = 0;
-   int iarg = 0;   
-   
+   int iarg = 0;
+
    if(argc < 2){
    	print_usage(0);
    }else if(argc >= 2){
@@ -77,34 +77,34 @@ void setup_options(int argc, char *argv[]){
 			argv[1]= "";
 			estep_main(argc,argv);
 			return;
-		}		
+		}
    }
-         
+
    //Iterate through options
    while((iarg = getopt_long(argc, argv, "vh", long_opts, &index)) != -1){
    	switch(iarg){
    		case 'h':
    			print_usage(0);
          	break;
-   		
+
 			case 'v':
 				printf ("%s\n",CAVEMAN_VERSION);
 				return;
-	
+
 			case '?':
 				print_usage(1);
 				break;
-				
+
       	default:
       		print_usage(1);
-                           
+
    	}; // End of args switch statement
-   	
-   }//End of iteration through options   
+
+   }//End of iteration through options
    return;
 }
 
 int main(int argc, char *argv[]){
-	setup_options(argc,argv);	  
+	setup_options(argc,argv);
    return 0;
 }
