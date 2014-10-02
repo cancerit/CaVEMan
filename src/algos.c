@@ -144,9 +144,9 @@ int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, 
 	List *reads = NULL;
 	char *cbase = NULL;
 	char *ref_b = NULL;
-
 	uint32_t start = from;
 	uint32_t stop;
+
 	for(start=from;start<=to;start+=(split_size+1)){
 		stop = start+split_size;
 		if(stop>to){
@@ -159,7 +159,8 @@ int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, 
 			if(pos_t->ref_pos >= start && pos_t->ref_pos <= stop){
 				//char ref_b_up = toupper(ref_base[((pos_t->ref_pos)-from)]);
 				char ref_b_up = toupper(ref_base[((pos_t->ref_pos)-from)]);
-				if((ref_b_up != 'N') && ((ref_b_up == 'A') || (ref_b_up == 'C') || (ref_b_up == 'G') || (ref_b_up = 'T')) ){
+				if((ref_b_up != 'N') && ((ref_b_up == 'A') || (ref_b_up == 'C')
+															|| (ref_b_up == 'G') || (ref_b_up = 'T')) ){
 					//int lane_i = alg_bean_get_index_for_str_arr(alg->lane,pos_t->lane);
 					//check(lane_i>=0,"Error calculating lane index.");
 					int rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->rd_pos,pos_t->rd_pos,pos_t->rd_len);
@@ -168,18 +169,18 @@ int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, 
 					check(mq_i>=0,"Error calculating map qual index.");
 					int bq_i = alg_bean_get_index_for_intrange_arr(alg->base_qual,pos_t->base_qual);
 					check(bq_i>=0,"Error calculating base qual index.");
-					char *ref_b = malloc(sizeof(char) *2);
+					ref_b = malloc(sizeof(char) *2);
 					check_mem(ref_b);
 					sprintf(ref_b,"%c",ref_b_up);
 					int rbase_i = alg_bean_get_index_for_char_arr(alg->ref_base,ref_b);
-					free(ref_b);
 					check(rbase_i>=0,"Error calculating ref base index for base %s.",ref_b);
+					free(ref_b);
 					cbase = malloc(sizeof(char)*2) ;
 					check_mem(cbase);
 					sprintf(cbase,"%c",toupper(bam_nt16_rev_table[pos_t->called_base]));
 					int callbase_i = alg_bean_get_index_for_char_arr(alg->call_base,cbase);
-					free(cbase);
 					check(callbase_i>=0,"Error calculating called base '%s' index.",cbase);
+					free(cbase);
 					covs[pos_t->read_order]
 								[pos_t->strand]
 								[pos_t->lane_i]
@@ -322,7 +323,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 			//Hom snps
 			if(iter<genos->hom_count){
 				long double ans = genos->hom_snp_genotypes[iter]->prob +
-													*(read->ref_base_probs[(genos->hom_snp_genotypes[iter]->tum_geno->var_base_idx)]);
+																			*(read->ref_base_probs[(genos->hom_snp_genotypes[iter]->tum_geno->var_base_idx)]);
 				genos->hom_snp_genotypes[iter]->prob = ans;
 			}//End of hom snps
 
@@ -536,7 +537,6 @@ inline int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, i
 	*callbase_i = alg_bean_get_index_for_char_arr(alg->call_base,cbase);
 	free(cbase);
 	check(*callbase_i>=0,"Error calculating called base index.");
-
 	return 0;
 error:
 	return -1;

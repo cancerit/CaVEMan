@@ -22,7 +22,7 @@
 #include "minunit.h"
 #include <bam_access.h>
 #include <alg_bean.h>
-#include <stdio.h>
+#include <ctype.h>
 #include <List.h>
 
 char *bam_file = "testData/mt.bam";

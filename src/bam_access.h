@@ -30,13 +30,14 @@
 #include "sam.h"
 
 typedef struct file_holder{
-   int beg, end;
+	int beg, end;
+	int base_counts_size;
 	samfile_t *in;
 	bam_index_t *idx;
 	List *reads;
 	alg_bean_t *bean;
 	int **base_counts;
-	int base_counts_size;
+
 	char *bam_access_bases;
 } file_holder;
 
@@ -58,7 +59,7 @@ typedef struct read_pos_t{
 	uint16_t normal:1;     /* total bits 10/16*/
 	uint16_t read_order:1; /* total bits  11/16*/
 	uint16_t strand:1;     /* total bits  12/16*/
-	uint16_t called_base:4;  /*Total to 16/16 bits*/
+	uint16_t called_base:4;  /*Total bits 16/16*/
 	uint16_t rd_pos:9; /* total bits 9/16 - Max read length of 511 */
 	uint16_t base_qual:7; /* total bits 16/16 - Max base qual of 127 (60 is max as standard so this should be safe) */
 	uint8_t map_qual; /*1*/

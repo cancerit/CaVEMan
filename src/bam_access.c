@@ -498,7 +498,7 @@ static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1
 				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
 				check_mem(rp);
 				rp->rd_len = bam_cigar2qlen(&p->b->core,bam1_cigar(p->b));
-				rp->ref_pos = (int)pos+1;
+				rp->ref_pos = pos+1;
 				rp->rd_pos = p->qpos+1;
 				rp->called_base = c;
 				rp->map_qual = p->b->core.qual;

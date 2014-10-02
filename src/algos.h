@@ -32,19 +32,19 @@ typedef struct estep_position_t{
 	uint8_t tum_cn;
 	int8_t ref_base_idx;
 	uint32_t ref_pos;
-	genotype_store_t *genos;
-	char *ref_base;
+	uint32_t total_cvg_tum;
+	uint32_t total_cvg_norm;
 	long double base_norm_contam;
+	long double total_snp_prob;
+	long double total_mut_prob;
 	genotype_t *norm_fwd_cvg;
 	genotype_t *norm_rev_cvg;
 	genotype_t *tum_fwd_cvg;
 	genotype_t *tum_rev_cvg;
-	int total_cvg_tum;
-	int total_cvg_norm;
-	long double total_snp_prob;
-	long double total_mut_prob;
 	combined_genotype_t *top_geno;
 	combined_genotype_t *sec_geno;
+	genotype_store_t *genos;
+	char *ref_base;
 } estep_position_t;
 
 int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size);
