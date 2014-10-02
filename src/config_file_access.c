@@ -22,12 +22,14 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
 #include <config_file_access.h>
 #include <dbg.h>
 
+const char *CWD="CWD";
 const char *MUT_TUM = "MUT_BAM";
 const char *NORM_TUM = "NORM_BAM";
 const char *REF_INDEX = "REF_IDX";
@@ -56,7 +58,17 @@ int config_file_access_read_config_file(FILE *file, char *tum_bam_file, char *no
 		char value [2048];
 		int chk = sscanf(line,"%[^=]=%s",key,value);
 		check(chk==2,"Couldn't resolve key - value pair from text %s in config file.",line);
-		if(strcmp(MUT_TUM,key)==0){
+		if(strcmp(CWD,key)==0){
+			size_t size = 500;
+			char *cur_wd = (char *) malloc(size);
+			check_mem(cur_wd);
+			char *chk = getcwd(cur_wd,size);
+			check(chk!=NULL,"Error retrieving CWD when reading config file.");
+			if(strcmp(cur_wd,value)!=0){
+				sentinel("Your current working directory '%s' is not the same as the directory you setup CaVEMan: '%s'. Please change to that directory and try again.",
+										cur_wd,value);
+			}
+		}else if(strcmp(MUT_TUM,key)==0){
 			strcpy(tum_bam_file,value);
 		}else if(strcmp(NORM_TUM,key)==0){
 			strcpy(norm_bam_file,value);
@@ -124,84 +136,34 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 {
 	assert(tum_bam_file != NULL && norm_bam_file != NULL && ref_idx != NULL && ignore_regions_file != NULL
 				&& alg_bean_loc != NULL && results != NULL && list_loc != NULL);
-
-	char real_tum_bam[PATH_MAX+1];
-	char real_norm_bam[PATH_MAX+1];
-	char results_real[PATH_MAX+1];
-	char list_loc_real[PATH_MAX+1];
-	char norm_cn_real[PATH_MAX+1];
-	char tum_cn_real[PATH_MAX+1];
-	char ignore_regions_real[PATH_MAX+1];
-	char ref_index_real[PATH_MAX+1];
-	char alg_bean_real[PATH_MAX+1];
-
-	char *ptr = realpath(tum_bam_file,real_tum_bam);
-	check(ptr!=NULL,"Error getting real path for tum bam file %s.",tum_bam_file);
-	ptr=NULL;
-	ptr = realpath(norm_bam_file,real_norm_bam);
-	check(ptr!=NULL,"Error getting real path for norm bam file %s.",norm_bam_file);
-	ptr=NULL;
-	if(norm_cn != NULL){
-		ptr = realpath(norm_cn,norm_cn_real);
-		check(ptr!=NULL,"Error getting real path for normal cn file %s.",norm_cn);
-		ptr=NULL;
-	}
-	if(tum_cn != NULL){
-		ptr = realpath(tum_cn,tum_cn_real);
-		check(ptr!=NULL,"Error getting real path for tumour cn file %s.",tum_cn);
-		ptr=NULL;
-	}
-	ptr = realpath(ignore_regions_file,ignore_regions_real);
-	check(ptr!=NULL,"Error getting real path for ignore region file %s.",ignore_regions_file);
-	ptr=NULL;
-	ptr = realpath(ref_idx,ref_index_real);
-	check(ptr!=NULL,"Error getting real path for reference index file %s.",ref_idx);
-	ptr=NULL;
+	char *curr_wd = NULL;
 
 	//Potentially non existant, so create it first
 	int dir = mkdir(results,S_IRWXU);
 	if(dir==0){
 		printf("Created results directory '%s'.\n",results);
 	}
-	ptr = realpath(results,results_real);
-	check(ptr!=NULL,"Error getting real path for results folder %s.",results);
-	ptr=NULL;
-	//Potentially non existant, so create it first
-	FILE *fptr;
-	fptr = fopen(list_loc,"r");
-	if(fptr==NULL){
-		fptr = fopen(list_loc,"w");
-		check(fptr!=NULL,"Error creating split list file %s.",list_loc);
-	}
-	fclose(fptr);
-	ptr = realpath(list_loc,list_loc_real);
-	check(ptr!=NULL,"Error getting real path for list location file %s.",list_loc);
-	ptr=NULL;
 
-	fptr = fopen(alg_bean_loc,"r");
-	if(fptr==NULL){
-		fptr = fopen(alg_bean_loc,"w");
-		check(fptr!=NULL,"Error creating alg_bean file %s.",alg_bean_loc);
-	}
-	fclose(fptr);
-	ptr = realpath(alg_bean_loc,alg_bean_real);
-	check(ptr!=NULL,"Error getting real path for alg_bean file %s.",alg_bean_loc);
-	ptr=NULL;
-
-
-	int res = fprintf(file,"%s=%s\n",MUT_TUM,real_tum_bam);
+	size_t size = 500;
+	curr_wd = (char *) malloc(size);
+	check_mem(curr_wd);
+	char *chk = getcwd(curr_wd,size);
+	check(chk!=NULL,"Error retrieving cwd for config file.");
+	int res = fprintf(file,"%s=%s\n",CWD,curr_wd);
+	check(res>=0,"Error writing cwd to config file.");
+	res = fprintf(file,"%s=%s\n",MUT_TUM,tum_bam_file);
 	check(res>=0,"Error writing mutant bam file loc to config file.");
-	res = fprintf(file,"%s=%s\n",NORM_TUM,real_norm_bam);
+	res = fprintf(file,"%s=%s\n",NORM_TUM,norm_bam_file);
 	check(res>=0,"Error writing normal bam file loc to config file.");
-	res = fprintf(file,"%s=%s\n",REF_INDEX,ref_index_real);
+	res = fprintf(file,"%s=%s\n",REF_INDEX,ref_idx);
 	check(res>=0,"Error writing reference index file loc to config file.");
-	res = fprintf(file,"%s=%s\n",IGN_FILE,ignore_regions_real);
+	res = fprintf(file,"%s=%s\n",IGN_FILE,ignore_regions_file);
 	check(res>=0,"Error writing ignore regions file loc to config file.");
-	res = fprintf(file,"%s=%s\n",ALG_FILE,alg_bean_real);
+	res = fprintf(file,"%s=%s\n",ALG_FILE,alg_bean_loc);
 	check(res>=0,"Error writing alg bean file loc to config file.");
-	res = fprintf(file,"%s=%s\n",RES_DIR,results_real);
+	res = fprintf(file,"%s=%s\n",RES_DIR,results);
 	check(res>=0,"Error writing results directory to config file.");
-	res = fprintf(file,"%s=%s\n",SPLIT_FILE,list_loc_real);
+	res = fprintf(file,"%s=%s\n",SPLIT_FILE,list_loc);
 	check(res>=0,"Error writing split sections file loc to config file.");
 	res = fprintf(file,"%s=%d\n",SW_KEY,includeSW);
 	check(res>=0,"Error writing include SW to config file.");
@@ -209,12 +171,12 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 	check(res>=0,"Error writing inclue single end to config file.");
 	res = fprintf(file,"%s=%d\n",DUP_KEY,includeDups);
 	check(res>=0,"Error writing include duplicates file to config file.");
-	if(norm_cn_real != NULL){
-		res = fprintf(file,"%s=%s\n",NORM_CN_KEY,norm_cn_real);
+	if(norm_cn != NULL){
+		res = fprintf(file,"%s=%s\n",NORM_CN_KEY,norm_cn);
 		check(res>=0,"Error writing normal cn file to config file.");
 	}
-	if(tum_cn_real != NULL){
-		res = fprintf(file,"%s=%s\n",TUM_CN_KEY,tum_cn_real);
+	if(tum_cn != NULL){
+		res = fprintf(file,"%s=%s\n",TUM_CN_KEY,tum_cn);
 		check(res>=0,"Error writing tumour cn file to config file.");
 	}
 	//Finally print the version for version checking.
@@ -222,5 +184,6 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 	check(res>=0,"Error writing version information to config file.");
 	return 0;
 error:
+	if(curr_wd) free(curr_wd);
 	return -1;
 }
