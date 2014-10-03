@@ -1,25 +1,25 @@
 #! /usr/bin/perl
 
 ########## LICENSE ##########
-# Copyright (c) 2014 Genome Research Ltd. 
-# 
-# Author: Cancer Genome Project cgpit@sanger.ac.uk 
-# 
-# This file is part of CaVEMan. 
-# 
-# CaVEMan is free software: you can redistribute it and/or modify it under 
-# the terms of the GNU Affero General Public License as published by the Free 
-# Software Foundation; either version 3 of the License, or (at your option) any 
-# later version. 
-# 
-# This program is distributed in the hope that it will be useful, but WITHOUT 
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-# details. 
-# 
-# You should have received a copy of the GNU Affero General Public License 
-# along with this program. If not, see <http://www.gnu.org/licenses/>. 
-# 
+# Copyright (c) 2014 Genome Research Ltd.
+#
+# Author: Cancer Genome Project cgpit@sanger.ac.uk
+#
+# This file is part of CaVEMan.
+#
+# CaVEMan is free software: you can redistribute it and/or modify it under
+# the terms of the GNU Affero General Public License as published by the Free
+# Software Foundation; either version 3 of the License, or (at your option) any
+# later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+# details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
 ###########################
 
 use strict;
@@ -37,20 +37,27 @@ use Carp;
 		#Iterate through each file
 		my $have_head = 0;
 		my $head;
+
+		#Do the header checks first;
 		foreach my $filename(@{$options->{'files'}}){
 			#open file
 			my $IN;
-			open($IN, '<', $filename) or die("Error trying to open $filename for read: $!\n");
+			open($IN, '<', $filename) or die("Error trying to open '$filename' for read: $!\n");
 				my $tmp_head;
 				while(<$IN>){
 					my $line = $_;
-					if($line =~ m/^#/){
+					if($line =~ m/^#/){ #Header line
 						if($have_head == 0){
 							push (@$head, $line);
-						}else{
+						}else{ #We've already loaded in a header so this is a new file that needs a header check
 							#Check our header matched that previously passed in.
 							push (@$tmp_head, $line);
-							#Now check against our stored header.
+						}
+					}elsif($line !~ m/^#/){
+						#Reached end of header.
+						if($have_head == 0){
+							$have_head = 1;
+						}else{ #Compare this header to the header to be printed.
 							for(my $i=0; $i<scalar(@$tmp_head); $i++){
 								next if($tmp_head->[$i] =~ m/fileDate/);
 								if($tmp_head->[$i] ne $head->[$i] ){
@@ -59,35 +66,48 @@ use Carp;
 								}
 							}
 						}
-						next;
-					}elsif($have_head==0){
-						$have_head = 1;
-						foreach my $head_line(@$head){
-							print $OUT $head_line;
-						}
-						next;					
-					} # End of header check.					
-				
-					print $OUT $line;
-								
-				}	# End of iterating through this file.	
+						last;
+					}
+				}
+			$have_head = 1 if($have_head == 0); #in case we hit a file containing only the header first.
+			close($IN) or croak ("Error closing file '$filename' when checking header: $!");
+		}
+
+		print "".scalar(@$head)." header lines\n";
+
+		#Print header to file.
+		for(my $i=0; $i<scalar(@$head); $i++){
+			print $OUT $head->[$i];
+		}
+
+		#Load in lines from files.
+		foreach my $filename(@{$options->{'files'}}){
+			#open file
+			my $IN;
+			open($IN, '<', $filename) or die("Error trying to open $filename for read: $!\n");
+				while(<$IN>){
+					my $line = $_;
+					if($line !~ m/^#/){
+						print $OUT $line;
+					}
+				}
 			close($IN);
 		}
 	close ($OUT);
 
-	# We've written a tmp file with all results, now take the header, 
+	# We've written a tmp file with all results, now take the header,
 	# and sort the remaining entries into the proper output file.
-	
+
 	# Get the header into the file.
 	my $head_cmd = "grep -e '^#' ".$options->{'o'}.".tmp > ".$options->{'o'};
 	`$head_cmd`;
-	
+
 	# Get the non header lines and sort accordingly
 	my $non_head_sort_cmd = "grep -ve '^#' ".$options->{'o'}.".tmp | sort -k1,1 -k2,2n >> ".$options->{'o'};
 	`$non_head_sort_cmd`;
-	
+
 	# delete the tmp file
-	unlink($options->{'o'}.".tmp") or die("ERROR: Couldn't delete temporary output  file ".$options->{'o'}.".tmp".":$!");
+	unlink($options->{'o'}.".tmp") or die("ERROR: Couldn't delete temporary output file ".$options->{'o'}.".tmp".":$!");
 }
 
 sub setup{
@@ -95,15 +115,15 @@ sub setup{
   	GetOptions( 'h|help' => \$opts{'h'},
 					'o|output=s' => \$opts{'o'},
   	) or pod2usage(2);
-  
+
 	if($opts{'h'}){
   		pod2usage(0);
 	}
-	
+
 	pod2usage(-msg  => "\nERROR: Incorrect parameters.\n", -verbose => 2, -output => \*STDERR ) unless($opts{'o'});
-	
+
 	$opts{'files'} = \@ARGV;
-	
+
 	return \%opts;
 }
 
@@ -111,9 +131,9 @@ __END__
 
 =head1 NAME
 
-mergeCavemanResults - Perl script to merge VCF or BED format results files output by CaVEMan split jobs 
-                      into a single results file. 
-                      For example mergeCavemanResults -t vcf -o muts.vcf results/*/*.muts.vcf
+mergeCavemanResults - Perl script to merge VCF or BED format results files output by CaVEMan split jobs
+                      into a single results file.
+                      For example mergeCavemanResults -o muts.vcf results/*/*.muts.vcf
 
 =head1 SYNOPSIS
 
@@ -127,6 +147,6 @@ Other:
 
 =head1 DESCRIPTION
 
-B<mergeCavemanResults> Will merge CaVEMan split output files into a single result file for the type. 
-    
+B<mergeCavemanResults> Will merge CaVEMan split output files into a single result file for the type.
+
 =cut
