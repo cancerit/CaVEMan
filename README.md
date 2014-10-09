@@ -49,8 +49,12 @@ See INSTALL.TXT
 
 * BWA Mapped, indexed, duplicate marked/removed bam files, for both a normal and tumour sample
 * Reference.fasta and index
+* A one based bed style format file of regions to ignore during analysis (see specified format).
+
+##Prerequisites (Optional - will result in more accurate calls)
+
 * Normal and tumour copy number files (see specified format).
-* A bed file of regions to ignore during analysis (see specified format).
+* A normal contamination of tumour value
 
 ##Processing flow
 
@@ -183,7 +187,7 @@ calculated.
 
 ###Copy Number
 
-Copy number files are taken in a 1-based bed style tab separated format, or BED fromat if the suffix is .bed.
+Copy number files are taken in a 1-based bed style tab separated format, or BED format if the suffix is .bed.
 Where the columns are chromosome,start,stop,copynumber(integer). A separate file is required
 for normal and tumour. Each file should have a copy number assigned for every region requested
 to be analysed (NB, CaVEMan set CN to 2 in regions where copy number is 0).
