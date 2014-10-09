@@ -51,7 +51,7 @@ See INSTALL.TXT
 * Reference.fasta and index
 * A one based bed style format file of regions to ignore during analysis (see specified format).
 
-##Prerequisites (Optional - will result in more accurate calls)
+##Optional inputs (will result in more accurate calls)
 
 * Normal and tumour copy number files (see specified format).
 * A normal contamination of tumour value
