@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of caveman_c. 
-* 
-* caveman_c is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "minunit.h"
@@ -24,10 +24,10 @@
 #include <List.h>
 #include <math.h>
 
-char *norm_file = "tests/mt.bam";
-char *tum_file = "tests/wt.bam";
-char *test_alg_out_loc = "tests/test_alg_bean.out";
-char *test_alg_loc = "tests/test_alg_bean";
+char *norm_file = "testData/mt.bam";
+char *tum_file = "testData/wt.bam";
+char *test_alg_out_loc = "testData/test_alg_bean.out";
+char *test_alg_loc = "testData/test_alg_bean";
 
 static alg_bean_t *test_bean;
 
@@ -144,34 +144,34 @@ int check_alg_bean_defaults(alg_bean_t *test_bean){
 	check(test_bean->lane != NULL,"Lane list unset.\n");
 	LIST_FOREACH(test_bean->lane,first,next,cur){
 		char *lane_id = ((char *)cur->value);
-		check((strcmp(lane_id,"6514_2_1") == 0 || strcmp(lane_id,"6514_2_0") == 0 || strcmp(lane_id,"6640_4_1") == 0 || strcmp(lane_id,"6640_4_0") == 0), 
+		check((strcmp(lane_id,"6514_2_1") == 0 || strcmp(lane_id,"6514_2_0") == 0 || strcmp(lane_id,"6640_4_1") == 0 || strcmp(lane_id,"6640_4_0") == 0),
 								"Unexpected lane id recorded.\n");
 	}
 	check(List_count(test_bean->lane) == 4,"Incorrect lane size recorded in size param.\n");
-	
+
 	check(test_bean->rd_pos != NULL,"rd_pos list unset.\n");
 	check(List_count(test_bean->rd_pos) == 5,"Incorrect read_pos array size.\n");
 	check(check_read_position(test_bean->rd_pos),"Error in read_position default checks.\n");
-	
+
 	check(test_bean->base_qual != NULL,"base_qual list unset.\n");
 	check(List_count(test_bean->base_qual) == 7,"Incorrect base_quality array size.\n");
-	check(check_base_quality(test_bean->base_qual),"Error in base_quality default checks.\n");	
-	
+	check(check_base_quality(test_bean->base_qual),"Error in base_quality default checks.\n");
+
 	check(test_bean->map_qual != NULL,"map_qual list unset.\n");
 	check(List_count(test_bean->map_qual) == 2,"Incorrect map_quality array size.\n");
-	check(check_map_quality(test_bean->map_qual),"Error in map_quality default checks.\n");	
-	
+	check(check_map_quality(test_bean->map_qual),"Error in map_quality default checks.\n");
+
 	check(test_bean->read_order != NULL,"read_order list unset.\n");
 	check(List_count(test_bean->read_order) == 2,"Incorrect read_order array size.\n");
-	
+
 	check(test_bean->ref_base != NULL,"ref_base list unset.\n");
 	check(List_count(test_bean->ref_base) == 4,"Incorrect ref_base array size.\n");
-	check(check_base_lists(test_bean->ref_base),"Error in ref_base default checks.\n");	
-	
+	check(check_base_lists(test_bean->ref_base),"Error in ref_base default checks.\n");
+
 	check(test_bean->call_base != NULL,"call_base list unset.\n");
 	check(List_count(test_bean->call_base) == 4,"Incorrect call_base array size.\n");
-	check(check_base_lists(test_bean->call_base),"Error in call_base default checks.\n");	
-	
+	check(check_base_lists(test_bean->call_base),"Error in call_base default checks.\n");
+
 	check(test_bean->strand != NULL,"strand list unset.\n");
 	check(List_count(test_bean->strand) == 2,"Incorrect strand array size.\n");
 	return 0;
@@ -184,14 +184,14 @@ char *test_alg_bean_read_file(){
 	mu_assert(open != NULL, "Problem opening test alg_bean file");
 	test_bean = alg_bean_read_file(open);
 	fclose(open);
-	mu_assert(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");	
+	mu_assert(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
 	alg_bean_destroy(test_bean);
 	return NULL;
 }
 
 char *test_alg_bean_get_index_for_str_arr(){
 	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
-	//We know the 
+	//We know the
 	//6514_2_PD4107a
 	//6640_4_PD4107a
 	//6514_2_PD4107a
@@ -238,8 +238,8 @@ char *test_alg_bean_get_index_for_read_pos_prop_arr(){
 char *test_alg_bean_generate_default_alg_bean(){
 	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
 	mu_assert(test_bean != NULL, "Couldn't retrieve default alg_bean.\n");
-	
-	mu_assert(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");	
+
+	mu_assert(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
 	return NULL;
 }
 
@@ -247,7 +247,7 @@ char *test_alg_bean_hard_copy_char_list(){
 	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
 	List *one = test_bean->lane;
 	List *joined = List_create();
-	alg_bean_hard_copy_char_list(joined,one);	
+	alg_bean_hard_copy_char_list(joined,one);
 	mu_assert(List_count(one) == List_count(joined),"Wrong number of elements after hard copy");
 	List_clear_destroy(one);
 	List_clear_destroy(joined);

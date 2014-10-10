@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of caveman_c. 
-* 
-* caveman_c is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <assert.h>
@@ -25,7 +25,7 @@
 #include <alg_bean.h>
 #include <bam_access.h>
 
-static float f1 = 2.63f; 
+static float f1 = 2.63f;
 static float f2 = 47.37f;
 static float f3 = 23.68f;
 static float f4 = 13.16f;
@@ -63,7 +63,7 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 	char line [ 5000 ];
 	while ( fgets(line,sizeof(line),file) != NULL ){
 		char text_id[50];
-		char list_txt [4950]; 
+		char list_txt [4950];
 		int chk = sscanf(line,"%s\t%s",text_id,list_txt);
 		check(chk>0,"No match for alg bean entries found in line %s.",line);
 		if(strcmp(text_id,read_pos_id) == 0){
@@ -85,13 +85,13 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 			sentinel("Unrecognised id passed: %s.",text_id);
 		}
 	}
-	
+
 	//Check we have all 4 ids expected fulfilled
 	check(bean->rd_pos != NULL && List_count(bean->rd_pos) > 0,"No results present for read position proportions.");
 	check(bean->base_qual != NULL && List_count(bean->base_qual) > 0,"No results present for base quality ranges.");
 	check(bean->map_qual != NULL && List_count(bean->map_qual) > 0,"No results present for mapping quality ranges.");
 	check(bean->lane != NULL && List_count(bean->lane) > 0,"No results present for lane list.");
-	
+
 	//Now populate the last few that aren't manually allocated.
 	//Called and ref base
 	//Ref and called bases
@@ -104,7 +104,7 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 	bean->call_base = ref_base;
 	bean->ref_base_size = 4;
 	bean->call_base_size = 4;
-	
+
 	//Read strand and read order (1st/2nd in pair)
 	//Strands
 	int a=1;
@@ -112,11 +112,11 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 	List *strand = List_create();
 	List_push(strand,&b);
 	List_push(strand,&a);
-	bean->strand = strand; 
-	bean->read_order = strand;	
+	bean->strand = strand;
+	bean->read_order = strand;
 	bean->strand_size = 2;
 	bean->read_order_size = 2;
-	
+
 	return bean;
 error:
 	return NULL;
@@ -164,7 +164,7 @@ int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len){
 		int lng = (((float)rd_len/(float)100) * pct);
 		alg_bean_intrange *range = malloc(sizeof(alg_bean_intrange));
 		if(i==0){
-			range->from = 1;			
+			range->from = 1;
 		}else{
 			range->from = last_stop + 1;
 		}
@@ -198,7 +198,7 @@ List *alg_bean_parse_float_list(char *txt){
 	ftchar = strtok(txt,";");
 	while(ftchar != NULL){
 		float *tmp = malloc(sizeof(float));
-		*tmp = atof(ftchar);	
+		*tmp = atof(ftchar);
 		List_push(li,tmp);
 		ftchar = strtok(NULL,";");
 	}
@@ -295,32 +295,32 @@ int alg_bean_write_file(FILE *file, alg_bean_t *bean){
 	check(bean->call_base != NULL,"alg_bean had NULL called base values.");
 	check(bean->strand != NULL,"alg_bean had NULL strand values.");
 	//Write in order;
-	
+
 	//Read position - NEED WORK
 	//check(1==0,"Read position format requires read and write methods.");
 	int chk = fprintf(file,"%s\t","rd_pos");
 	check(chk!=0,"Error writing read position ID.");
 	chk = alg_bean_write_list_float(file, bean->rd_pos);
 	check(chk==0,"Error when writing read position ranges to file.");
-	
+
 	//Base quality
 	chk = fprintf(file,"%s\t","base_qual");
 	check(chk!=0,"Error writing base quality ID.");
 	chk = alg_bean_write_list_alg_bean_intrange(file, bean->base_qual);
 	check(chk==0,"Error when writing base quality ranges to file.");
-	
+
 	//Mapping quality
 	chk = fprintf(file,"%s\t","map_qual");
 	check(chk!=0,"Error writing mapping quality ID.");
 	chk = alg_bean_write_list_alg_bean_intrange(file, bean->map_qual);
 	check(chk==0,"Error when writing mapping quality ranges to file.");
-	
+
 	//Lane
 	chk = fprintf(file,"%s\t","lane");
 	check(chk!=0,"Error writing lane ID.");
 	chk = alg_bean_write_list_char(file, bean->lane);
 	check(chk==0,"Error when writing lane ranges to file.");
-		
+
 	return 0;
 error:
 	return -1;
@@ -342,7 +342,7 @@ void alg_bean_destroy(alg_bean_t *bean){
 		}
 		if(bean->ref_base){
 			List_destroy(bean->ref_base);
-		}	 	
+		}
 	 	if(bean->strand != NULL){
 	 		List_destroy(bean->strand);
 	 	}
@@ -355,7 +355,7 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	assert(norm!= NULL);
 	assert(tum!= NULL);
 	struct alg_bean_t *bn = malloc(sizeof(struct alg_bean_t));
-	
+
 	//Ref and called bases
 	List *ref_base = List_create();
 	List_push(ref_base,"A");
@@ -370,8 +370,8 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	List *strand = List_create();
 	List_push(strand,&b);
 	List_push(strand,&a);
-	bn->strand = strand; 
-	
+	bn->strand = strand;
+
 	//Base quality
 	//"0-10==11-15==16-20==21-30==31-200";
 	List *base_q_list = List_create();
@@ -411,7 +411,7 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	List_push(base_q_list,range_8);
 	List_push(base_q_list,range_9);
 	bn->base_qual = base_q_list;
-	
+
 	//Map quality
 	//0-60==255
 	List *map_q_list = List_create();
@@ -426,39 +426,39 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	List_push(map_q_list,range_6);
 	List_push(map_q_list,range_7);
 	bn->map_qual = map_q_list;
-	
+
 	//Chemistries
 	//Read order now, so 0,1 for 1st and 2nd;
 	bn->read_order = strand;
-	
+
 	//Lanes
 	List *norm_lanes = bam_access_get_lane_list_from_header(norm,"1");
 	List *tum_lanes = bam_access_get_lane_list_from_header(tum,"0");
-	
+
 	List *joined_lanes = List_create();
 	alg_bean_hard_copy_char_list(joined_lanes,norm_lanes);
 	alg_bean_hard_copy_char_list(joined_lanes,tum_lanes);
-	
+
 	//split the lanes into a string array.
 	bn->lane = joined_lanes;
 	List_clear_destroy(norm_lanes);
-	List_clear_destroy(tum_lanes);	
-	
+	List_clear_destroy(tum_lanes);
+
 	//Read position
 	List *float_list = List_create();
 	List_push(float_list,&f1);
 	List_push(float_list,&f2);
 	List_push(float_list,&f3);
 	List_push(float_list,&f4);
-	List_push(float_list,&f5);	
-	bn->rd_pos = float_list;	
+	List_push(float_list,&f5);
+	bn->rd_pos = float_list;
 	/*alg_bean_intrange **rd_pos;
 	 int rd_pos_size; */
 
 	//Alg bean store file will be in the format NAMEOFCORVARIATE\trange1;range2;range3
 	//Excluding read pos which needs to be relative to read length.
 	//called base and ref base and read order and strand are not included as they're assumed to be in separate ranges anyway.
-	
+
 	return bn;
 error:
 	return NULL;
@@ -469,6 +469,6 @@ List *alg_bean_hard_copy_char_list(List *new_list, List *old){
 		char *tmp = malloc(sizeof(char) * (strlen((char *)cur->value)+1));
 		strcpy(tmp,(char *)cur->value);
 		List_push(new_list,tmp);
-	}	
+	}
 	return new_list;
 }

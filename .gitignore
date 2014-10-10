@@ -1,0 +1,5 @@
+/bin/
+/src/*.o
+/tests/*_tests
+/samtools/
+/tests/tests_log

@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of caveman_c. 
-* 
-* caveman_c is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <split_access.h>
@@ -48,22 +48,23 @@ void split_access_get_section_from_index(char *file_loc, char *chr, int *start_z
 		}
 		i++;
 	}
-	
+
 error:
 	if(file) fclose(file);
-	return;	
+	return;
 }
 
 List *split_access_get_all_split_sections(char *file_loc){
 	assert(file_loc != NULL);
 	FILE *file;
+	char *chr = NULL;
+	seq_region_t *reg = NULL;
 	file = fopen(file_loc,"r");
 	check(file != NULL,"Error opening split list file.");
 	char line[250];
 	int i=0;
 	List *li = List_create();
-	char *chr;
-	seq_region_t *reg;
+
 	while ( fgets(line,sizeof(line),file) != NULL ){
 		i++;
 		chr = malloc(sizeof(char) * 50);
@@ -86,5 +87,5 @@ error:
 		free(reg);
 	}
 	if(chr) free(chr);
-	return NULL;	
+	return NULL;
 }

@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of caveman_c. 
-* 
-* caveman_c is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdio.h>
@@ -39,7 +39,8 @@ int ignore_reg_access_get_ign_reg_count_for_chr(char *ign_file, char *chr){
 	char rd[200];
 	while(fgets(rd, 200, file) != NULL){
 		check(rd != NULL,"Invalid line read in ignored region file.");
-		char *chr_nom = malloc(sizeof(char *));
+		char *chr_nom = malloc(sizeof(char)*50);
+		check_mem(chr_nom);
 		int chk = sscanf(rd,"%s",chr_nom);
 		check(chk == 1,"Incorrect line read.\n");
 		if(strcmp(chr_nom,chr) == 0){
@@ -51,7 +52,7 @@ int ignore_reg_access_get_ign_reg_count_for_chr(char *ign_file, char *chr){
 	return entry_count;
 error:
 	if(file) fclose(file);
-	return -1;	
+	return -1;
 }
 
 seq_region_t *ignore_reg_access_get_ign_reg_overlap(int pos, struct seq_region_t **regions, int entry_count){
@@ -74,20 +75,21 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
 	assert(chr != NULL);
 	assert(entry_count >= 0);
 	assert(sizeof(regions)>0);
-	
+
 	if(entry_count == 0){
-		return;
+		return 0;
 	}
 	//assign the right size to the array
 	//then reread so we can parse the actual lines.
 	FILE *file = fopen(ign_file,"r");
 	check(file != NULL,"Couldn't open ignored region file: %s.",ign_file);
 	int found_count = 0;
-	
+
 	char rd[200];
 	while(fgets(rd, 200, file) != NULL){
 		check(rd != NULL,"Invalid line read in ignored region file.");
-		char *chr_nom = malloc(sizeof(char *));		
+		char *chr_nom = malloc(sizeof(char)*50);
+		check_mem(chr_nom);
 		int beg,end;
 		int chk = sscanf(rd,"%s\t%d\t%d",chr_nom,&beg,&end);
 		if(chk==3){
@@ -107,15 +109,15 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
 				found_count++;
 			}
 		}else{
-			free(chr_nom);		
+			free(chr_nom);
 			sentinel("Incorrect line read from ignore file %s.",rd);
 		}
-		free(chr_nom);		
+		free(chr_nom);
 	}
 	check(entry_count == found_count,"Wrong number of lines found %d for chr: %s. Expected %d.",found_count,chr,entry_count);
 	fclose(file);
 	return 0;
-	
+
 error:
 	if(file) fclose(file);
 	if(regions) ignore_reg_access_destroy_seq_region_t_arr(entry_count, regions);
@@ -143,7 +145,7 @@ error:
 List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end, struct seq_region_t **regions, int entry_count){
 	List *li = ignore_reg_access_get_ign_reg_contained(start,end,regions,entry_count);
 	check(li != NULL,"Error fetching contained ignore regions.");
-	
+
 	List *reg_for_analysis = List_create();
 	seq_region_t *range = malloc(sizeof(struct seq_region_t));
 	range->beg = start;
@@ -156,18 +158,18 @@ List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end,
 	range->end = end;
 	List_push(reg_for_analysis,range);
 	List_clear_destroy(li);
-	return reg_for_analysis;	
+	return reg_for_analysis;
 error:
 	List_clear_destroy(li);
 	return NULL;
-	
+
 }
 
 void ignore_reg_access_destroy_seq_region_t_arr(int entry_count, seq_region_t **regions){
 	if(sizeof(regions) > 0){
 		int i=0;
 		for(i=0;i<entry_count;i++){
-			if(regions[i] != NULL){		
+			if(regions[i] != NULL){
 				free(regions[i]);
 			}
 		}

@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of caveman_c. 
-* 
-* caveman_c is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ int fai_access_get_name_from_index(int idx, char *index_file_name, char *chr_nam
 	fclose(fai);
 	return 0;
 error:
-	if(fai){ 
+	if(fai){
 		fclose(fai);
 	}
 	return -1;
@@ -59,12 +59,14 @@ char *fai_access_get_ref_seqeuence_for_pos(char *fa_loc,char *char_nom,int start
 	assert(char_nom !=NULL);
 	assert(fa_loc != NULL);
 	char region[100];
+	char *seq = NULL;
+	faidx_t *fai = NULL;
 	int chk = sprintf(region,"%s:%d-%d",char_nom,start_one_based,stop);
 	check(chk>0,"Error formatting region.");
 	int length = (stop-start_one_based)+1;
-	faidx_t *fai = fai_load(fa_loc);
+	fai = fai_load(fa_loc);
 	check(fai != NULL,"Error opening FASTA index.");
-	char *seq = fai_fetch(fai,region,&length);
+	seq = fai_fetch(fai,region,&length);
 	check(seq != NULL,"Error fetching reference sequence for region %s.",region);
 	fai_destroy(fai);
 	return seq;

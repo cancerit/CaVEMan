@@ -3,9 +3,9 @@
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
-* This file is part of caveman_c.
+* This file is part of CaVEMan.
 *
-* caveman_c is free software: you can redistribute it and/or modify it under
+* CaVEMan is free software: you can redistribute it and/or modify it under
 * the terms of the GNU Affero General Public License as published by the Free
 * Software Foundation; either version 3 of the License, or (at your option) any
 * later version.
@@ -28,6 +28,7 @@
 #include <dbg.h>
 #include <file_tests.h>
 #include <covs_access.h>
+#include <cn_access.h>
 #include <alg_bean.h>
 #include <bam_access.h>
 #include <split_access.h>
@@ -45,10 +46,13 @@ static char results[512];// = "results";
 static char ref_idx[512];// = "";
 static char list_loc[512];// = "splitList";
 static char alg_bean_loc[512];// = "alg_bean";
+static char version[50];
 static char *covariate_file = "covs_arr";
 static char *probs_file = "probs_arr";
-static char *norm_cn_loc = NULL;
-static char *tum_cn_loc = NULL;
+static char norm_cn_loc[512];
+static char tum_cn_loc[512];
+static char *norm_plat = NULL;
+static char *tum_plat = NULL;
 static float min_mut_prob = 0.8;
 static float min_snp_prob = 0.95;
 static float norm_contam = 0.1;
@@ -57,6 +61,9 @@ static float prior_mut_prob = 0.000006;
 static float prior_snp_prob = 0.0001;
 static int min_tum_cvg = 1;
 static int min_norm_cvg = 1;
+static int estep_max_tumour_coverage = 25000;
+static int normal_copy_number = 2;
+static int tumour_copy_number = 2;
 static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
@@ -66,12 +73,13 @@ static int split_size = 50000;
 static int debug=0;
 static char *assembly = NULL;
 static char *species = NULL;
+static char *norm_prot = "WGS";
+static char *tum_prot = "WGS";
+static int max_copy_number = 10;
+char *valid_protocols[3] = {"WGS","WXS","RNA"};
 
 void estep_print_usage (int exit_code){
-	printf ("Usage: caveman estep -i jobindex -e norm.copy.no -j tum.copy.no [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
-
-	printf("-e  --norm-cn [file]                             Location of normal copy number bed file\n");
-	printf("-j  --tum-cn [file]                              Location of tumour copy number bed file\n");
+	printf ("Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
 	printf("-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)\n\n");
 	printf("Optional\n");
 	printf("-f  --config-file [file]                         Path to the config file produced by setup. [default:'%s']\n",config_file);
@@ -90,7 +98,14 @@ void estep_print_usage (int exit_code){
 	printf("-o  --prob-file [file]                           File location of the prob array. [default:'%s']\n",probs_file);
 	printf("-v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do not contain AS and SP information.\n");
 	printf("-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.\n");
-	printf("-h	help                                         Display this usage information.\n");
+	printf("-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:%d].\n",normal_copy_number);
+	printf("-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:%d].\n",tumour_copy_number);
+	printf("-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WGX|RNA) [default:%s].\n",norm_prot);
+	printf("-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WGX|RNA) [default:%s].\n",tum_prot);
+	printf("-P  --normal-platform [string]                   Normal platform. Overrides the values retrieved from bam header.\n");
+	printf("-T  --tumour-platform [string]                   Tumour platform. Overrides the values retrieved from bam header.\n");
+	printf("-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the offending region will be set to this value. [default:%d].\n",max_copy_number);
+  printf("-h	help                                         Display this usage information.\n");
 
   exit(exit_code);
 }
@@ -111,11 +126,17 @@ void estep_setup_options(int argc, char *argv[]){
              	{"snp-probability-cutoff", required_argument, 0, 'q'},
              	{"min-tum-coverage", required_argument, 0, 'x'},
              	{"min-norm-coverage", required_argument, 0, 'y'},
-             	{"norm-cn", required_argument, 0, 'e'},
-             	{"tum-cn", required_argument, 0, 'j'},
              	{"split-size", required_argument, 0, 'a'},
              	{"species-assembly ", required_argument, 0, 'v'},
              	{"species", required_argument, 0, 'w'},
+             	{"normal-copy-number", required_argument, 0, 'n'},
+             	{"tumour-copy-number", required_argument, 0, 't'},
+             	{"normal-protocol", required_argument, 0, 'l'},
+             	{"tumour-protocol", required_argument, 0, 'r'},
+             	{"max-copy-number", required_argument, 0, 'M'},
+             	{"normal-platform", required_argument, 0, 'P'},
+             	{"tumour-platform", required_argument, 0, 'T'},
+             	{"snp-warnings", no_argument, 0, 'S'},
              	{"help", no_argument, 0, 'h'},
              	{"debug", no_argument, 0, 's'},
 
@@ -126,47 +147,72 @@ void estep_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "e:j:x:y:c:d:p:q:b:k:a:f:i:o:g:m:v:w:sh",
+   while((iarg = getopt_long(argc, argv, "x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:P:T:r:sh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
+   		case 'l':
+				norm_prot = optarg;
+   			break;
+
+   		case 'r':
+				tum_prot = optarg;
+   			break;
+
    		case 'v':
    			assembly = optarg;
    			break;
+
    		case 'w':
    			species = optarg;
    			break;
+
    		case 'o':
    			probs_file = optarg;
    			break;
+
    		case 'g':
    			covariate_file = optarg;
    			break;
+
    		case 's':
    			debug = 1;
    			break;
+
    		case 'h':
-         	estep_print_usage(0);
-         	break;
+        estep_print_usage(0);
+        break;
 
-     		case 'e':
-     			norm_cn_loc = optarg;
-     			break;
+      case 'f':
+        config_file = optarg;
+        break;
 
-     		case 'j':
-     			tum_cn_loc = optarg;
-     			break;
+      case 'M':
+        cn_access_set_max_cn(atoi(optarg));
+        break;
 
-      	case 'f':
-      		config_file = optarg;
-      		break;
+      case 'P':
+				norm_plat = optarg;
+        break;
 
-      	case 'i':
-      		idx = atoi(optarg);
-      		break;
+      case 'T':
+      	tum_plat = optarg;
+        break;
 
-      	case 'm':
-      		min_bq = atoi(optarg);
-      		break;
+      case 'n':
+        normal_copy_number = atoi(optarg);
+        break;
+
+      case 't':
+        tumour_copy_number = atoi(optarg);
+        break;
+
+      case 'i':
+        idx = atoi(optarg);
+        break;
+
+      case 'm':
+        min_bq = atoi(optarg);
+        break;
 
 			case 'k':
 				norm_contam = atof(optarg);
@@ -204,12 +250,16 @@ void estep_setup_options(int argc, char *argv[]){
 				split_size = atoi(optarg);
 				break;
 
-			case '?':
-            estep_print_usage (1);
-            break;
+			case 'S':
+				set_snp_warnings();
+				break;
 
-      	default:
-      		estep_print_usage (1);
+			case '?':
+        estep_print_usage (1);
+        break;
+
+      default:
+      	estep_print_usage (1);
 
    	}; // End of args switch statement
 
@@ -226,34 +276,90 @@ void estep_setup_options(int argc, char *argv[]){
    	estep_print_usage(1);
    }
 
+	 int i=0;
+	 int norm_prot_check=0;
+	 int tum_prot_check=0;
+	 for(i=0;i<3;i++){
+		if(strcmp(norm_prot,valid_protocols[i])==0){
+			norm_prot_check=1;
+		}
+		if(strcmp(tum_prot,valid_protocols[i])==0){
+			tum_prot_check=1;
+		}
+	 }
+
+   if(norm_prot_check==0){
+		printf("Normal protocol '%s' is invalid should be one of (WGS|WXS|RNA).",norm_prot);
+		estep_print_usage(1);
+   }
+
+   if(tum_prot_check==0){
+		printf("Tumour protocol '%s' is invalid should be one of (WGS|WXS|RNA).",tum_prot);
+		estep_print_usage(1);
+   }
+
+   set_max_tum_cvg(estep_max_tumour_coverage);
+
    return;
 }
 
 int estep_main(int argc, char *argv[]){
 	estep_setup_options(argc, argv);
 
+	long double ********prob_arr = NULL;
+	alg_bean_t *alg = NULL;
+	char *fa_file = NULL;
+	int ignore_reg_count = 0;
+	List *these_regions = NULL;
+	struct seq_region_t **ignore_regs = NULL;
+	char no_analysis_file_loc[500];
+	FILE *no_analysis_file = NULL;
+	List *no_analysis_list = NULL;
+	char *ref_seq = NULL;
+	FILE *debug_file = NULL;
+	FILE *snp_file = NULL;
+	FILE *mut_file = NULL;
+
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
+	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,
+														ref_idx,ignore_regions_file,alg_bean_loc,results,list_loc,
+																					&includeSW,&includeSingleEnd,&includeDups,version,norm_cn_loc,tum_cn_loc);
 
-	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean_loc,
-								results,list_loc,&includeSW,&includeSingleEnd,&includeDups);
+	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
 
 	check(cfg==0,"Error parsing config file.");
-   bam_access_include_sw(includeSW);
-   bam_access_include_se(includeSingleEnd);
-   bam_access_include_dup(includeDups);
+  bam_access_include_sw(includeSW);
+  bam_access_include_se(includeSingleEnd);
+  bam_access_include_dup(includeDups);
+
+  set_normal_cn(normal_copy_number);
+  set_tumour_cn(tumour_copy_number);
+
+  if(norm_plat==NULL){
+  	norm_plat = malloc(sizeof(char) * 50);
+		check_mem(norm_plat);
+		strcpy(norm_plat,".");
+  }
+  if(tum_plat==NULL){
+		tum_plat = malloc(sizeof(char) * 50);
+		check_mem(tum_plat);
+		strcpy(tum_plat,".");
+  }
 
 	//Load in alg bean
 	FILE *alg_bean_file = fopen(alg_bean_loc,"r");
 	check(alg_bean_file != 0 ,"Error trying to open alg_bean file: %s.",alg_bean_loc);
-	alg_bean_t *alg = alg_bean_read_file(alg_bean_file);
+	alg = alg_bean_read_file(alg_bean_file);
 	check(alg != NULL,"Error reading alg_bean from file.");
 	fclose(alg_bean_file);
 
 	//Load in probability array
-	long double ********prob_arr = covs_access_read_probs_from_file(probs_file,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
-									List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+	prob_arr = covs_access_read_probs_from_file(probs_file,
+														List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+														List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),
+																												List_count(alg->ref_base),List_count(alg->call_base));
 
 	//Set the algorithm modifiers and open the bam files
 	//Set the min base qual in case it's been changed.
@@ -282,7 +388,7 @@ int estep_main(int argc, char *argv[]){
 
 	//Get the chunk of ref sequence using this split section.
 	//Strip the .fai from the fasta file.
-	char *fa_file = malloc(sizeof(char) * (strlen(ref_idx)-3));
+	fa_file = malloc(sizeof(char) * (strlen(ref_idx)-3));
 	check_mem(fa_file);
 	strncpy(fa_file,ref_idx,(strlen(ref_idx)-4));
 	fa_file[strlen(ref_idx)-4] = '\0';
@@ -290,15 +396,14 @@ int estep_main(int argc, char *argv[]){
 
 	//Get ignored regions contained in split section
 	//Get ignored regions for section and calculate a list of sections to analyse.
-	int ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
+	ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
    check(ignore_reg_count >= 0,"Error trying to check the number of ignored regions for this chromosome.");
 
    //A list structure to store the ignored regions and skipped bases.
-   List *no_analysis_list = List_create();
+   no_analysis_list = List_create();
    output_set_no_analysis_section_list(no_analysis_list);
 
    //Now create a store for said regions.
-   struct seq_region_t **ignore_regs;
    ignore_regs = malloc(sizeof(struct seq_region_t *) *  ignore_reg_count);
    check_mem(ignore_regs);
    check(ignore_reg_access_get_ign_reg_for_chr(ignore_regions_file,chr_name,ignore_reg_count,ignore_regs)==0,"Error fetching ignored regions from file.");
@@ -306,7 +411,7 @@ int estep_main(int argc, char *argv[]){
 	//Create a list of sections to analyse.
 	//Check the contained ignored regions
 	//Resolve the ignored regions and start/stop into sections for analysis.
-	List *these_regions = ignore_reg_access_resolve_ignores_to_analysis_sections(start_zero_based+1,stop,ignore_regs,ignore_reg_count);
+	these_regions = ignore_reg_access_resolve_ignores_to_analysis_sections(start_zero_based+1,stop,ignore_regs,ignore_reg_count);
 
 	//Add each of these ignored regions to the no analysis list
 	int i=0;
@@ -341,7 +446,6 @@ int estep_main(int argc, char *argv[]){
 	char snp_out[500];
 	char mut_out[500];
 	char debug_out[500];
-	char no_analysis_file_loc[500];
 
 	int chk = sprintf(snp_out,"%s/%s/%d_%d.snps.vcf",results,chr_name,start_zero_based+1,stop);
 	check(chk>0,"Error generating snp output file location.");
@@ -356,31 +460,35 @@ int estep_main(int argc, char *argv[]){
 	check(chk>0,"Error generating no analysis file location.");
 
 	//Open files for output
-	FILE *mut_file = fopen(mut_out,"w");
+	mut_file = fopen(mut_out,"w");
 	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
-	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file, assembly, species);
+	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
+																									assembly, species, norm_prot, tum_prot,
+																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to muts file.");
 
-	FILE *snp_file = fopen(snp_out,"w");
+	snp_file = fopen(snp_out,"w");
 	check(snp_file != 0, "Error trying to open snp file for output: %s.",snp_out);
-	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file, assembly, species);
+	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
+																									assembly, species, norm_prot, tum_prot,
+																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to SNP file.");
 
-	FILE *no_analysis_file = fopen(no_analysis_file_loc,"w");
+	no_analysis_file = fopen(no_analysis_file_loc,"w");
 	check(no_analysis_file != 0, "Error trying to open no analysis file for output: %s.",no_analysis_file_loc);
 	output_set_no_analysis_file(no_analysis_file);
 
-	FILE *debug_file = NULL;
 	if(debug == 1){
 		debug_file = fopen(debug_out,"w");
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
-		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file, assembly, species);
+		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file,
+																									assembly, species, norm_prot, tum_prot,
+																									norm_plat, tum_plat);
 		check(chk_write==0,"Error writing header to dbg file.");
 	}
 
 
 	//Iterate through analysis sections
-	char *ref_seq;
 	//Iterate through sections.
 	LIST_FOREACH(these_regions, first, next, cur){
 		printf("Estep section %s:%d-%d\n",chr_name,((seq_region_t *)cur->value)->beg,((seq_region_t *)cur->value)->end);
@@ -417,8 +525,8 @@ int estep_main(int argc, char *argv[]){
 	fclose(no_analysis_file);
 	//cleanup
 	List_clear_destroy(these_regions);
-	List_clear_destroy(no_analysis_list);
 	free(fa_file);
+	free(no_analysis_list);
 	bam_access_closebams();
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count,ignore_regs);
 	covs_access_free_prob_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
