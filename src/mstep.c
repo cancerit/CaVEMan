@@ -134,11 +134,11 @@ int mstep_main(int argc, char *argv[]){
 	mstep_setup_options(argc,argv);
 
 	char *fa_file = NULL;
-	int ********arr_check = NULL;
+	uint64_t ********arr_check = NULL;
 	char *ref_seq = NULL;
 	List *these_regions = NULL;
 	struct seq_region_t **ignore_regs = NULL;
-	int ********covs = NULL;
+	uint64_t ********covs = NULL;
 	FILE *alg_bean_file = NULL;
 	alg_bean_t *alg = NULL;
 
