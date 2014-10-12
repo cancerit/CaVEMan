@@ -56,7 +56,7 @@ UMNORM_TARGET=./bin/generateCavemanUMNormVCF
 
 .NOTPARALLEL: test
 
-all: clean make_bin $(CAVEMAN_TARGET) $(UMNORM_TARGET) $(MEM_TARGET) copyscript test
+all: clean make_bin $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript test
 	@echo  Binaries have been compiled.
 
 $(UMNORM_TARGET): $(OBJS)
