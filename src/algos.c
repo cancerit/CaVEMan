@@ -139,7 +139,7 @@ void set_max_tum_cvg(int i){
 	max_tum_cvg = i;
 }
 
-int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size){
+int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size){
 	//Fetch all reads for this pos? Or a struct for a single read at that position?
 	List *reads = NULL;
 	char *cbase = NULL;
@@ -260,9 +260,9 @@ inline long double algos_calculate_per_base_normal_contamination(uint8_t norm_co
 int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int8_t ref_base_idx, long double base_norm_contam){
 	//Normal read
 	if(read->normal==1){
-
 		//Calculate initial normal probabilities.
-		long double res = genos->ref_geno_norm_prob + *(read->ref_base_probs[ref_base_idx]);
+		long double ref_base_prob = *(read->ref_base_probs[ref_base_idx]);
+		long double res = genos->ref_geno_norm_prob + ref_base_prob;
 		genos->ref_geno_norm_prob = res;
 
 		//iterate through from 0 to highest available of genos->hom_count, genos->het_norm_count,
@@ -283,7 +283,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				long double ans = genos->het_snp_norm_genotypes[iter]->prob +
 												(
 													logl(
-														expl( *(read->ref_base_probs[ref_base_idx]) + logl((long double)1 - tmp_psi_var_prob_norm) )
+														expl( ref_base_prob + logl((long double)1 - tmp_psi_var_prob_norm) )
 															+
 														expl( *(read->ref_base_probs[(genos->het_snp_norm_genotypes[iter]->norm_geno->var_base_idx)]) + logl(tmp_psi_var_prob_norm) )
 													)
@@ -293,9 +293,9 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 		}
 
 	}else if(read->normal==0){//A tumour read
-		long double res = genos->ref_geno_tum_prob + *(read->ref_base_probs[ref_base_idx]);
+		long double ref_base_prob = *(read->ref_base_probs[ref_base_idx]);
+		long double res = genos->ref_geno_tum_prob + ref_base_prob;
 		genos->ref_geno_tum_prob = res;
-
 		//iterate through from 0 to highest available of genos->somatic_count, genos->hom_count, genos->het_count
 		int iter=0;
 		for(iter=0;iter<genos->tum_max;iter++){
@@ -307,11 +307,10 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				//Calculate read component probability.
 				long double log_tmp_psi_var_prob = logl(tmp_psi_var_prob);
 				long double log_1_minus_tmp_psi_var_prob = logl((long double)1 - tmp_psi_var_prob);
-
 				long double ans = genos->somatic_genotypes[iter]->prob +
 																	logl(
 																		(
-																			expl( (*(read->ref_base_probs[ref_base_idx]) + log_1_minus_tmp_psi_var_prob) )
+																			expl( (ref_base_prob + log_1_minus_tmp_psi_var_prob) )
 																				+
 																			expl( (*(read->ref_base_probs[genos->somatic_genotypes[iter]->tum_geno->var_base_idx]) + log_tmp_psi_var_prob) )
 																		)
@@ -341,7 +340,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				long double tum_res = genos->het_snp_genotypes[iter]->prob +
 												(
 													logl(
-														expl( *(read->ref_base_probs[ref_base_idx]) + logl((long double)1 - tmp_psi_var_prob_tum) )
+														expl( ref_base_prob + logl((long double)1 - tmp_psi_var_prob_tum) )
 															+
 														expl( *(read->ref_base_probs[(genos->het_snp_genotypes[iter]->norm_geno->var_base_idx)]) + logl(tmp_psi_var_prob_tum) )
 													)
@@ -463,14 +462,21 @@ inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long 
 	return;
 }
 
+inline long double calculate_ref_prob(const long double norm, const long double tum){
+	long double ref_prob;
+	ref_prob = logl(((long double)1 - (long double)prior_s_prob) - (long double)prior_m_prob)
+							+ norm + tum;
+	return ref_prob;
+}
+
 void algos_run_per_position_estep_maths(estep_position_t *pos){
 	//Put together the reference genotype probability.
 	long double norm_factor_max = -DBL_MAX;
 	pos->genos->ref_genotype->prob = 0.0;
-	long double ref_prob = logl(((long double)1 - (long double)prior_s_prob) - (long double)prior_m_prob)
-							+ pos->genos->ref_geno_norm_prob + pos->genos->ref_geno_tum_prob;
-
+	long double ref_prob = calculate_ref_prob(pos->genos->ref_geno_norm_prob,pos->genos->ref_geno_tum_prob);
 	pos->genos->ref_genotype->prob = ref_prob;
+	//long double ref_prob = logl(((long double)1 - (long double)prior_s_prob) - (long double)prior_m_prob)
+	//						+ pos->genos->ref_geno_norm_prob + pos->genos->ref_geno_tum_prob;
 	if(pos->genos->ref_genotype->prob > norm_factor_max){
 		norm_factor_max = pos->genos->ref_genotype->prob;
 	}
@@ -613,7 +619,6 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 						//Finish the last position we ran over
 						if(pos->ref_base_idx >= 0 && pos->norm_cn > 0 && pos->tum_cn > 0 && pos->total_cvg_norm > 0 && pos->total_cvg_tum > 0){
 							algos_run_per_position_estep_maths(pos);
-							//printf("Total_mut");
 							int rounded_mut = (int)(round(floorl(pos->total_mut_prob*100 + 0.5)));
 							int rounded_snp = (int)(round(floorl(pos->total_snp_prob*100 + 0.5)));
 							if(rounded_mut >= ((int)(min_m_prob * 100))){
