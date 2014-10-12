@@ -1,23 +1,5 @@
-<<<<<<< HEAD
-bin/
-src/*.o
-tests/alg_bean_tests
-tests/algos_tests
-tests/bam_access_tests
-tests/cn_access_tests
-tests/config_file_access_tests
-tests/covs_access_tests
-tests/fai_access_tests
-tests/genotype_tests
-tests/ign_region_access_tests
-tests/output_tests
-tests/split_access_tests
-tests/tests_log
-
-=======
-/bin
+/bin/
 /src/*.o
 /tests/*_tests
 /samtools/
 /tests/tests_log
->>>>>>> e4d46f853c5a47a0e575f797e9868db0cb905db1

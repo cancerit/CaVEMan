@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#!/usr/bin/perl
 
 ########## LICENSE ##########
 # Copyright (c) 2014 Genome Research Ltd.
@@ -36,33 +36,33 @@ use Carp;
 	open($OUT,'>',$options->{'o'}.".tmp") or die("Error opening output file $options->{o}.tmp for write: $!\n");
 		#Iterate through each file
 		my $have_head = 0;
-		my $head;
+		my @head ;
 
 		#Do the header checks first;
 		foreach my $filename(@{$options->{'files'}}){
 			#open file
 			my $IN;
 			open($IN, '<', $filename) or die("Error trying to open '$filename' for read: $!\n");
-				my $tmp_head;
+				my @tmp_head;
 				while(<$IN>){
 					my $line = $_;
 					if($line =~ m/^#/){ #Header line
 						if($have_head == 0){
-							push (@$head, $line);
+							push (@head, $line);
 						}else{ #We've already loaded in a header so this is a new file that needs a header check
 							#Check our header matched that previously passed in.
-							push (@$tmp_head, $line);
+							push (@tmp_head, $line);
 						}
 					}elsif($line !~ m/^#/){
 						#Reached end of header.
 						if($have_head == 0){
 							$have_head = 1;
 						}else{ #Compare this header to the header to be printed.
-							for(my $i=0; $i<scalar(@$tmp_head); $i++){
-								next if($tmp_head->[$i] =~ m/fileDate/);
-								if($tmp_head->[$i] ne $head->[$i] ){
+							for(my $i=0; $i<scalar(@tmp_head); $i++){
+								next if($tmp_head[$i] =~ m/fileDate/);
+								if($tmp_head[$i] ne $head[$i] ){
 									croak("Header mismatch found at line ",($i+1),
-													" of header:\n",$tmp_head->[$i]," ne ",$head->[$i],"\n");
+													" of header:\n",$tmp_head[$i]," ne ",$head[$i],"\n");
 								}
 							}
 						}
@@ -73,11 +73,11 @@ use Carp;
 			close($IN) or croak ("Error closing file '$filename' when checking header: $!");
 		}
 
-		print "".scalar(@$head)." header lines\n";
+		warn "".scalar(@head)." header lines\n";
 
 		#Print header to file.
-		for(my $i=0; $i<scalar(@$head); $i++){
-			print $OUT $head->[$i];
+		for(my $i=0; $i<scalar(@head); $i++){
+			print $OUT $head[$i];
 		}
 
 		#Load in lines from files.
