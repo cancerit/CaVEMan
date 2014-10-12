@@ -133,8 +133,7 @@ void split_setup_options(int argc, char *argv[]){
    return;
 }
 
-int round_divide_integer(int dividend, int divisor)
-{
+int round_divide_integer(int dividend, int divisor){
 		if(dividend == 0 || divisor == 0){
 			return 1;
 		}
@@ -224,8 +223,9 @@ int split_main(int argc, char *argv[]){
 				sect_stop = overlap->end;
 				List_push(ign_this_sect,overlap);
 			}
-
+			printf("Starting split section %d\n",last_stop+1);
 			rdCount += get_read_counts_with_ignore(ign_this_sect,last_stop+1,sect_stop,chr_name);
+			printf("Found %d reads in section %d-%d\n",rdCount,last_stop+1,sect_stop);
 			mean_reg_cn_tum = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,last_stop+1,sect_stop,0);
 			List_destroy(contained);
 			check(rdCount >= 0,"Problem retrieving reads for section.");
@@ -243,7 +243,9 @@ int split_main(int argc, char *argv[]){
 					sect_stop += increment;
 					List_clear_destroy(ign_this_sect);
 				}
+				printf("Section is end or requires normal increase in size: %d-%d\n",last_stop+1,sect_stop);
 			}else if(rdCount > ((max_read_count/round_divide_integer(mean_reg_cn_tum,2)) * maxPropRdCount)){
+				printf("Shrinking section to size: %d-%d\n",last_stop+1,sect_stop);
 				sect_stop = shrink_section_to_size(chr_name,sect_start,sect_stop,ignore_regs,ignore_reg_count,rdCount);
 				check(sect_stop > 0,"Error resizing over sized section.");
 				split_access_print_section(output,chr_name,sect_start,sect_stop);
@@ -255,6 +257,7 @@ int split_main(int argc, char *argv[]){
 				continue;
 			}else if(rdCount >= (int)(max_read_count/round_divide_integer(mean_reg_cn_tum,2))
 									&& rdCount <= ((int)(max_read_count/round_divide_integer(mean_reg_cn_tum,2)) * maxPropRdCount)){
+				printf("Section is good size: %d-%d\n",last_stop+1,sect_stop);
 				split_access_print_section(output,chr_name,sect_start,sect_stop);
 				sect_start = sect_stop+1;
 				last_stop = sect_stop;
@@ -285,7 +288,7 @@ error:
 int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop, struct seq_region_t **ignore_regs,
 																	int ignore_reg_count, int read_num){
 	int new_inc = increment;
-	new_inc /= 16;
+	new_inc /= 2;
 	int mean_reg_cn_tum = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,sect_start,sect_stop,0);
 	//int mean_reg_cn_norm = 0;
 	while(read_num > (round_divide_integer( max_read_count,round_divide_integer(mean_reg_cn_tum,2)) * maxPropRdCount)){
@@ -311,6 +314,7 @@ int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop, struct 
 			List_push(ign_this_sect,overlap);
 		}
 		read_num = get_read_counts_with_ignore(ign_this_sect,sect_start,sect_stop,chr_name);
+		printf("Found %d reads in shrunk section %d-%d\n",read_num,sect_start,sect_stop);
 		mean_reg_cn_tum = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,sect_start,sect_stop,0);
 	  //mean_reg_cn_norm = cn_access_get_mean_cn_for_range(tum_cn_loc,chr_name,last_stop+1,sect_stop,1);
 		free(contained);

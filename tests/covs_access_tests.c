@@ -41,7 +41,7 @@ int dim7 = 1;
 int dim8 = 2;
 
 char *test_covs_access_generate_cov_array_given_dimensions(){
-	int ********arr = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
 	mu_assert(arr != NULL,"Array not generated.\n");
 	mu_assert(arr[0][0][0][0][0][0][0][0] == 0, "Incorrectly formed array created.\n");
 	mu_assert(arr[0][0][0][0][0][0][0][1] == 0, "Incorrectly formed array created.\n");
@@ -50,14 +50,14 @@ char *test_covs_access_generate_cov_array_given_dimensions(){
 }
 
 char *test_covs_access_write_covs_to_file(){
-	int ********arr = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
 	mu_assert(arr != NULL,"Array not generated.\n");
 	arr[0][0][0][0][0][0][0][0] = 7;
 	arr[0][0][0][0][0][0][0][1] = 12;
 	covs_access_write_covs_to_file(test_cov_out_loc,arr,dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
-	//void covs_access_write_covs_to_file(char *file_loc,int ********arr,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8)
+	//void covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8)
 	//Load in the cov file and check it matches.
-	int ********arr_2 = covs_access_read_covs_from_file(test_cov_out_loc, dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
+	uint64_t ********arr_2 = covs_access_read_covs_from_file(test_cov_out_loc, dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
 	mu_assert(arr_2 != NULL,"Array not generated.\n");
 	mu_assert(cov_access_compare_two_cov_arrays(arr,arr_2,dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8)==0,"Arrays after writing and reading in did not match.\n");
 	covs_access_free_cov_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8, arr);
@@ -66,12 +66,12 @@ char *test_covs_access_write_covs_to_file(){
 }
 
 char *test_covs_access_read_covs_from_file(){
-	//int ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8)
-	int ********exp = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
+	//uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8)
+	uint64_t ********exp = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
 	mu_assert(exp != NULL,"Array not generated.\n");
 	exp[0][0][0][0][0][0][0][0] = 7;
 	exp[0][0][0][0][0][0][0][1] = 12;
-	int ********got = covs_access_read_covs_from_file(test_cov_loc,dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
+	uint64_t ********got = covs_access_read_covs_from_file(test_cov_loc,dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
 	mu_assert(got != NULL,"Array not generated.\n");
 	mu_assert(cov_access_compare_two_cov_arrays(exp,got,dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8)==0,"Arrays after reading in did not match.\n");
 	covs_access_free_cov_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8, exp);
@@ -80,10 +80,10 @@ char *test_covs_access_read_covs_from_file(){
 }
 
 char *test_cov_access_compare_two_cov_arrays(){
-	int ********arr = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
 	arr[0][0][0][0][0][0][0][0] = 7;
 	arr[0][0][0][0][0][0][0][1] = 12;
-	int ********arr_2 = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
+	uint64_t ********arr_2 = covs_access_generate_cov_array_given_dimensions( dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8);
 	arr_2[0][0][0][0][0][0][0][0] = 7;
 	arr_2[0][0][0][0][0][0][0][1] = 12;
 	mu_assert(cov_access_compare_two_cov_arrays(arr,arr_2,dim1, dim2,  dim3,  dim4,  dim5,  dim6,  dim7,  dim8)==0,"Arrays do not appear to be equal when they should be.\n");
@@ -95,7 +95,7 @@ char *test_cov_access_compare_two_cov_arrays(){
 }
 
 char *test_covs_access_generate_probability_array(){
-	int ********arr = covs_access_generate_cov_array_given_dimensions( 1, 1,  1,  1,  1,  1,  4,  4);
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions( 1, 1,  1,  1,  1,  1,  4,  4);
 	mu_assert(arr != NULL,"Array not generated.\n");
 	arr[0][0][0][0][0][0][0][0] = 1;
 	arr[0][0][0][0][0][0][0][1] = 4;
@@ -139,7 +139,7 @@ char *test_covs_access_generate_probability_array(){
 }
 
 char *test_covs_access_write_read_probs_to_file(){
-	int ********arr = covs_access_generate_cov_array_given_dimensions( 1, 1,  1,  1,  1,  1,  4,  4);
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions( 1, 1,  1,  1,  1,  1,  4,  4);
 	mu_assert(arr != NULL,"Array not generated.\n");
 	arr[0][0][0][0][0][0][0][0] = 1;
 	arr[0][0][0][0][0][0][0][1] = 4;

@@ -133,7 +133,7 @@ void genotype_init_genotype_t(genotype_t *gen){
    	genotype_set_base_count(gen, bases[i], 0);
    }
    gen->var_base = '\0';
-   gen->var_base_prop = 0;
+   gen->var_base_prop = 0.0;
    return;
 }
 

@@ -113,7 +113,7 @@ int merge_main(int argc, char *argv[]){
 	merge_setup_options(argc,argv);
 
 	alg_bean_t *alg = NULL;
-	int ********covs = NULL;
+	uint64_t ********covs = NULL;
 	long double ********prob_arr = NULL;
 	int tmp = 0;
 	//Open the config file and do relevant things
@@ -145,7 +145,7 @@ int merge_main(int argc, char *argv[]){
 		char cov_loc[500] = "";
 		int chck = sprintf(cov_loc,"%s/%s/%d_%d.covs",results,chr,start,stop);
 		check(chck>0,"Error creating path to covs file.");
-		int ********to_append = covs_access_read_covs_from_file(cov_loc,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+		uint64_t ********to_append = covs_access_read_covs_from_file(cov_loc,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 		//append retrieved array to the new one
 		covs_access_merge_count_arrays(covs,to_append,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
@@ -162,7 +162,7 @@ int merge_main(int argc, char *argv[]){
 							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	check(chk_covs==0,"Error writing covariate array to file.");
 	//read in the written file and check we've still got the right results.
-	int ********arr_check = covs_access_read_covs_from_file(covariate_file,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+	uint64_t ********arr_check = covs_access_read_covs_from_file(covariate_file,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 
 	int check_arrays = cov_access_compare_two_cov_arrays(covs,arr_check,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),

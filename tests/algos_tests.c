@@ -45,10 +45,10 @@ char *test_dbg_out = "testData/dbg.vcf";
 char *test_no_anal_out = "testData/no_analysis.bed";
 
 char *test_algos_mstep_read_position(){
-	//algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, int from, int to, char *ref_base);
+	//algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, int from, int to, char *ref_base);
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(norm,tum);
 	mu_assert(bam_access_openbams(norm, tum)==0,"Bams not opened.\n");
-	int ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	mu_assert(arr != NULL,"Array not properly created.\n");
 	char *chr = "22";
@@ -70,7 +70,7 @@ char *test_algos_mstep_read_position_two(){
 	//char *mstep_norm = "tests/mstep_test_wt.bam";
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(mstep_norm,mstep_mut);
 	mu_assert(bam_access_openbams(mstep_norm,mstep_mut)==0,"Bams not opened.\n");
-	int ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	mu_assert(arr != NULL,"Array not properly created.\n");
 	char *chr = "2";
 	int from = 38000243;

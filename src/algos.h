@@ -47,7 +47,7 @@ typedef struct estep_position_t{
 	char *ref_base;
 } estep_position_t;
 
-int algos_mstep_read_position(alg_bean_t *alg,int ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size);
+int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size);
 int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char *chr_name, uint32_t from, uint32_t to, char *ref_base,
 												char *norm_cn, char *tum_cn, FILE *snp_out, FILE *tum_out, FILE *dbg, int split_size);
 

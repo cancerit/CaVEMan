@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <covs_access.h>
@@ -25,30 +25,30 @@
 #include <dbg.h>
 #include <stdlib.h>
 
-int ********covs_access_generate_cov_array_given_dimensions(int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
-	int ********array = (int ********)malloc(sizeof(int *******) * dim1);
+uint64_t ********covs_access_generate_cov_array_given_dimensions(int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
+	uint64_t ********array = (uint64_t ********)malloc(sizeof(uint64_t *******) * dim1);
 	check_mem(array);
 	int i,j,k,m,n,p,r,s;
 	for(i=0;i<dim1;i++){
-		array[i] = (int *******)malloc(sizeof(int******) * dim2);
+		array[i] = (uint64_t *******)malloc(sizeof(uint64_t******) * dim2);
 		check_mem(array[i]);
 		for(j=0;j<dim2;j++){
-			array[i][j] = (int ******)malloc(sizeof(int*****) * dim3);
+			array[i][j] = (uint64_t ******)malloc(sizeof(uint64_t*****) * dim3);
 			check_mem(array[i][j]);
 			for(k=0;k<dim3;k++){
-				array[i][j][k] = (int *****)malloc(sizeof(int****) * dim4);
+				array[i][j][k] = (uint64_t *****)malloc(sizeof(uint64_t****) * dim4);
 				check_mem(array[i][j][k]);
 				for(m=0;m<dim4;m++){
-					array[i][j][k][m] = (int ****)malloc(sizeof(int***) * dim5);
+					array[i][j][k][m] = (uint64_t ****)malloc(sizeof(uint64_t***) * dim5);
 					check_mem(array[i][j][k][m]);
-					for(n=0;n<dim5;n++){					
-						array[i][j][k][m][n] = (int ***)malloc(sizeof(int**) * dim6);
+					for(n=0;n<dim5;n++){
+						array[i][j][k][m][n] = (uint64_t ***)malloc(sizeof(uint64_t**) * dim6);
 						check_mem(array[i][j][k][m][n]);
 						for(p=0;p<dim6;p++){
-							array[i][j][k][m][n][p] = (int **)malloc(sizeof(int*) * dim7);
+							array[i][j][k][m][n][p] = (uint64_t **)malloc(sizeof(uint64_t*) * dim7);
 							check_mem(array[i][j][k][m][n][p]);
 							for(r=0;r<dim7;r++){
-								array[i][j][k][m][n][p][r] = (int *)malloc(sizeof(int) * dim8);
+								array[i][j][k][m][n][p][r] = (uint64_t *)malloc(sizeof(uint64_t) * dim8);
 								check_mem(array[i][j][k][m][n][p][r]);
 								for(s=0;s<dim8;s++){
 									array[i][j][k][m][n][p][r][s] = 0;
@@ -65,13 +65,13 @@ error:
 	return NULL;
 }
 
-void covs_access_free_cov_array_given_dimensions(int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8, int ********arr){
+void covs_access_free_cov_array_given_dimensions(int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8, uint64_t ********arr){
 	int i,j,k,m,n,p,r;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								free(arr[i][j][k][m][n][p][r]);
@@ -98,7 +98,7 @@ void covs_access_free_prob_array_given_dimensions(int dim1,int dim2, int dim3, i
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								free(arr[i][j][k][m][n][p][r]);
@@ -119,16 +119,16 @@ void covs_access_free_prob_array_given_dimensions(int dim1,int dim2, int dim3, i
 	return;
 }
 
-int covs_access_write_covs_to_file(char *file_loc,int ********arr,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
+int covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	assert(file_loc != NULL);
 	assert(arr != NULL);
-	int true_arr[dim1][dim2][dim3][dim4][dim5][dim6][dim7][dim8];
+	uint64_t true_arr[dim1][dim2][dim3][dim4][dim5][dim6][dim7][dim8];
 	int i,j,k,m,n,p,r,s;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
@@ -143,7 +143,7 @@ int covs_access_write_covs_to_file(char *file_loc,int ********arr,int dim1,int d
 	}
 	FILE *file = fopen(file_loc,"wb");
 	check(file,"Error opening file to write cov array: %s.",file_loc);
-	int chk = fwrite(true_arr,sizeof(int),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);	
+	int chk = fwrite(true_arr,sizeof(uint64_t),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);
 	check(chk==dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,"Error writing cov array to file.");
 	fflush(file);
 	fclose(file);
@@ -153,24 +153,24 @@ error:
 	return -1;
 }
 
-int ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
+uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	assert(file_loc != NULL);
 	//Use a real array rather than pointers for reading...
-	int true_arr[dim1][dim2][dim3][dim4][dim5][dim6][dim7][dim8];
+	uint64_t true_arr[dim1][dim2][dim3][dim4][dim5][dim6][dim7][dim8];
 	FILE *file = fopen(file_loc,"rb");
 	check(file,"Error opening file to read cov array: %s.",file_loc);
-	int chk = fread(true_arr,sizeof(int),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);	
+	int chk = fread(true_arr,sizeof(uint64_t),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);
 	check(chk==dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,"Error reading cov array from file.");
 	fclose(file);
 	//Actual return array
-	int ********arr = covs_access_generate_cov_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8);
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8);
 	//copy values to array pointers.
 	int i,j,k,m,n,p,r,s;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
@@ -189,13 +189,13 @@ error:
 	return NULL;
 }
 
-int cov_access_compare_two_cov_arrays(int ********first,int ********second,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
+int cov_access_compare_two_cov_arrays(uint64_t ********first,uint64_t ********second,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	int i,j,k,m,n,p,r,s;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
@@ -219,7 +219,7 @@ int cov_access_compare_two_prob_arrays(long double ********first,long double ***
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
@@ -238,17 +238,17 @@ int cov_access_compare_two_prob_arrays(long double ********first,long double ***
 }
 
 
-void cov_access_print_cov_array(int ********arr,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
+void cov_access_print_cov_array(uint64_t ********arr,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	int i,j,k,m,n,p,r,s;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
-									printf("%d,%d,%d,%d,%d,%d,%d,%d - %d\n",i,j,k,m,n,p,r,s,arr[i][j][k][m][n][p][r][s]);
+									printf("%d,%d,%d,%d,%d,%d,%d,%d - %lld\n",i,j,k,m,n,p,r,s,(long long int)arr[i][j][k][m][n][p][r][s]);
 								}
 							}
 						}
@@ -259,15 +259,15 @@ void cov_access_print_cov_array(int ********arr,int dim1,int dim2, int dim3, int
 	}
 	printf("\n");
 	return;
-}	
+}
 
-void covs_access_merge_count_arrays(int ********arr_1, int ********arr_2, int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
+void covs_access_merge_count_arrays(uint64_t ********arr_1, uint64_t ********arr_2, int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	int i,j,k,m,n,p,r,s;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
@@ -283,7 +283,7 @@ void covs_access_merge_count_arrays(int ********arr_1, int ********arr_2, int di
 	return;
 }
 
-long double ********covs_access_generate_probability_array(int ********counts,int rd_order_size,int strand_size, int lane_size, int rpos_size, int mq_size, int bq_size, int ref_b_size, int called_b_size){
+long double ********covs_access_generate_probability_array(uint64_t ********counts,int rd_order_size,int strand_size, int lane_size, int rpos_size, int mq_size, int bq_size, int ref_b_size, int called_b_size){
 	long double ********array = (long double ********)malloc(sizeof(long double *******) * rd_order_size);
 	check_mem(array);
 	int i,j,k,m,n,p,r,s;
@@ -299,7 +299,7 @@ long double ********covs_access_generate_probability_array(int ********counts,in
 				for(m=0;m<rpos_size;m++){
 					array[i][j][k][m] = (long double ****)malloc(sizeof(long double***) * mq_size);
 					check_mem(array[i][j][k][m]);
-					for(n=0;n<mq_size;n++){					
+					for(n=0;n<mq_size;n++){
 						array[i][j][k][m][n] = (long double ***)malloc(sizeof(long double**) * bq_size);
 						check_mem(array[i][j][k][m][n]);
 						for(p=0;p<bq_size;p++){
@@ -310,7 +310,7 @@ long double ********covs_access_generate_probability_array(int ********counts,in
 								check_mem(array[i][j][k][m][n][p][r]);
 								long sum_all = 0;
 								int zeroCount = 0;
-								//Iterate through the called bases.								
+								//Iterate through the called bases.
 								for(s=0;s<called_b_size;s++){
 									if(counts[i][j][k][m][n][p][r][s] == 0){
 										counts[i][j][k][m][n][p][r][s] = 1;
@@ -319,10 +319,11 @@ long double ********covs_access_generate_probability_array(int ********counts,in
 									sum_all += counts[i][j][k][m][n][p][r][s];
 									//array[i][j][k][m][n][p][r][s] = 0;
 								}
-								
+
 								if(zeroCount < 4){
 									for(s=0;s<called_b_size;s++){
 										long double result = logl((((long double) counts[i][j][k][m][n][p][r][s]) / ((long double) sum_all)));
+										check(isnan(result)!=1,"NaN encountered in non zero count location [%d][%d][%d][%d][%d][%d][%d][%d].",i,j,k,m,n,p,r,s);
 										array[i][j][k][m][n][p][r][s] = result;
 									}
 								}else{
@@ -335,7 +336,7 @@ long double ********covs_access_generate_probability_array(int ********counts,in
 										int cnt = 0;
 										for(read_ord = 0; read_ord<rd_order_size; read_ord++ ){
 											int read_pos = 0;
-											for(read_pos=0; read_pos<rpos_size; read_pos++){	
+											for(read_pos=0; read_pos<rpos_size; read_pos++){
 												int base_q = 0;
 												for(base_q = 0; base_q<bq_size; base_q++){
 													cnt++;
@@ -347,16 +348,17 @@ long double ********covs_access_generate_probability_array(int ********counts,in
 											}
 										}
 										counts[i][j][k][m][n][p][r][s] = sump;
-									}		
-									long sum = 0;							
+									}
+									long sum = 0;
 									for(s=0;s<called_b_size;s++){
 										sum += counts[i][j][k][m][n][p][r][s];
 									}
 									for(s=0;s<called_b_size;s++){
 										long double result = logl((((long double) counts[i][j][k][m][n][p][r][s]) / ((long double) sum)));
+										check(isnan(result)!=1, "NaN encountered in zero count location [%d][%d][%d][%d][%d][%d][%d][%d].",i,j,k,m,n,p,r,s);
 										array[i][j][k][m][n][p][r][s] = result;
 									}
-								}									
+								}
 							}
 						}
 					}
@@ -375,7 +377,7 @@ void cov_access_print_prob_array(long double ********arr,int dim1,int dim2, int 
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
@@ -392,17 +394,17 @@ void cov_access_print_prob_array(long double ********arr,int dim1,int dim2, int 
 	return;
 }
 
-void cov_access_print_cov_and_prob_array(int ********arr,long double ********arr_2,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
+void cov_access_print_cov_and_prob_array(uint64_t ********arr,long double ********arr_2,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	int i,j,k,m,n,p,r,s;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
-									printf("%d,%d,%d,%d,%d,%d,%d,%d\t%d\t%10.5Le\n",i,j,k,m,n,p,r,s,arr[i][j][k][m][n][p][r][s],arr_2[i][j][k][m][n][p][r][s]);
+									printf("%d,%d,%d,%d,%d,%d,%d,%d\t%lld\t%10.5Le\n",i,j,k,m,n,p,r,s,(long long int)arr[i][j][k][m][n][p][r][s],arr_2[i][j][k][m][n][p][r][s]);
 								}
 							}
 						}
@@ -424,7 +426,7 @@ int covs_access_write_probs_to_file(char *file_loc,long double ********arr,int d
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
@@ -439,7 +441,7 @@ int covs_access_write_probs_to_file(char *file_loc,long double ********arr,int d
 	}
 	FILE *file = fopen(file_loc,"wb");
 	check(file,"Error opening file to write cov array: %s.",file_loc);
-	int chk = fwrite(true_arr,sizeof(long double),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);	
+	int chk = fwrite(true_arr,sizeof(long double),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);
 	check(chk==dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,"Error writing prob array to file.");
 	fflush(file);
 	fclose(file);
@@ -465,7 +467,7 @@ long double ********covs_access_generate_prob_array_given_dimensions(int dim1,in
 				for(m=0;m<dim4;m++){
 					array[i][j][k][m] = (long double ****)malloc(sizeof(long double***) * dim5);
 					check_mem(array[i][j][k][m]);
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						array[i][j][k][m][n] = (long double ***)malloc(sizeof(long double**) * dim6);
 						check_mem(array[i][j][k][m][n]);
 						for(p=0;p<dim6;p++){
@@ -495,7 +497,7 @@ long double  ********covs_access_read_probs_from_file(char *file_loc,int dim1,in
 	long double true_arr[dim1][dim2][dim3][dim4][dim5][dim6][dim7][dim8];
 	FILE *file = fopen(file_loc,"rb");
 	check(file,"Error opening file to read cov array: %s.",file_loc);
-	int chk = fread(true_arr,sizeof(long double),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);	
+	int chk = fread(true_arr,sizeof(long double),dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,file);
 	check(chk==dim1*dim2*dim3*dim4*dim5*dim6*dim7*dim8,"Error reading cov array from file.");
 	fclose(file);
 	//Actual return array
@@ -506,7 +508,7 @@ long double  ********covs_access_read_probs_from_file(char *file_loc,int dim1,in
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
 				for(m=0;m<dim4;m++){
-					for(n=0;n<dim5;n++){					
+					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								for(s=0;s<dim8;s++){
