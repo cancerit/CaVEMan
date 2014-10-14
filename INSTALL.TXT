@@ -2,14 +2,25 @@ System Requirements
 ===================
 
 caveman is designed to run in a compute farm/clustre environment.
-caveman depends on the samtools library <http://sourceforge.net/projects/samtools/>. 
+caveman depends on:
+  samtools-1.0
+  htslib
+both can be found here <https://github.com/samtools>
 
 
 Compilation
 ===========
 
-Type 'make LFLAGS=-L$SAMTOOLS/lib OPTINC=-I$SAMTOOLS/include/' to compile caveman 
+Type 'make' if you have the following environmental variables $SAMTOOLS $HTSLIB set 
+to be the directory of your local install of each.
+
+Otherwise the command below will hopefully help you.
+
+make LFLAGS="-L/<your path to samtools>/samtools-1.0/ -L-/<your path to htslib>/htslib/" OPTINC="-I/<your path to samtools>/samtools-1.0/ -I/<your path to htslib>/htslib/ -I/<your path to htslib>/htslib/htslib"
+
+LFLAGS=-L$SAMTOOLS/lib OPTINC=-I$SAMTOOLS/include/' to compile caveman 
 where $SAMTOOLS is the path to your local install of samtools. 
+SAMTOOLS)/ -I$(HTSLIB)/ -I$(HTSLIB
 
 Installation
 ============
