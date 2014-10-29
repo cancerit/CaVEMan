@@ -189,6 +189,82 @@ char *test_bam_access_get_contigs_from_bam_no_spp(){
 	return NULL;
 }
 
+char *test_bam_access_check_bam_flags(){
+	bam1_t *b = bam_init1();
+	b->core.qual = 60;
+	b->core.flag = 99; //mapped, proper pair, mate rev strand, 1st in pair
+	//Check pass
+	mu_assert(bam_access_check_bam_flags(b)==1,"Pass bam checks");
+	//check fail on qual
+	b->core.qual = 0;
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - Qual");
+	b->core.qual = 60;
+	//Check fail on unmapped
+	b->core.flag = 101;
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - unmapped");
+	//Check fail on secondary mapping
+	b->core.flag = 355;
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - 2ndary alignment");
+	//Check fail on QCfail
+	b->core.flag = 611;
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - QC fail");
+	//Check fail on 2048 flag
+	b->core.flag = 2147;
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - Supplementary alignment");
+	//check fail on duplicate
+	b->core.flag = 1123;
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - Supplementary alignment");
+	//check pass duplicate
+	bam_access_include_dup(1);
+	b->core.flag = 1123;
+	mu_assert(bam_access_check_bam_flags(b)==1,"Pass bam checks - Supplementary alignment");
+	//check pass single end
+	b->core.flag = 16;
+	bam_access_include_dup(0);
+	bam_access_include_se(1);
+	mu_assert(bam_access_check_bam_flags(b)==1,"Pass bam checks - Single end");
+	//Check fail single end on proper pair
+	b->core.flag = 81;
+	bam_access_include_se(0);
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - Not proper pair");
+	//check fail single end on mate unmapped
+	b->core.flag = 91;
+	mu_assert(bam_access_check_bam_flags(b)==0,"Fail bam checks - Mate unmapped");
+	bam_destroy1(b);
+	return NULL;
+}
+
+char *test_bam_access_populate_file_index(){
+	samFile *sf = NULL;
+	hts_idx_t *idx = NULL;
+	sf = bam_access_populate_file(test_mt_bam );
+	mu_assert(sf != NULL,"samFile was NULL");
+	idx = bam_access_populate_file_index(sf,test_mt_bam );
+	mu_assert(idx != NULL,"samFile index was NULL");
+	sam_close(sf);
+	bam_index_destroy(idx);
+
+	return NULL;
+}
+
+char *test_bam_access_get_hts_itr(){
+	samFile *sf = NULL;
+	hts_idx_t *idx = NULL;
+	hts_itr_t *itr = NULL;
+	char *chr = "22";
+	uint32_t from = 17619559;
+	uint32_t to = 17619559;
+	sf = bam_access_populate_file(test_mt_bam );
+	mu_assert(sf != NULL,"samFile was NULL");
+	idx = bam_access_populate_file_index(sf,test_mt_bam );
+	mu_assert(idx != NULL,"samFile index was NULL");
+	itr = bam_access_get_hts_itr(sf, idx, chr, from, to);
+	mu_assert(itr!=NULL,"Error fetching iterator");
+	sam_close(sf);
+	bam_index_destroy(idx);
+	hts_itr_destroy(itr);
+	return NULL;
+}
 
 char *all_tests() {
    mu_suite_start();
@@ -200,6 +276,9 @@ char *all_tests() {
    mu_run_test(test_bam_access_sample_name_platform_from_header);
    mu_run_test(test_bam_access_get_contigs_from_bam);
    mu_run_test(test_bam_access_get_contigs_from_bam_no_spp);
+   mu_run_test(test_bam_access_check_bam_flags);
+   mu_run_test(test_bam_access_populate_file_index);
+   mu_run_test(test_bam_access_get_hts_itr);
    return NULL;
 }
 
