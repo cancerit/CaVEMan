@@ -67,6 +67,8 @@ typedef struct read_pos_t{
 	long double *ref_base_probs[4];
 } read_pos_t;
 
+int bam_access_check_bam_flags(const bam1_t *b);
+
 int bam_access_openbams(char *normFile, char *tumFile);
 
 int bam_access_get_count_for_region(char *chr_name, uint32_t start, uint32_t stop);
@@ -94,5 +96,11 @@ void List_insert_sorted(List *list, void *value, List_compare cmp);
 List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species);
 
 file_holder *bam_access_get_by_position_counts(char *normFile, char *chr, uint32_t start, uint32_t end);
+
+hts_idx_t *bam_access_populate_file_index(samFile *sf, const char *bam_loc);
+
+samFile *bam_access_populate_file(const char *bam_loc);
+
+hts_itr_t *bam_access_get_hts_itr(samFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to);
 
 #endif
