@@ -10,14 +10,19 @@ CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
 # -Wall turns on most warnings from compiler
 CFLAGS = -Wall
 
+HTSLOC?=$(HTSLIB)
+SAMTOOLSLOC?=$(SAMTOOLS)
+
+HTSTMP?=./caveman_tmp
+
 #Define locations of header files
-OPTINC?= -I$(SAMTOOLS)/ -I$(HTSLIB)/ -I$(HTSLIB)/htslib
+OPTINC?= -I$(SAMTOOLSLOC)/ -I$(HTSLOC)/ -I$(HTSLOC)/htslib
 INCLUDES= -Isrc $(OPTINC) -rdynamic
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS ?= -L$(SAMTOOLS) -L$(HTSLIB)
+LFLAGS?= -L$(SAMTOOLSLOC) -L$(HTSTMP)
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname
@@ -52,11 +57,11 @@ UMNORM_TARGET=./bin/generateCavemanUMNormVCF
 # deleting dependencies appended to the file from 'make depend'
 #
 
-.PHONY: depend clean coverage copyscript test
+.PHONY: depend clean coverage copyscript test make_htslib_tmp remove_htslib_tmp
 
 .NOTPARALLEL: test
 
-all: clean make_bin $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript test
+all: clean make_bin make_htslib_tmp $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscript test remove_htslib_tmp
 	@echo  Binaries have been compiled.
 
 $(UMNORM_TARGET): $(OBJS)
@@ -77,6 +82,14 @@ coverage: test
 
 make_bin:
 	$(MD) ./bin
+
+make_htslib_tmp:
+	$(MD) $(HTSTMP)
+	#Do some magic to ensure we compile CaVEMan with the static libhts.a rather than libhts.so
+	ln -s $(HTSLOC)/libhts.a $(HTSTMP)/libhts.a
+
+remove_htslib_tmp:
+	rm -rf $(HTSTMP)
 
 copyscript:
 	rsync -uE ./scripts/* ./bin/
