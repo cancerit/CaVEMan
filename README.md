@@ -66,22 +66,25 @@ Generates a config file for use with the remaining CaVEMan steps (it'll save you
 Also generates a file named 'alg_bean' in the run directory.
 
 	bin/caveman setup || ./bin/setupCaveman
-	Usage: caveman setup -t tum.bam -n norm.bam -r reference.fa.fai -g ignore_regions.tab [-f path] [-l path] [-a path] [-wzu]
+	Usage: caveman setup -t tum.bam -n norm.bam -r reference.fa.fai -g ignore_regions.tab -e tum_cn.bed -j norm_cn.bed [-f path] [-l path] [-a path] [-wzu]
 
-	-t  --tumour-bam filename       Location of tumour bam
-	-n  --normal-bam filename       Location of normal bam
-	-r  --reference-index filename  Location of reference fasta index
-	-g  --ignore-regions-file       Location of tsv ignore regions file
+	-t  --tumour-bam [file]             Location of tumour bam
+	-n  --normal-bam [file]             Location of normal bam
+	-r  --reference-index [file]        Location of reference fasta index
+	-g  --ignore-regions-file [file]    Location of tsv ignore regions file
 
 	Optional
-	-c  --config-file               File to write caveman run config file [default: 'caveman.cfg.ini']
-	-f  --results-folder filename   Folder to write results [default:'results']
-	-l  --split-file filename       File to write list of split sections [default: 'splitList']
-	-a  --alg-bean-file filename    Location to write alg-bean [default: 'alg_bean']
-	-w  --include-smith-waterman    Include SW mapped reads in the analysis
-	-z  --include-single-end        Use single end reads for this analysis
-	-u  --include-duplicates        Include reads marked as duplicates in the analysis
-	-h	--help                      Display this usage information.
+	-c  --config-file [file]            File to write caveman run config file [default:'./caveman.cfg.ini']
+	-f  --results-folder [file]         Folder to write results [default:'./results']
+	-l  --split-file [file]             File to write list of split sections [default:'./splitList']
+	-a  --alg-bean-file [file]          Location to write alg-bean [default:'./alg_bean']
+	-w  --include-smith-waterman        Include SW mapped reads in the analysis
+	-z  --include-single-end            Use single end reads for this analysis
+	-u  --include-duplicates            Include reads marked as duplicates in the analysis
+	-e  --tumour-copy-no-file [file]    Location of tumour copy number bed file (if the extension is not .bed the file will 		be treated as 1 based start). If no copy number file is supplied then the default cn of 2 will be used
+	-j  --normal-copy-no-file [file]    Location of normal copy number bed file (if the extension is not .bed the file will 		be treated as 1 based start). If no copy number file is supplied then the default cn of 2 will be used
+	-h	--help                          Display this usage information.
+
 
 ###Split
 
@@ -151,35 +154,35 @@ in the genome that was analysed with read counts (as seen by CaVEMan) and top tw
 calculated.
 
 	bin/caveman estep || ./bin/estepCaveman
-	Usage: caveman estep -i jobindex -e norm.copy.no -j tum.copy.no [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]
+	Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c 	float] [-d float] [-a int]
 
-		-e  --norm-cn [file]                             Location of normal copy number bed file (if the extension is not .bed the file will be treated as 1 based start)
-		-j  --tum-cn [file]                              Location of tumour copy number bed file (if the extension is not .bed the file will be treated as 1 based start)
-		-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)
+	-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)
 
-		Optional
-		-f  --config-file [file]                         Path to the config file produced by setup. [default:'caveman.cfg.ini']
-		-m  --min-base-qual [int]                        Minimum base quality for inclusion of a read position [default:11]
-		-c  --prior-mut-probability [float]              Prior somatic probability [default:0.000006]
-		-d  --prior-snp-probability [float]              Prior germline mutant probability [default:0.000100]
-		-k  --normal-contamination [float]               Normal contamination of tumour [default:0.100000]
-		-b  --reference-bias [float]                     Reference bias [default:0.950000]
-		-p  --mut-probability-cutoff [float]             Minimum probability call for a somatic mutant position to be output [default:0.800000]
-		-q  --snp-probability-cutoff [float]             Minimum probability call for a germline mutant position to be output [default:0.950000]
-		-x  --min-tum-coverage [int]                     Minimum tumour coverage for analysis of a position [default:1]
-		-y  --min-norm-coverage [int]                    Minimum normal coverage for analysis of a position [default:1]
-		-a  --split-size [int]                           Size of section to retrieve at a time from bam file. Allows memory footprint tuning [default:50000].
-		-s  --debug                                      Adds an extra output to a debug file. Every base analysed has an output
-		-g  --cov-file [file]                            File location of the covariate array. [default:'covs_arr']
-		-o  --prob-file [file]                           File location of the prob array. [default:'probs_arr']
-		-v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do not contain AS and SP information.
-		-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.
-		-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:2].
-		-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:2].
-		-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WGX|RNA) [default:WGS].
-		-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WGX|RNA) [default:WGS].
-		-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the offending region will be set to this value. [default:10].
-		-h	help                                         Display this usage information.
+	Optional
+	-f  --config-file [file]                         Path to the config file produced by setup. [default:'caveman.cfg.ini']
+	-m  --min-base-qual [int]                        Minimum base quality for inclusion of a read position [default:11]
+	-c  --prior-mut-probability [float]              Prior somatic probability [default:0.000006]
+	-d  --prior-snp-probability [float]              Prior germline mutant probability [default:0.000100]
+	-k  --normal-contamination [float]               Normal contamination of tumour [default:0.100000]
+	-b  --reference-bias [float]                     Reference bias [default:0.950000]
+	-p  --mut-probability-cutoff [float]             Minimum probability call for a somatic mutant position to be output 		[default:0.800000]
+	-q  --snp-probability-cutoff [float]             Minimum probability call for a germline mutant position to be output 		[default:0.950000]
+	-x  --min-tum-coverage [int]                     Minimum tumour coverage for analysis of a position [default:1]
+	-y  --min-norm-coverage [int]                    Minimum normal coverage for analysis of a position [default:1]
+	-a  --split-size [int]                           Size of section to retrieve at a time from bam file. Allows memory 								 footprint tuning [default:50000].
+	-s  --debug                                      Adds an extra output to a debug file. Every base analysed has an 			output
+	-g  --cov-file [file]                            File location of the covariate array. [default:'covs_arr']
+	-o  --prob-file [file]                           File location of the prob array. [default:'probs_arr']
+	-v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do 								 not contain AS and SP information.
+	-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not 								 contain AS and SP information.
+	-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file 								 [default:2].
+	-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file 								 [default:2].
+	-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked 									 (WGS|WGX|RNA) [default:WGS].
+	-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked 									 (WGS|WGX|RNA) [default:WGS].
+	-P  --normal-platform [string]                   Normal platform. Overrides the values retrieved from bam header.
+	-T  --tumour-platform [string]                   Tumour platform. Overrides the values retrieved from bam header.
+	-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the 								 offending region will be set to this value. [default:10].
+	-h  --help                                     Display this usage information.
 
 
 ##File Formats
