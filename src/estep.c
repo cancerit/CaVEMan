@@ -394,6 +394,13 @@ int estep_main(int argc, char *argv[]){
 	fa_file[strlen(ref_idx)-4] = '\0';
 	check(fa_file != NULL, "Error decoding FASTA file name");
 
+  //Open no analsyis file here so we can write ignored regions.
+	int chk_no = sprintf(no_analysis_file_loc,"%s/%s/%d_%d.no_analysis.bed",results,chr_name,start_zero_based+1,stop);
+	check(chk_no>0,"Error generating no analysis file location.");
+	no_analysis_file = fopen(no_analysis_file_loc,"w");
+	check(no_analysis_file != 0, "Error trying to open no analysis file for output: %s.",no_analysis_file_loc);
+	output_set_no_analysis_file(no_analysis_file);
+
 	//Get ignored regions contained in split section
 	//Get ignored regions for section and calculate a list of sections to analyse.
 	ignore_reg_count = ignore_reg_access_get_ign_reg_count_for_chr(ignore_regions_file,chr_name);
@@ -456,9 +463,6 @@ int estep_main(int argc, char *argv[]){
 	chk = sprintf(debug_out,"%s/%s/%d_%d.dbg.vcf",results,chr_name,start_zero_based+1,stop);
 	check(chk>0,"Error generating debug file location.");
 
-	chk = sprintf(no_analysis_file_loc,"%s/%s/%d_%d.no_analysis.bed",results,chr_name,start_zero_based+1,stop);
-	check(chk>0,"Error generating no analysis file location.");
-
 	//Open files for output
 	mut_file = fopen(mut_out,"w");
 	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
@@ -474,9 +478,6 @@ int estep_main(int argc, char *argv[]){
 																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to SNP file.");
 
-	no_analysis_file = fopen(no_analysis_file_loc,"w");
-	check(no_analysis_file != 0, "Error trying to open no analysis file for output: %s.",no_analysis_file_loc);
-	output_set_no_analysis_file(no_analysis_file);
 
 	if(debug == 1){
 		debug_file = fopen(debug_out,"w");

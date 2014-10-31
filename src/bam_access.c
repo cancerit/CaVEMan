@@ -300,6 +300,54 @@ error:
 	return -1;
 }
 
+int bam_access_check_bam_flags(const bam1_t *b){
+	//check Mapping Quality and not un mapped //4 // read unmapped
+	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
+		return 0;
+	}
+	//Bad read reasons:
+	//8 // mate unmapped
+	//256 // Non primary alignment
+	//512 // fails platform/vendor checks
+	//2048 is supplementary read
+	if((b->core.flag & BAM_FSECONDARY) || (b->core.flag & BAM_FQCFAIL) || (b->core.flag & 2048)){
+		return 0;
+	}
+	//1024 is PCR/optical duplicate
+	if((include_dup == 0 && (b->core.flag & BAM_FDUP))){
+		return 0;
+	}
+	//Proper pair and mate unmapped
+	if(include_se == 0 && !((b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
+		return 0;
+	}
+	//printf("XT DATA: %c\n",xt);
+	//Now we check aux data for XT:M flags (the SW mapped marker from BWA)
+	if(include_sw == 0){
+		uint8_t *xt_data = bam_aux_get(b,"XT");
+	 	if(xt_data != NULL && bam_aux2A(xt_data) == 'M'){
+			return 0;
+		}
+	}
+	return 1;
+}
+
+/*// callback for bam_fetch()
+static int fetch_count_func(const bam1_t *b, void *data){
+  if(bam_access_check_bam_flags(b) == 1){
+		counter++;
+	}
+	return 0;
+}
+
+static int fetch_algo_func(const bam1_t *b, void *data){
+	if(bam_access_check_bam_flags(b) == 1){
+		bam_plbuf_t *pileup = (bam_plbuf_t*) data;
+		bam_plbuf_push(b,pileup);
+	}
+	return 0;
+}*/
+
 // callback for bam_fetch()
 static int fetch_count_func(const bam1_t *b, void *data){
 	//check Mapping Quality and not un mapped //4 // read unmapped
@@ -688,5 +736,39 @@ error:
 	if(line) free(line);
 	if(bam) samclose(bam);
 	if(li) List_clear_destroy(li);
+	return NULL;
+}
+
+samFile *bam_access_populate_file(const char *bam_loc){
+	samFile *sf = NULL;
+	sf = sam_open(bam_loc);
+	check(sf != 0,"File %s failed to open.",bam_loc);
+	return sf;
+error:
+	if(sf) sam_close(sf);
+	return NULL;
+}
+
+hts_idx_t *bam_access_populate_file_index(samFile *sf, const char *bam_loc){
+	hts_idx_t *idx = NULL;
+	idx = sam_index_load(sf,bam_loc);
+	check(idx != NULL,"Index %s failed to open.",bam_loc);
+	return idx;
+error:
+	if(idx) bam_index_destroy(idx);
+	return NULL;
+}
+
+hts_itr_t *bam_access_get_hts_itr(samFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to){
+	hts_itr_t *iter = NULL;
+	bam_hdr_t *head = NULL;
+	head = sam_hdr_read(sf);
+	int tid = bam_name2id(head, chr);
+	free(head);
+	iter = sam_itr_queryi(idx, tid, from, to);
+	check(iter!=0,"Error fetching iterator %s:%d-%d.",chr,from,to);
+	return iter;
+error:
+	if(iter) hts_itr_destroy(iter);
 	return NULL;
 }
