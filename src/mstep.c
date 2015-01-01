@@ -239,21 +239,18 @@ int mstep_main(int argc, char *argv[]){
 	}
 
 	//Iterate through sections.
-	LIST_FOREACH(these_regions, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		printf("M-stepping section %s:%d-%d for mstep\n",chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+	LIST_FOR_EACH_ELEMENT(these_regions, first, next, cur) {
+		printf("M-stepping section %s:%d-%d for mstep\n",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 		//Get the reference sequence for this section
-		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 
 		printf("fetched a reference seq of length %lu for this section.\n",strlen(ref_seq));
-		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 		//Get all reads or pos pileups for section.
 		//Iterate through positions in section and mstep
-		int chk = algos_mstep_read_position(alg,covs,chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end,ref_seq, split_size);
-		check(chk==0,"Error running mstep for region %s:%d-%d.",chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+		int chk = algos_mstep_read_position(alg,covs,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end,ref_seq, split_size);
+		check(chk==0,"Error running mstep for region %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 		free(ref_seq);
-	  }
 	}
 
 	//Write this split section array to file.

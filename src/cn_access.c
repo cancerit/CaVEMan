@@ -94,18 +94,15 @@ int8_t cn_access_get_mean_cn_for_range(char *file_loc,char *chr,uint32_t start,u
 	int total_cn = 0;
 	int count_cn_entries = 0;
 	if(cns[is_normal] != NULL){
-    LIST_FOREACH(cns[is_normal], first, next, cur) {
-      int curi;
-      for (curi=0; curi<cur->numElements; ++curi) {
-    	int reg_start = ((seq_region_t *)cur->values[curi])->beg;
-    	int reg_stop = ((seq_region_t *)cur->values[curi])->end;
-	if(strcmp(((seq_region_t *)cur->values[curi])->chr_name,chr) == 0
-	   && check_overlap(reg_start,reg_stop,start,stop) == 1){
-	  total_cn += ((seq_region_t *)cur->values[curi])->val;
-	  count_cn_entries++;
-	}
-      }
-    }
+	  LIST_FOR_EACH_ELEMENT(cns[is_normal], first, next, cur) {
+	      int reg_start = ((seq_region_t *)cur)->beg;
+	      int reg_stop = ((seq_region_t *)cur)->end;
+	      if(strcmp(((seq_region_t *)cur)->chr_name,chr) == 0
+		 && check_overlap(reg_start,reg_stop,start,stop) == 1){
+		total_cn += ((seq_region_t *)cur)->val;
+		count_cn_entries++;
+	      }
+	  }
 	}
 
 	int result = 2;//Default to cn 2
@@ -127,15 +124,12 @@ int8_t cn_access_get_copy_number_for_location(char *file_loc,char *chr,uint32_t 
 	}
 	int cn = 0;
 	if(cns[is_normal] != NULL){
-    LIST_FOREACH(cns[is_normal], first, next, cur) {
-      int curi;
-      for (curi=0; curi<cur->numElements; ++curi) {
-	if(strcmp(((seq_region_t *)cur->values[curi])->chr_name,chr) == 0 && pos >= ((seq_region_t *)cur->values[curi])->beg && pos <= ((seq_region_t *)cur->values[curi])->end){
-	  cn = ((seq_region_t *)cur->values[curi])->val;
-	  goto end_foreach;
-	}
-      }
-    }
+	  LIST_FOR_EACH_ELEMENT(cns[is_normal], first, next, cur) {
+	    if(strcmp(((seq_region_t *)cur)->chr_name,chr) == 0 && pos >= ((seq_region_t *)cur)->beg && pos <= ((seq_region_t *)cur)->end){
+	      cn = ((seq_region_t *)cur)->val;
+	      goto end_foreach;
+	    }
+	  }
 	end_foreach:;
 	}else{
 		sentinel("Somehow copy number for location %s:%d was not available.",chr,pos);
@@ -151,22 +145,16 @@ void cn_access_set_max_cn(int max_copy_number){
 
 void clear_copy_number_store(){
 	if(cns[0] != NULL){
-		LIST_FOREACH(cns[0], first, next, cur) {
-		  int curi;
-		  for (curi=0; curi<cur->numElements; ++curi) {
-		    free(((seq_region_t *)cur->values[curi])->chr_name);
-		  }
+		LIST_FOR_EACH_ELEMENT(cns[0], first, next, cur) {
+		    free(((seq_region_t *)cur)->chr_name);
 		}
 		List_clear_destroy(cns[0]);
 		cns[0] = NULL;
 	}
 
 	if(cns[1] != NULL){
-		LIST_FOREACH(cns[1], first, next, cur) {
-		  int curi;
-		  for (curi=0; curi<cur->numElements; ++curi) {
-		    free(((seq_region_t *)cur->values[curi])->chr_name);
-		  }
+		LIST_FOR_EACH_ELEMENT(cns[1], first, next, cur) {
+		    free(((seq_region_t *)cur)->chr_name);
 		}
 		List_clear_destroy(cns[1]);
 		cns[1] = NULL;

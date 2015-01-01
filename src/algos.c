@@ -154,10 +154,8 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 		}
 		reads = bam_access_get_reads_at_this_pos(chr_name,start,stop,0,alg);
 		check(reads >= 0,"Error retrieving read positions for section %s:%d-%d.",chr_name,start,stop);
-		LIST_FOREACH(reads, first, next, cur) {
-		  int curi;
-		  for (curi=0; curi<cur->numElements; ++curi) {
-			read_pos_t *pos_t = cur->values[curi];
+		LIST_FOR_EACH_ELEMENT(reads, first, next, cur) {
+			read_pos_t *pos_t = cur;
 			if(pos_t->ref_pos >= start && pos_t->ref_pos <= stop){
 				//char ref_b_up = toupper(ref_base[((pos_t->ref_pos)-from)]);
 				char ref_b_up = toupper(ref_base[((pos_t->ref_pos)-from)]);
@@ -194,7 +192,6 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 				}
 			}
 			//free(pos_t->lane);
-		  }
 		}//End of LIST_FOREACH
 		List_clear_destroy(reads);
 	}//End of each section.
@@ -615,10 +612,8 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 		//Iterate through each read once to generate position beans.
 		//Change position when we reach a new position as list is sorted
 		if(List_count(reads) > 0){
-			LIST_FOREACH(reads, first, next, cur) {
-			  int curi;
-			  for (curi=0; curi<cur->numElements; ++curi) {
-				read_pos_t *pos_t = cur->values[curi];
+			LIST_FOR_EACH_ELEMENT(reads, first, next, cur) {
+				read_pos_t *pos_t = cur;
 				if(pos == NULL || pos->ref_pos < pos_t->ref_pos){
 					if(pos != NULL){
 						//Finish the last position we ran over
@@ -743,7 +738,6 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 					algos_run_per_read_estep_maths(pos->genos,pos_t,pos->ref_base_idx,pos->base_norm_contam);
 				}
 				//free(pos_t->lane);
-			  }
 			}//end of iteration through reads.
 			if(pos->ref_base_idx >= 0 && pos->norm_cn > 0 && pos->tum_cn > 0 && pos->total_cvg_norm > 0 && pos->total_cvg_tum > 0){
 				algos_run_per_position_estep_maths(pos);

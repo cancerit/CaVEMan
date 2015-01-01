@@ -41,7 +41,7 @@ int List_bubble_sort(List *list, List_compare cmp)
 
     do {
         sorted = 1;
-        LIST_FOREACH(list, first, next, cur) {
+        LIST_FOR_EACH_NODE(list, first, next, cur) {
 	  int curi;
 	  for (curi=0; curi<cur->numElements; ++curi) {
 	    if (curi<cur->numElements-1) {
@@ -102,17 +102,14 @@ List *List_merge_sort(List *list, List_compare cmp)
     List *right = List_create();
     int middle = List_count(list) / 2;
 
-    LIST_FOREACH(list, first, next, cur) {
-      int curi;
-      for (curi=0; curi<cur->numElements; ++curi) {
+    LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
         if(middle > 0) {
-            List_push(left, cur->values[curi]);
+            List_push(left, cur);
         } else {
-            List_push(right, cur->values[curi]);
+            List_push(right, cur);
         }
 
         middle--;
-      }
     }
 
     List *sort_left = List_merge_sort(left, cmp);

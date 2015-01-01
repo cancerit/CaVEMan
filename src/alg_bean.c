@@ -124,42 +124,33 @@ error:
 
 int alg_bean_get_index_for_str_arr(List *list,char *val){
 	int i=0;
-	LIST_FOREACH(list, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-	    if(strcmp((char *)cur->values[curi],val)==0){
+	LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
+	    if(strcmp((char *)cur,val)==0){
 	      return i;
 	    }
 	    i++;
-	  }
 	}
 	return -1;
 }
 
 int alg_bean_get_index_for_intrange_arr(List *list,int val){
 	int i=0;
-	LIST_FOREACH(list, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-	    if(((alg_bean_intrange *)cur->values[curi])->from <= val && ((alg_bean_intrange *)cur->values[curi])->to >= val){
+	LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
+	    if(((alg_bean_intrange *)cur)->from <= val && ((alg_bean_intrange *)cur)->to >= val){
 	      return i;
 	    }
 	    i++;
-	  }
 	}
 	return -1;
 }
 
 int alg_bean_get_index_for_char_arr(List *list,char *val){
 	int i=0;
-	LIST_FOREACH(list, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-	    if(strcmp(((char *)cur->values[curi]),val) == 0){
+	LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
+	    if(strcmp(((char *)cur),val) == 0){
 	      return i;
 	    }
 	    i++;
-	  }
 	}
 	return -1;
 }
@@ -168,10 +159,8 @@ int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len){
 	List *lengths = List_create();
 	int i=0;
 	int last_stop = 1;
-	LIST_FOREACH(list, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-	    float pct = *((float *)cur->values[curi]);
+	LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
+	    float pct = *((float *)cur);
 	    int lng = (((float)rd_len/(float)100) * pct);
 	    alg_bean_intrange *range = malloc(sizeof(alg_bean_intrange));
 	    if(i==0){
@@ -183,7 +172,6 @@ int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len){
 	    last_stop = range->to;
 	    List_push(lengths,range);
 	    i++;
-	  }
 	}
 	int result = alg_bean_get_index_for_intrange_arr(lengths,pos);
 	List_clear_destroy(lengths);
@@ -239,16 +227,13 @@ int alg_bean_write_list_alg_bean_intrange(FILE *file, List *li){
 	assert(li != NULL);
 	assert(List_count(li) > 0);
 	int chk = 0;
-	LIST_FOREACH(li, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		chk = fprintf(file,"%d-%d",((alg_bean_intrange *)cur->values[curi])->from,((alg_bean_intrange *)cur->values[curi])->to);
+	LIST_FOR_EACH_ELEMENT_MORE(li, first, next, cur, more) {
+		chk = fprintf(file,"%d-%d",((alg_bean_intrange *)cur)->from,((alg_bean_intrange *)cur)->to);
 		check(chk>0,"Error writing intrange.");
-		if ((curi < cur->numElements-1) || (cur->next != NULL)) {
+		if (more) {
 			chk = fprintf(file,";");
 			check(chk>0,"Error writing string separator.");
 		}
-	  }
 	}
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
@@ -262,16 +247,13 @@ int alg_bean_write_list_float(FILE *file, List *li){
 	assert(li != NULL);
 	assert(List_count(li) > 0);
 	int chk = 0;
-	LIST_FOREACH(li, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		chk = fprintf(file,"%.2f",*(float *)cur->values[curi]);
+	LIST_FOR_EACH_ELEMENT_MORE(li, first, next, cur, more) {
+		chk = fprintf(file,"%.2f",*(float *)cur);
 		check(chk>0,"Error writing float.");
-		if ((curi < cur->numElements-1) || (cur->next != NULL)) {
+		if (more) {
 			chk = fprintf(file,";");
 			check(chk>0,"Error writing string separator.");
 		}
-	  }
 	}
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
@@ -285,16 +267,13 @@ int alg_bean_write_list_char(FILE *file, List *li){
 	assert(li != NULL);
 	assert(List_count(li) > 0);
 	int chk = 0;
-	LIST_FOREACH(li, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		chk = fprintf(file,"%s",(char *)cur->values[curi]);
+	LIST_FOR_EACH_ELEMENT_MORE(li, first, next, cur, more) {
+		chk = fprintf(file,"%s",(char *)cur);
 		check(chk>=0,"Error writing string.");
-		if ((curi<cur->numElements-1) || (cur->next != NULL)) {
+		if (more) {
 			chk = fprintf(file,";");
 			check(chk>0,"Error writing string separator.");
 		}
-	  }
 	}
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
@@ -486,13 +465,10 @@ error:
 }
 
 List *alg_bean_hard_copy_char_list(List *new_list, List *old){
-	LIST_FOREACH(old, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		char *tmp = malloc(sizeof(char) * (strlen((char *)cur->values[curi])+1));
-		strcpy(tmp,(char *)cur->values[curi]);
+  LIST_FOR_EACH_ELEMENT(old, first, next, cur) {
+		char *tmp = malloc(sizeof(char) * (strlen((char *)cur)+1));
+		strcpy(tmp,(char *)cur);
 		List_push(new_list,tmp);
-	  }
-	}
-	return new_list;
+  }
+  return new_list;
 }

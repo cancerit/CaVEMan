@@ -149,14 +149,11 @@ List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end,
 	List *reg_for_analysis = List_create();
 	seq_region_t *range = malloc(sizeof(struct seq_region_t));
 	range->beg = start;
-	LIST_FOREACH(li, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		range->end = ((seq_region_t *) cur->values[curi])->beg - 1;
+	LIST_FOR_EACH_ELEMENT(li, first, next, cur) {
+		range->end = ((seq_region_t *) cur)->beg - 1;
 		List_push(reg_for_analysis,range);
 		range = malloc(sizeof(struct seq_region_t));
-		range->beg = ((seq_region_t *) cur->values[curi])->end + 1;
-	  }
+		range->beg = ((seq_region_t *) cur)->end + 1;
 	}
 	range->end = end;
 	List_push(reg_for_analysis,range);

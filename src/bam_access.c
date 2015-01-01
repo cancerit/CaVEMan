@@ -434,7 +434,7 @@ void List_insert_sorted(List *list, void *value, List_compare cmp){
     List_shift(list, value);
   } else {
     // Iterate backwards through the array.
-    LIST_FOREACH(list, last, prev, cur) {
+    LIST_FOR_EACH_NODE(list, last, prev, cur) {
       int curi;
       for (curi=cur->numElements-1; curi>=0; --curi) {
 	if (cmp(cur->values[curi], value) <= 0) {
@@ -691,13 +691,10 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 				lane = strcat(lane,"_");
 				lane = strcat(lane,isnorm);
 				int found = 0;
-				LIST_FOREACH(li, first, next, cur) {
-				  int curi;
-				  for (curi=0; curi<cur->numElements; ++curi) {
-					if(strcmp((char *)cur->values[curi],lane)==0){
+				LIST_FOR_EACH_ELEMENT(li, first, next, cur) {
+					if(strcmp((char *)cur,lane)==0){
 						found = 1;
 					}
-				  }
 				}
 				if(found==0){
 					List_push(li,lane);

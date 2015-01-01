@@ -63,12 +63,23 @@ void List_split(List *list, int split_index, List *left, List *right);
 void List_maybeSplitNode(List *list, ListNode *node);
 void List_insert(List *list, ListNode *node, int index, void *value);
 
-/*
-void *List_remove(List *list, ListNode *node);
-*/
+#define LIST_FOR_EACH_NODE(L, S, M, V) ListNode *_node = NULL; \
+  ListNode *V = NULL;					       \
+  for (V = _node = L->S; _node != NULL; V = _node = _node->M)
 
-#define LIST_FOREACH(L, S, M, V) ListNode *_node = NULL; \
-		ListNode *V = NULL; \
-		for(V = _node = L->S; _node != NULL; V = _node = _node->M)
-		
+#define LIST_FOR_EACH_ELEMENT(L, S, M, E) ListNode *_node = NULL;	\
+  int _i;								\
+  void *E;								\
+  for (_node = L->S; _node != NULL; _node = _node->M)			\
+    for (E = _node->values[_i = 0]; _i < _node->numElements; E = _node->values[++_i])
+
+#define LIST_FOR_EACH_ELEMENT_MORE(L, S, M, E, F) ListNode *_node = NULL; \
+  int _i;								\
+  void *E;								\
+  int F;								\
+  for (_node = L->S; _node != NULL; _node = _node->M)			\
+    for (E = _node->values[_i = 0], F = (_i < _node->numElements-1) || (_node->next != NULL); \
+	 _i < _node->numElements;					\
+	 E = _node->values[++_i], F = (_i < _node->numElements-1) || (_node->next != NULL)) 
+
 #endif

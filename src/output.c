@@ -198,14 +198,11 @@ char *output_generate_reference_contig_lines(char *bam_file, char *assembly, cha
 	check(contig_list != NULL,"Error fetching contigs from bam file.");
 	char *contigs = malloc(sizeof(char) * 1000 * List_count(contig_list));
 	strcpy(contigs,"");
-	LIST_FOREACH(contig_list, first,next,cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		ref_seq_t *ref = (ref_seq_t *)cur->values[curi];
+	LIST_FOR_EACH_ELEMENT(contig_list, first,next,cur) {
+		ref_seq_t *ref = (ref_seq_t *)cur;
 		char contig_str[1000];
 		sprintf(contig_str,"##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n",ref->name,ref->length,ref->ass,ref->spp);
 		strcat(contigs,contig_str);
-	  }
 	}
 	List_clear_destroy(contig_list);
 	return contigs;
@@ -369,13 +366,10 @@ error:
 
 int output_flush_no_analysis(char *chr_name){
 	//output all the no_analysis regions to file....
-	LIST_FOREACH(no_analysis_sects, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		seq_region_t *reg = (seq_region_t *) cur->values[curi];
+	LIST_FOR_EACH_ELEMENT(no_analysis_sects, first, next, cur) {
+		seq_region_t *reg = (seq_region_t *) cur;
 		int chk = fprintf(no_analysis,"%s\t%d\t%d\n",chr_name,(reg->beg-1),reg->end);
 		check(chk>=0,"Error writing to no analysis bed file.");
-	  }
 	}
 	List_clear_destroy(no_analysis_sects);
 	no_analysis_sects = List_create();

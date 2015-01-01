@@ -491,22 +491,19 @@ int estep_main(int argc, char *argv[]){
 
 	//Iterate through analysis sections
 	//Iterate through sections.
-	LIST_FOREACH(these_regions, first, next, cur) {
-	  int curi;
-	  for (curi=0; curi<cur->numElements; ++curi) {
-		printf("Estep section %s:%d-%d\n",chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+	LIST_FOR_EACH_ELEMENT(these_regions, first, next, cur) {
+		printf("Estep section %s:%d-%d\n",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 		//Get the reference sequence for this section
-		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 
 		printf("fetched a reference seq of length %lu for this section.\n",strlen(ref_seq));
-		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 		//Get all reads or pos pileups for section.
 		//Iterate through positions in section and mstep
-		int chk = algos_estep_read_position(alg,prob_arr,chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end,ref_seq,
+		int chk = algos_estep_read_position(alg,prob_arr,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end,ref_seq,
 									norm_cn_loc, tum_cn_loc, snp_file, mut_file, debug_file, split_size);
-		check(chk==0,"Error running estep for region %s:%d-%d.",chr_name,((seq_region_t *)cur->values[curi])->beg,((seq_region_t *)cur->values[curi])->end);
+		check(chk==0,"Error running estep for region %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
 		free(ref_seq);
-	  }
 	}
 
 	int write_check = output_flush_no_analysis(chr_name);
