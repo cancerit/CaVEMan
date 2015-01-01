@@ -50,8 +50,11 @@ char *test_genotype_hard_copy_genotype_t_list(){
 	genotype_hard_copy_genotype_t_list(new_list,old);
 	mu_assert(List_count(new_list) == 1, "Wrong number of elements in list.");
 	LIST_FOREACH(new_list, first, next, cur){
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
 		//Only one element...
-		mu_assert(((genotype_t *)cur->value)->c_count == 10, "Wrong c count in copied value.");
+		mu_assert(((genotype_t *)cur->values[curi])->c_count == 10, "Wrong c count in copied value.");
+	  }
 	}
 	List_clear_destroy(new_list);
 	List_clear_destroy(old);

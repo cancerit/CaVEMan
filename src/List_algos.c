@@ -22,12 +22,14 @@
 #include <List_algos.h>
 #include <dbg.h>
 
+/*
 inline void ListNode_swap(ListNode *a, ListNode *b)
 {
     void *temp = a->value;
     a->value = b->value;
     b->value = temp;
 }
+*/
 
 int List_bubble_sort(List *list, List_compare cmp)
 {
@@ -40,12 +42,24 @@ int List_bubble_sort(List *list, List_compare cmp)
     do {
         sorted = 1;
         LIST_FOREACH(list, first, next, cur) {
-            if(cur->next) {
-                if(cmp(cur->value, cur->next->value) > 0) {
-                    ListNode_swap(cur, cur->next);
-                    sorted = 0;
-                }
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+	    if (curi<cur->numElements-1) {
+	      if (cmp(cur->values[curi], cur->values[curi+1]) > 0) {
+		void* tmp = cur->values[curi];
+		cur->values[curi] = cur->values[curi+1];
+		cur->values[curi+1] = tmp;
+		sorted = 0;
+	      }
+	    } else if(cur->next) {
+	      if(cmp(cur->values[curi], cur->next->values[0]) > 0) {
+		void* tmp = cur->values[curi];
+		cur->values[curi] = cur->next->values[0];
+		cur->next->values[0] = tmp;
+		sorted = 0;
+	      }
             }
+	  }
         }
     } while(!sorted);
 
@@ -89,13 +103,16 @@ List *List_merge_sort(List *list, List_compare cmp)
     int middle = List_count(list) / 2;
 
     LIST_FOREACH(list, first, next, cur) {
+      int curi;
+      for (curi=0; curi<cur->numElements; ++curi) {
         if(middle > 0) {
-            List_push(left, cur->value);
+            List_push(left, cur->values[curi]);
         } else {
-            List_push(right, cur->value);
+            List_push(right, cur->values[curi]);
         }
 
         middle--;
+      }
     }
 
     List *sort_left = List_merge_sort(left, cmp);

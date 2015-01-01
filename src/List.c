@@ -23,155 +23,244 @@
 #include <dbg.h>
 #include <assert.h>
 
-List *List_create(){
-	return calloc(1, sizeof(List));
+List *List_create() {
+  return calloc(1, sizeof(List));
 }
 
-void List_destroy(List *list){
-	assert(list != NULL);
-	LIST_FOREACH(list, first, next, cur){
-		if(cur->prev){
-			free(cur->prev);
-		}
-	}
-	free(list->last);
-	free(list);
+void List_destroy(List *list) {
+  assert(list != NULL);
+  LIST_FOREACH(list, first, next, cur) {
+    if(cur->prev){
+      free(cur->prev);
+    }
+  }
+  free(list->last);
+  free(list);
 }
 
-void List_clear(List *list){
-	assert(list != NULL);
-	LIST_FOREACH(list, first, next, cur){
-		free(cur->value);
-	}
+void List_clear(List *list) {
+  assert(list != NULL);
+  LIST_FOREACH(list, first, next, cur) {
+    int i;
+    for (i=0; i<cur->numElements; ++i) {
+      free(cur->values[i]);
+    }
+  }
 }
 
-void List_clear_destroy(List *list){
-	assert(list != NULL);
-	if(List_count(list) > 0){
-		List_clear(list);
-	}	
-	List_destroy(list);
+void List_clear_destroy(List *list) {
+  assert(list != NULL);
+  if(List_count(list) > 0){
+    List_clear(list);
+  }	
+  List_destroy(list);
 }
 
-void List_push(List *list, void *value){
-	assert(list != NULL);
-	ListNode *node = calloc(1, sizeof(ListNode));
-	check_mem(node);
-	
-	node->value = value;
-	
-	if(list->last == NULL){
-		list->first = node;
-		list->last = node;
-	}else{
-		list->last->next = node;
-		node->prev = list->last;
-		list->last = node;
-	}
-	
-	list->count++;
-	
-error:
-	return;
-}
-
-void *List_pop(List *list){
-	assert(list != NULL);
-	ListNode *node = list->last;
-	return node != NULL ? List_remove(list, node) : NULL;
-}
-
-void List_shift(List *list, void *value)
-{
+void List_push(List *list, void *value) {
+  assert(list != NULL);
+  if ((list->last == NULL) || (list->last->numElements == ELEMENTS_PER_NODE)) {
     ListNode *node = calloc(1, sizeof(ListNode));
     check_mem(node);
-
-    node->value = value;
-
-    if(list->first == NULL) {
-        list->first = node;
-        list->last = node;
+    node->numElements = 1;
+    node->values[0] = value;
+    if (list->last == NULL) {
+      list->first = node;
+      list->last = node;
     } else {
-        node->next = list->first;
-        list->first->prev = node;
-        list->first = node;
+      list->last->next = node;
+      node->prev = list->last;
+      list->last = node;
     }
+  } else {
+    list->last->values[list->last->numElements++] = value;
+  }
+  list->count++;
+  
+error:
+  return;
+}
 
+void *List_pop(List *list) {
+  assert(list != NULL);
+  ListNode *node = list->last;
+  if (node != NULL) {
+    void *result = node->values[--node->numElements];
+    if (node->numElements == 0) {
+      if (list->first == list->last) {
+	list->first = NULL;
+	list->last = NULL;
+      } else {
+	list->last = list->last->prev;
+	list->last->next = NULL;
+      }
+      free(node);
+    }
+    list->count--;
+    return result;
+  } else {
+    return NULL;
+  }
+}
+
+void List_shift(List *list, void *value) {
+  assert(list != NULL);
+  if ((list->first == NULL) || (list->first->numElements == ELEMENTS_PER_NODE)) {
+    ListNode *node = calloc(1, sizeof(ListNode));
+    check_mem(node);
+    node->numElements = 1;
+    node->values[0] = value;
+    if(list->first == NULL) {
+      list->first = node;
+      list->last = node;
+    } else {
+      node->next = list->first;
+      list->first->prev = node;
+      list->first = node;
+    }
+  } else {
+    int i;
+    for (i=list->first->numElements++; i>0; --i) {
+      list->first->values[i] = list->first->values[i-1];
+    }
+    list->first->values[0] = value;
+  }
+  list->count++;
+
+error:
+  return;
+}
+
+void *List_unshift(List *list) {
+  assert(list != NULL);
+  ListNode *node = list->first;
+  if (node != NULL) {
+    void *result = node->values[0];
+    if (--node->numElements == 0) {
+      if (list->first == list->last) {
+	list->first = NULL;
+	list->last = NULL;
+      } else {
+	list->first = list->first->next;
+	list->first->prev = NULL;
+      }
+      free(node);
+    } else {
+      int i;
+      for (i=0; i<node->numElements; ++i) {
+	node->values[i] = node->values[i+1];
+      }
+    }
+    list->count--;
+    return result;
+  } else {
+    return NULL;
+  }
+}
+
+List *List_copy(List *list) {
+  assert(list != NULL);
+  List *listCopy = List_create();
+  LIST_FOREACH(list, first, next, cur) {
+    int curi;
+    for (curi=0; curi<cur->numElements; ++curi) {
+      List_push(listCopy, cur->values[curi]);
+    }
+  }
+  return listCopy;
+}
+
+List *List_join(List *list1, List *list2) {
+  assert(list1 != NULL);
+  assert(list2 != NULL);
+  List *joined = List_copy(list1);
+  LIST_FOREACH(list2, first, next, cur) {
+    int curi;
+    for (curi=0; curi<cur->numElements; ++curi) {
+      List_push(joined, cur->values[curi]);
+    }
+  }
+  return joined;
+}
+
+void List_split(List *list, int split_pos, List *left, List *right) {
+  assert(list != NULL);
+  assert(List_count(list)>0);
+  assert(split_pos <= List_count(list));
+  LIST_FOREACH(list, first, next, cur) {
+    int curi;
+    for (curi=0; curi<cur->numElements; ++curi) {
+      if(split_pos > 0) {
+	List_push(left,&cur->values[curi]);
+      } else {
+	List_push(right,&cur->values[curi]);
+      }
+      split_pos--;
+    }
+  }
+  return;
+}
+
+void List_maybeSplitNode(List *list, ListNode *node) {
+  if (node->numElements == ELEMENTS_PER_NODE) {
+    ListNode *newNode = calloc(1, sizeof(ListNode));
+    newNode->next = node->next;
+    newNode->prev = node;
+    newNode->numElements = ELEMENTS_PER_NODE/2;
+    int i;
+    for (i=0; i<ELEMENTS_PER_NODE/2; ++i) {
+      newNode->values[i] = node->values[i+ELEMENTS_PER_NODE/2];
+    }
+    node->next = newNode;
+    node->numElements -= ELEMENTS_PER_NODE/2;
+    if (list->last == node) list->last = newNode;
+  }
+}
+
+void List_insert(List *list, ListNode *node, int index, void *value) {
+  List_maybeSplitNode(list, node);
+  if (index < node->numElements) {
+    int i;
+    for (i=++node->numElements; i>index; --i) {
+      node->values[i] = node->values[i-1];
+    }
+    node->values[index] = value;
     list->count++;
-
-error:
-    return;
+  } else {
+    List_insert(list, node->next, index-node->numElements, value);
+  }
 }
 
-void *List_unshift(List *list)
-{
-    ListNode *node = list->first;
-    return node != NULL ? List_remove(list, node) : NULL;
+/*
+void *List_remove(List *list, ListNode *node) {
+  assert(list != NULL);
+  void *result = NULL;
+  
+  check(list->first && list->last, "List is empty.");
+  check(node, "node can't be NULL");
+  
+  if(node == list->first && node == list->last) {
+    list->first = NULL;
+    list->last = NULL;
+  } else if(node == list->first) {
+    list->first = node->next;
+    check(list-> first != NULL, "Invalid list, somehow got a first that is NULL.");
+    list->first->prev = NULL;
+  } else if(node == list->last) {
+    list->last = node->prev;
+    check(list->last != NULL, "Invalid list, somehow got a last that is NULL.");
+    list->last->next = NULL;
+  } else {
+    ListNode *after = node->next;
+    ListNode *before = node->prev;
+    after->prev = before;
+    before->next = after;
+  }
+  
+  list->count--;
+  result = node->value;
+  free(node);
+  
+ error:
+  return result;
 }
-
-List *List_copy(List *list){
-	assert(list != NULL);
-	List *listCopy = List_create();
-	LIST_FOREACH(list, first, next, cur){
-		List_push(listCopy, cur->value);
-	}
-	return listCopy;
-}
-
-List *List_join(List *list1, List *list2){
-	assert(list1 != NULL);
-	assert(list2 != NULL);
-	List *joined = List_copy(list1);
-	LIST_FOREACH(list2, first, next, cur){
-		List_push(joined, cur->value);
-	}
-	return joined;
-}
-
-void List_split(List *list, int split_pos, List *left, List *right){
-	assert(list != NULL);
-	assert(List_count(list)>0);
-	assert(split_pos <= List_count(list));
-	LIST_FOREACH(list, first, next, cur){
-		if(split_pos > 0){
-			List_push(left,&cur->value);
-		}else{
-			List_push(right,&cur->value);
-		}
-		split_pos--;
-	}
-	return;
-}
-
-void *List_remove(List *list, ListNode *node){
-	assert(list != NULL);
-	void *result = NULL;
-	
-	check(list->first && list->last, "List is empty.");
-	check(node, "node can't be NULL");
-	
-	if(node == list->first && node == list->last){
-		list->first = NULL;
-		list->last = NULL;
-	}else if(node == list->first){
-		list->first = node->next;
-		check(list-> first != NULL, "Invalid list, somehow got a first that is NULL.");
-		list->first->prev = NULL;
-	}else if(node == list->last){
-		list->last = node->prev;
-		check(list->last != NULL, "Invalid list, somehow got a last that is NULL.");
-		list->last->next = NULL;
-	}else{
-		ListNode *after = node->next;
-		ListNode *before = node->prev;
-		after->prev = before;
-		before->next = after;
-	}
-	
-	list->count--;
-	result = node->value;
-	free(node);
-	
-error:
-	return result;
-}
+*/

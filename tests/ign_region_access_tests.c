@@ -99,10 +99,10 @@ char *test_ignore_reg_access_resolve_ignores_to_analysis_sections(){
 //10	5680	5699
 	List *sects = ignore_reg_access_resolve_ignores_to_analysis_sections(11,5679,ignore_regs,ignore_reg_count);
 	mu_assert(List_count(sects)==2,"Incorrect number of sections resolved.\n");
-	mu_assert(((seq_region_t *)sects->first->value)->beg == 11,"Incorrect first section start.\n");
-	mu_assert(((seq_region_t *)sects->first->value)->end == 12,"Incorrect first section stop.\n");
-	mu_assert(((seq_region_t *)sects->last->value)->beg == 5679,"Incorrect first section start.\n");
-	mu_assert(((seq_region_t *)sects->last->value)->end == 5679,"Incorrect first section stop.\n");
+	mu_assert(((seq_region_t *)sects->first->values[0])->beg == 11,"Incorrect first section start.\n");
+	mu_assert(((seq_region_t *)sects->first->values[0])->end == 12,"Incorrect first section stop.\n");
+	mu_assert(((seq_region_t *)sects->last->values[sects->last->numElements-1])->beg == 5679,"Incorrect first section start.\n");
+	mu_assert(((seq_region_t *)sects->last->values[sects->last->numElements-1])->end == 5679,"Incorrect first section stop.\n");
 	List_clear_destroy(sects);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count, ignore_regs);
 	return NULL;

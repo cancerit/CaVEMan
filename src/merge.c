@@ -138,10 +138,12 @@ int merge_main(int argc, char *argv[]){
 	//Get all split sections from split file.
 	List *split_sects = split_access_get_all_split_sections(list_loc);
 	//Iterate through split sections and retrieve each cov array file
-	LIST_FOREACH(split_sects, first, next, cur){
-		char *chr = ((seq_region_t *)cur->value)->chr_name;
-		int start = ((seq_region_t *)cur->value)->beg;
-		int stop = ((seq_region_t *)cur->value)->end;
+	LIST_FOREACH(split_sects, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		char *chr = ((seq_region_t *)cur->values[curi])->chr_name;
+		int start = ((seq_region_t *)cur->values[curi])->beg;
+		int stop = ((seq_region_t *)cur->values[curi])->end;
 		char cov_loc[500] = "";
 		int chck = sprintf(cov_loc,"%s/%s/%d_%d.covs",results,chr,start,stop);
 		check(chck>0,"Error creating path to covs file.");
@@ -152,7 +154,8 @@ int merge_main(int argc, char *argv[]){
 							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 		covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),to_append);
-		free(((seq_region_t *)cur->value)->chr_name);
+		free(((seq_region_t *)cur->values[curi])->chr_name);
+	  }
 	}
 	//Destroy the list of split sections.
 	List_clear_destroy(split_sects);

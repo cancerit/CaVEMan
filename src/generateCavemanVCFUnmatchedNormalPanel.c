@@ -214,8 +214,11 @@ void gen_panel_setup_options(int argc, char *argv[]){
 }
 
 int gen_panel_write_sample_lines(List *samples,FILE *vcf_out){
-	LIST_FOREACH(samples, first, next, cur){
-		check(fprintf(vcf_out,VCF_SAMPLE,((sample_bam *)cur->value)->sample_name,platform,protocol)>0,"Error writing file format line to VCF");
+	LIST_FOREACH(samples, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+	    check(fprintf(vcf_out,VCF_SAMPLE,((sample_bam *)cur->values[curi])->sample_name,platform,protocol)>0,"Error writing file format line to VCF");
+	  }
 	}
 	return 0;
 error:
@@ -234,7 +237,7 @@ int gen_panel_write_VCF_header(List *samples,FILE *vcf_out){
 
 	check(fprintf(vcf_out,VCF_FILE_DATE,date)>0,"Error writing file date line to VCF");
 	check(fprintf(vcf_out,"%s%s%s\n",VCF_SOURCE,date,VCF_SOURCE_2)>0,"Error writing source line to VCF");
-	contigs = output_generate_reference_contig_lines(((sample_bam *)samples->first->value)->bam_file, species_vers, species);
+	contigs = output_generate_reference_contig_lines(((sample_bam *)samples->first->values[0])->bam_file, species_vers, species);
 	check(contigs!=NULL,"Error calculating contig lines for VCF");
 	check(fprintf(vcf_out,"%s",contigs)>0,"Error writing contig lines to VCF");
 	check(fprintf(vcf_out,"%s",VCF_INFO)>0,"Error writing info line to VCF");
@@ -275,25 +278,28 @@ List *gen_panel_get_list_of_samples_and_locs(){
 	free(sampchar);
 
 	bamchar = strtok(bam_file_locs,",");
-	LIST_FOREACH(samples, first, next, cur){
+	LIST_FOREACH(samples, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
 		if(bamchar == NULL){
 			sentinel("List of sample names and bam locations are not equal in length.");
 		}
-		((sample_bam *)cur->value)->bam_file = malloc(sizeof(char) * (strlen(bamchar) + 1));
-		check_mem(((sample_bam *)cur->value)->bam_file);
-		char *tmp = strcpy(((sample_bam *)cur->value)->bam_file,bamchar);
+		((sample_bam *)cur->values[curi])->bam_file = malloc(sizeof(char) * (strlen(bamchar) + 1));
+		check_mem(((sample_bam *)cur->values[curi])->bam_file);
+		char *tmp = strcpy(((sample_bam *)cur->values[curi])->bam_file,bamchar);
 		check(tmp != NULL,"Error copying bam location to object.");
-		if(check_exist(((sample_bam *)cur->value)->bam_file) != 1){
-    	printf("Bam file %s does not appear to exist.\n",((sample_bam *)cur->value)->bam_file);
-   		gen_panel_print_usage(1);
-   	}
-   	char *chk=NULL;
-   	chk=strcat(new_sample_names,((sample_bam *)cur->value)->sample_name);
-   	check(chk!=NULL,"Error appending new sample names.");
-   	if(cur->next != NULL){
-   		strcat(new_sample_names,"\t");
-   	}
+		if(check_exist(((sample_bam *)cur->values[curi])->bam_file) != 1){
+		  printf("Bam file %s does not appear to exist.\n",((sample_bam *)cur->values[curi])->bam_file);
+		  gen_panel_print_usage(1);
+		}
+		char *chk=NULL;
+		chk=strcat(new_sample_names,((sample_bam *)cur->values[curi])->sample_name);
+		check(chk!=NULL,"Error appending new sample names.");
+		if ((curi < cur->numElements-1) || (cur->next != NULL)) {
+		  strcat(new_sample_names,"\t");
+		}
 		bamchar = strtok(NULL,",");
+	  }
 	}
 	strcpy(sample_names,new_sample_names);
 	free(new_sample_names);
@@ -307,18 +313,21 @@ error:
 }
 
 void gen_panel_clear_pileups(List *samples){
-	LIST_FOREACH(samples, first, next, this){
-		if(((sample_bam *)this->value)->holder){
-			if(((sample_bam *)this->value)->holder->base_counts){
+	LIST_FOREACH(samples, first, next, this) {
+	  int thisi;
+	  for (thisi=0; thisi<this->numElements; ++thisi) {
+		if(((sample_bam *)this->values[thisi])->holder){
+			if(((sample_bam *)this->values[thisi])->holder->base_counts){
 				int i=0;
-				for(i=0;i<((sample_bam *)this->value)->holder->base_counts_size;i++){
-					if(((sample_bam *)this->value)->holder->base_counts[i]) free(((sample_bam *)this->value)->holder->base_counts[i]);
+				for(i=0;i<((sample_bam *)this->values[thisi])->holder->base_counts_size;i++){
+					if(((sample_bam *)this->values[thisi])->holder->base_counts[i]) free(((sample_bam *)this->values[thisi])->holder->base_counts[i]);
 				}
-				free(((sample_bam *)this->value)->holder->base_counts);
+				free(((sample_bam *)this->values[thisi])->holder->base_counts);
 			}
-			free(((sample_bam *)this->value)->holder->bam_access_bases);
-			free(((sample_bam *)this->value)->holder);
+			free(((sample_bam *)this->values[thisi])->holder->bam_access_bases);
+			free(((sample_bam *)this->values[thisi])->holder);
 		}
+	  }
 	}
 	return;
 }
@@ -329,9 +338,12 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 	fprintf(stdout,"PILEUP REGION: %s:%d-%d\n",chr_name,start,end);
 	//Pileup and counts.
 	//Iterate through each sample for these locations and write that sample to output line.
-	LIST_FOREACH(samples, first, next, cur){
-		((sample_bam *)cur->value)->holder = bam_access_get_by_position_counts(((sample_bam *)cur->value)->bam_file, chr_name, start, end);
-		check(((sample_bam *)cur->value)->holder != NULL,"Error accessing by position counts for sample %s.",((sample_bam *)cur->value)->sample_name);
+	LIST_FOREACH(samples, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		((sample_bam *)cur->values[curi])->holder = bam_access_get_by_position_counts(((sample_bam *)cur->values[curi])->bam_file, chr_name, start, end);
+		check(((sample_bam *)cur->values[curi])->holder != NULL,"Error accessing by position counts for sample %s.",((sample_bam *)cur->values[curi])->sample_name);
+	  }
 	}
 
 	//Now output each position
@@ -350,27 +362,30 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 		last_of_line = malloc(sizeof(char) * ((50*sizeoflist)+1));
 		check_mem(last_of_line);
 		strcpy(last_of_line,"");
-		LIST_FOREACH(samples, first, next, this){
-			if(((sample_bam *)this->value)->holder->base_counts[i] != 0){
-				sum += (((sample_bam *)this->value)->holder->base_counts[i][0]+
-								((sample_bam *)this->value)->holder->base_counts[i][1]+
-								((sample_bam *)this->value)->holder->base_counts[i][2]+
-								((sample_bam *)this->value)->holder->base_counts[i][3]);
+		LIST_FOREACH(samples, first, next, this) {
+		  int thisi;
+		  for (thisi=0; thisi<this->numElements; ++thisi) {
+			if(((sample_bam *)this->values[thisi])->holder->base_counts[i] != 0){
+				sum += (((sample_bam *)this->values[thisi])->holder->base_counts[i][0]+
+								((sample_bam *)this->values[thisi])->holder->base_counts[i][1]+
+								((sample_bam *)this->values[thisi])->holder->base_counts[i][2]+
+								((sample_bam *)this->values[thisi])->holder->base_counts[i][3]);
 				char tmp[128];
 				int chk = 0;
 				chk = sprintf(	tmp,VCF_VAR_LINE,
-																						((sample_bam *)this->value)->holder->base_counts[i][0],
-																						((sample_bam *)this->value)->holder->base_counts[i][1],
-																						((sample_bam *)this->value)->holder->base_counts[i][2],
-																						((sample_bam *)this->value)->holder->base_counts[i][3]);
+																						((sample_bam *)this->values[thisi])->holder->base_counts[i][0],
+																						((sample_bam *)this->values[thisi])->holder->base_counts[i][1],
+																						((sample_bam *)this->values[thisi])->holder->base_counts[i][2],
+																						((sample_bam *)this->values[thisi])->holder->base_counts[i][3]);
 				check(chk>0,"Error copying allele counts string.");
 				strcat(last_of_line,tmp);
 			}else{
 				strcat(last_of_line,"-");
 			}
-			if(this->next!=NULL){
+			if ((thisi < this->numElements-1) || (this->next!=NULL)) {
 				strcat(last_of_line,"\t");
 			}
+		  }
 		}
 		strcat(last_of_line,"\n");
 		write = 0;
@@ -395,9 +410,12 @@ error:
 }
 
 void gen_panel_destroy_sample_list(List *samples){
-	LIST_FOREACH(samples, first, next, cur){
-		free(((sample_bam *)cur->value)->bam_file);
-		free(((sample_bam *)cur->value)->sample_name);
+	LIST_FOREACH(samples, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		free(((sample_bam *)cur->values[curi])->bam_file);
+		free(((sample_bam *)cur->values[curi])->sample_name);
+	  }
 	}
 	List_clear_destroy(samples);
 	return;

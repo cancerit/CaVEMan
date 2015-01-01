@@ -32,9 +32,12 @@ char *bases_str[4] = {"A","C","G","T"};
 List *geno_cache[250][4] = {};
 
 List *genotype_hard_copy_genotype_t_list(List *new_list, List *old){
-	LIST_FOREACH(old, first, next, cur){
-		genotype_t *tmp = genotype_copy_genotype((genotype_t *)cur->value);
+	LIST_FOREACH(old, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		genotype_t *tmp = genotype_copy_genotype((genotype_t *)cur->values[curi]);
 		List_push(new_list,tmp);
+	  }
 	}
 	return new_list;
 }
@@ -155,23 +158,26 @@ List *genotype_generate_unique_genotype_list(List *li){
 	memset(genos,0,(sizeof(genotype_t *) * geno_size));
 	List *uniq = List_create();
 	int i=0;
-	LIST_FOREACH(li,first,next,cur){
+	LIST_FOREACH(li,first,next,cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
 		int j=0;
 		int match = 0;
 		for(j=0;j<geno_size;j++){
-			if(genos[j] > 0 && genotype_equals(genos[j],(genotype_t *)cur->value)==1){
+			if(genos[j] > 0 && genotype_equals(genos[j],(genotype_t *)cur->values[curi])==1){
 				match = 1;
 			}
 		}
 		if(match == 0){
 			//genos[j] = malloc(sizeof(struct genotype_t));
 			//check_mem(genos[i]);
-			genos[i] = (genotype_t *)cur->value;
+			genos[i] = (genotype_t *)cur->values[curi];
 			List_push(uniq,genos[i]);
 		}else{
-			free(cur->value);
+			free(cur->values[curi]);
 		}
 		i++;
+	  }
 	}
 
 	free(genos);
@@ -210,8 +216,10 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
       if(List_count(genos)>0){
       	List *tmp = List_create();
          //We need four copies of each genotype to append one of each bean to.
-         LIST_FOREACH(genos, first, next, cur){
-         	genotype_t *gen = (genotype_t *)cur->value;
+         LIST_FOREACH(genos, first, next, cur) {
+	   int curi;
+	   for (curi=0; curi<cur->numElements; ++curi) {
+         	genotype_t *gen = (genotype_t *)cur->values[curi];
          	//Create 2 copies, one will be reference, the next will be mutant base.
          	genotype_t *gen1 = genotype_copy_genotype(gen);
          	genotype_t *gen2 = genotype_copy_genotype(gen1);
@@ -226,7 +234,8 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
 							List_push(tmp,gen1);
 						}
       		}
-      		if(genotype_equals((genotype_t *)(tmp->last->value),gen1)!=1) free(gen1);
+      		if(genotype_equals((genotype_t *)(tmp->last->values[tmp->last->numElements-1]),gen1)!=1) free(gen1);
+	   }
          }
          List_clear_destroy(genos);
          genos = tmp;
@@ -245,8 +254,10 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
 	unique = genotype_generate_unique_genotype_list(genos);
 
 	//Now we have a list of genotypes we calculate variant base and variant base proportion.
-	LIST_FOREACH(unique, first, next, cur){
-		genotype_t *gen = (genotype_t *)cur->value;
+	LIST_FOREACH(unique, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		genotype_t *gen = (genotype_t *)cur->values[curi];
 		//Variant base
 		char var_b = genotype_get_var_base(gen,ref_base[0]);
 		check(var_b,"Error retrieving variant base for genotype: %s given ref base: %s.",genotype_get_genotype_t_as_string(gen),ref_base);
@@ -260,6 +271,7 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
 				gen->var_base_idx = i;
 			}
 		}
+	  }
 	}
 
 	geno_cache[copy_num][bs] = unique;
@@ -321,13 +333,16 @@ char genotype_get_var_base(genotype_t *geno, const char ref_base){
 
 List *genotype_create_combined_List(List *li, genotype_t *norm){
 	List *out = List_create();
-	LIST_FOREACH(li,first,next,cur){
+	LIST_FOREACH(li,first,next,cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
 		combined_genotype_t *combo = malloc(sizeof(combined_genotype_t));
 		check_mem(combo);
 		combo->norm_geno = norm;
-		combo->tum_geno = (genotype_t *)cur->value;
+		combo->tum_geno = (genotype_t *)cur->values[curi];
 		combo->prob = 0.0;
 		List_push(out,combo);
+	  }
 	}
 	return out;
 error:
@@ -336,11 +351,14 @@ error:
 }
 
 genotype_t *genotype_find_ref_genotype(List *tum_genos,int tum_cn, const char ref_base){
-	LIST_FOREACH(tum_genos, first, next, cur){
-		genotype_t *tum = (genotype_t *) cur->value;
+	LIST_FOREACH(tum_genos, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		genotype_t *tum = (genotype_t *) cur->values[curi];
 		if(genotype_get_base_count(tum, ref_base) == tum_cn){
 			return tum;
 		}
+	  }
 	}
 	return NULL;
 }
@@ -351,8 +369,10 @@ List *genotype_calculate_related_genotypes(genotype_t *norm,List *tum_genos,int 
 	//Iterate through each tumour genotype and see if it can fit with the normal genotype passed. If it can, add it to the list.
 	List *store = List_create();
 	//Lastly make the list into an array.
-	LIST_FOREACH(tum_genos, first, next, cur){
-		genotype_t *tum = (genotype_t *) cur->value;
+	LIST_FOREACH(tum_genos, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		genotype_t *tum = (genotype_t *) cur->values[curi];
 		//The variant bases should match (unless hom ref in tumour) and normal genotype is not reference - SNPs.
 		if(norm->var_base != ref_base){
 			//Hom SNPs
@@ -366,6 +386,7 @@ List *genotype_calculate_related_genotypes(genotype_t *norm,List *tum_genos,int 
 			//Reference normal genotype, so all these are somatics so ignore the reference tumour genotype.
 			List_push(store,tum);
 		}
+	  }
 	}
 	List *list = genotype_create_combined_List(store, norm);
 	*count += List_count(list);
@@ -375,9 +396,12 @@ List *genotype_calculate_related_genotypes(genotype_t *norm,List *tum_genos,int 
 
 int genotype_get_size_of_list_of_lists(List *li){
 	int count = 0;
-	LIST_FOREACH(li,first,next,cur){
-		List *this = (List *)cur->value;
+	LIST_FOREACH(li,first,next,cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		List *this = (List *)cur->values[curi];
 		count += List_count(this);
+	  }
 	}
 	return count;
 }
@@ -385,26 +409,35 @@ int genotype_get_size_of_list_of_lists(List *li){
 void genotype_put_genotype_combos_into_array(combined_genotype_t **combos,List *list){
 	//int size = genotype_get_size_of_list_of_lists(list);
 	int i=0;
-	LIST_FOREACH(list,first,next,cur){
-		List *this = (List *)cur->value;
+	LIST_FOREACH(list,first,next,cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		List *this = (List *)cur->values[curi];
 		LIST_FOREACH(this, first, next, here){
-			combos[i] = (combined_genotype_t *)here->value;
+		  int herei;
+		  for (herei=0; herei<here->numElements; ++herei) {
+			combos[i] = (combined_genotype_t *)here->values[herei];
 			i++;
+		  }
 		}
 		List_destroy(this);
+	  }
 	}
 	return;
 }
 
 void genotype_fill_het_snp_norms_list(List *het_snps_norm,combined_genotype_t **het_snp_norm_genotypes){
 	int i=0;
-	LIST_FOREACH(het_snps_norm, first, next, this){
+	LIST_FOREACH(het_snps_norm, first, next, this) {
+	  int thisi;
+	  for (thisi=0; thisi<this->numElements; ++thisi) {
 		combined_genotype_t *g = malloc(sizeof(struct combined_genotype_t));
 		check_mem(g);
-		g->norm_geno = (genotype_t *)this->value;
+		g->norm_geno = (genotype_t *)this->values[thisi];
 		g->prob = 0.0;
 		het_snp_norm_genotypes[i] = g;
 		i++;
+	  }
 	}
 	return;
 error:
@@ -426,8 +459,10 @@ void genotype_set_snp_and_mut_genotypes(List *norm_genos, List *tum_genos, int n
 	List *het_snps_norm = List_create();
 	combined_genotype_t *ref_genotype = malloc(sizeof(combined_genotype_t));
 	//Iterate through normal genotypes.
-	LIST_FOREACH(norm_genos, first, next, cur){
-		genotype_t *norm = (genotype_t *)cur->value;
+	LIST_FOREACH(norm_genos, first, next, cur) {
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		genotype_t *norm = (genotype_t *)cur->values[curi];
 		int ref_count = genotype_get_base_count(norm, ref_base[0]);
 		if(ref_count == norm_cn){
 			ref_genotype->norm_geno = norm;
@@ -446,6 +481,7 @@ void genotype_set_snp_and_mut_genotypes(List *norm_genos, List *tum_genos, int n
 			List *list = genotype_calculate_related_genotypes(norm,tum_genos,&hom_count,tum_cn,ref_base[0]);
 			List_push(hom_snps,list);
 		}
+	  }
 	}
 	combined_genotype_t **het_snp_norm_genotypes = malloc(sizeof(combined_genotype_t *) * List_count(het_snps_norm));
 	check_mem(het_snp_norm_genotypes);

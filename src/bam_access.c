@@ -425,47 +425,28 @@ static int pileup_count_func(uint32_t tid, uint32_t pos, int n, const bam_pileup
 }
 
 void List_insert_sorted(List *list, void *value, List_compare cmp){
-	assert(list != NULL);
-	ListNode *node = calloc(1,sizeof(ListNode));
-	check_mem(node);
-	node->value = value;
-	if(list->last == NULL){//Empty list add a single entry
-		list->first = node;
-		list->last = node;
-		list->count++;
-		return;
-	}else if(cmp(list->last->value,node->value)<=0){//Checking if this entry will tag on the end, hopefully quicker than iteration.
-		list->last->next = node;
-		node->prev = list->last;
-		list->last = node;
-		list->count++;
-		return;
-	}else if(cmp(list->first->value,value)>=0){//If the first value is more than the value passed we tack this on the beginning
-		list->first->prev = node;
-		node->next = list->first;
-		list->first = node;
-		list->count++;
-		return;
-	}else{
-		 // Iterate backwards through the array.
-		LIST_FOREACH(list, last, prev, cur) {
-			if(cmp(cur->value, value) <= 0) {//If the current node's value is less than or equal to the value passed the value is entered here.
-				if(cur->next == NULL){ //Last node being changed
-					list->last = node;
-				}else{//If we're in the right place to put the new value
-								//(the new node must be less than or equal to the next node)
-					node->next = cur->next;
-					node->next->prev = node;
-				}
-				cur->next = node;
-				node->prev = cur;
-				list->count++;
-				return;
-			}
-		}
+  assert(list != NULL);
+  if (list->last == NULL) {
+    List_push(list, value);
+  } else if (cmp(list->last->values[list->last->numElements-1], value) <= 0) {
+    List_push(list, value);
+  } else if (cmp(list->first->values[0], value) >= 0) {
+    List_shift(list, value);
+  } else {
+    // Iterate backwards through the array.
+    LIST_FOREACH(list, last, prev, cur) {
+      int curi;
+      for (curi=cur->numElements-1; curi>=0; --curi) {
+	if (cmp(cur->values[curi], value) <= 0) {
+	  List_insert(list, cur, curi+1, value);
+	  return;
 	}
-error:
-	return;
+      }
+    }
+  }
+  
+ error:
+  return;
 }
 
 int bam_access_compare_read_pos_t(const void *in_a, const void *in_b){
@@ -710,10 +691,13 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 				lane = strcat(lane,"_");
 				lane = strcat(lane,isnorm);
 				int found = 0;
-				LIST_FOREACH(li, first, next, cur){
-					if(strcmp((char *)cur->value,lane)==0){
+				LIST_FOREACH(li, first, next, cur) {
+				  int curi;
+				  for (curi=0; curi<cur->numElements; ++curi) {
+					if(strcmp((char *)cur->values[curi],lane)==0){
 						found = 1;
 					}
+				  }
 				}
 				if(found==0){
 					List_push(li,lane);

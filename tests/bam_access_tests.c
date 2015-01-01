@@ -83,8 +83,11 @@ char *test_list_algos_List_insert_sorted(){
 	mu_assert(List_count(li) == 7,"Incorrect number of elements in list.");
 	unsigned long int i=1;
 	LIST_FOREACH(li, first, next, cur) {
-		mu_assert(((read_pos_t *)cur->value)->ref_pos == i,"Incorrect number in sorted order.");
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		mu_assert(((read_pos_t *)cur->values[curi])->ref_pos == i,"Incorrect number in sorted order.");
 		i++;
+	  }
 	}
 	List_destroy(li);
 	return NULL;
@@ -141,7 +144,9 @@ char *test_bam_access_get_reads_at_this_pos(){
 	int norm_count = 0;
 	int tum_count = 0;
 	LIST_FOREACH(got, first, next, cur){
-		read_pos_t *rp = (read_pos_t *)cur->value;
+	  int curi;
+	  for (curi=0; curi<cur->numElements; ++curi) {
+		read_pos_t *rp = (read_pos_t *)cur->values[curi];
 		if(rp->normal==1){
 			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C',"Wrong called base in normal.");
 			norm_count++;
@@ -149,6 +154,7 @@ char *test_bam_access_get_reads_at_this_pos(){
 			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C'||toupper(bam_nt16_rev_table[rp->called_base])=='A',"Wrong tumour called base.");
 			tum_count++;
 		}
+	  }
 	}
 	mu_assert(norm_count==25,"Incorrect numer of normal reads fetched.");
 	mu_assert(tum_count==52,"Incorrect numer of tumour reads fetched.");

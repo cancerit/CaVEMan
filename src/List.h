@@ -24,12 +24,15 @@
 
 #include <stdlib.h>
 
+#define ELEMENTS_PER_NODE 8
+
 struct ListNode;
 
 typedef struct ListNode{
 	struct ListNode *next;
 	struct ListNode *prev;
-	void *value;
+        int numElements;
+	void *values[ELEMENTS_PER_NODE];
 } ListNode;
 
 typedef struct List{
@@ -44,8 +47,8 @@ void List_clear(List *list);
 void List_clear_destroy(List *list);
 
 #define List_count(A) ((A)->count)
-#define List_first(A) ((A)->first != NULL ? (A)->first->value : NULL)
-#define List_last(A) ((A)->last != NULL ? (A)->last->value : NULL)
+#define List_first(A) ((A)->first != NULL ? (A)->first->values[0] : NULL)
+#define List_last(A) ((A)->last != NULL ? (A)->last->values[(A)->last->numElements-1] : NULL)
 
 void List_push(List *list, void *value);
 void *List_pop(List *list);
@@ -57,7 +60,12 @@ List *List_copy(List *list);
 List *List_join(List *list1, List *list2);
 void List_split(List *list, int split_index, List *left, List *right);
 
+void List_maybeSplitNode(List *list, ListNode *node);
+void List_insert(List *list, ListNode *node, int index, void *value);
+
+/*
 void *List_remove(List *list, ListNode *node);
+*/
 
 #define LIST_FOREACH(L, S, M, V) ListNode *_node = NULL; \
 		ListNode *V = NULL; \
