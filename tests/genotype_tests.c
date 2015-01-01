@@ -21,17 +21,16 @@
 
 #include "minunit.h"
 #include <genotype.h>
-#include <List.h>
 #include <string.h>
 
 char *test_genotype_calculate_genotypes(){
 	char *ref_base = "A";
 	int cn = 2;
-	List *genos = genotype_calculate_genotypes(cn,ref_base);
+	genotype_t_ptr_List *genos = genotype_calculate_genotypes(cn,ref_base);
 	mu_assert(genos != NULL, "Genotypes list was NULL");
 	mu_assert(List_count(genos) == 7, "Wrong number of genotypes returned in cn 2 test.");
 	cn = 4;
-	List *sec_genos = genotype_calculate_genotypes(4,ref_base);
+	genotype_t_ptr_List *sec_genos = genotype_calculate_genotypes(4,ref_base);
 	mu_assert(sec_genos != NULL, "Genotypes list was NULL");
 	mu_assert(List_count(sec_genos) == 13, "Wrong number of genotypes returned in cn 4 test.");
 	genotype_clear_genotype_cache();
@@ -39,22 +38,28 @@ char *test_genotype_calculate_genotypes(){
 }
 
 char *test_genotype_hard_copy_genotype_t_list(){
-	List *new_list = List_create(); 
-	List *old = List_create();
+	genotype_t_ptr_List *new_list = genotype_t_ptr_List_create(); 
+	genotype_t_ptr_List *old = genotype_t_ptr_List_create();
 	genotype_t *geno = genotype_init_genotype();
 	int count = 10;
 	char base = 'C';
 	genotype_set_base_count(geno, base, count);
 	mu_assert(geno->c_count==10,"Wrong number of C bases recorded");
-	List_push(old,geno);
+	genotype_t_ptr_List_push(old,geno);
 	genotype_hard_copy_genotype_t_list(new_list,old);
 	mu_assert(List_count(new_list) == 1, "Wrong number of elements in list.");
-	LIST_FOR_EACH_ELEMENT(new_list, first, next, cur){
+	LIST_FOR_EACH_ELEMENT(genotype_t_ptr, new_list, first, next, cur){
 		//Only one element...
-		mu_assert(((genotype_t *)cur)->c_count == 10, "Wrong c count in copied value.");
+		mu_assert(cur->c_count == 10, "Wrong c count in copied value.");
 	}
-	List_clear_destroy(new_list);
-	List_clear_destroy(old);
+	{LIST_FOR_EACH_ELEMENT(genotype_t_ptr, new_list, first, next, cur) {
+	    free(cur);
+	  }}
+	genotype_t_ptr_List_destroy(new_list);
+	{LIST_FOR_EACH_ELEMENT(genotype_t_ptr, old, first, next, cur) {
+	    free(cur);
+	  }}
+	genotype_t_ptr_List_destroy(old);
 	return NULL;
 }
 

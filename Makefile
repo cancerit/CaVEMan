@@ -30,7 +30,7 @@ LFLAGS?= -L$(SAMTOOLSLOC) -L$(HTSTMP)
 LIBS =-lhts -lbam -lpthread -lz -lm
 
 # define the C source files
-SRCS = ./src/file_tests.c ./src/List.c ./src/List_algos.c ./src/bam_access.c ./src/config_file_access.c ./src/fai_access.c ./src/ignore_reg_access.c ./src/alg_bean.c ./src/split_access.c ./src/covs_access.c ./src/cn_access.c ./src/genotype.c ./src/algos.c ./src/output.c ./src/setup.c ./src/split.c ./src/mstep.c ./src/merge.c ./src/estep.c
+SRCS = ./src/file_tests.c ./src/BasicLists.c ./src/bam_access.c ./src/config_file_access.c ./src/fai_access.c ./src/ignore_reg_access.c ./src/alg_bean.c ./src/split_access.c ./src/covs_access.c ./src/cn_access.c ./src/genotype.c ./src/algos.c ./src/output.c ./src/setup.c ./src/split.c ./src/mstep.c ./src/merge.c ./src/estep.c
 #Define test sources
 TEST_SRC=$(wildcard ./tests/*_tests.c)
 TESTS=$(patsubst %.c,%,$(TEST_SRC))

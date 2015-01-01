@@ -136,7 +136,7 @@ int mstep_main(int argc, char *argv[]){
 	char *fa_file = NULL;
 	uint64_t ********arr_check = NULL;
 	char *ref_seq = NULL;
-	List *these_regions = NULL;
+	seq_region_t_List *these_regions = NULL;
 	struct seq_region_t **ignore_regs = NULL;
 	uint64_t ********covs = NULL;
 	FILE *alg_bean_file = NULL;
@@ -217,39 +217,37 @@ int mstep_main(int argc, char *argv[]){
 
 	// If there's only one split it in two.
 	if(List_count(these_regions) == 1){
-		seq_region_t *old = List_pop(these_regions);
-		if(old->beg == old->end){
-			seq_region_t *range_1 = malloc(sizeof(seq_region_t));
-			range_1->beg = old->beg;
-			range_1->end = old->end;
-			List_push(these_regions,range_1);
-			free(old);
+		seq_region_t old = seq_region_t_List_pop(these_regions);
+		if(old.beg == old.end){
+		  seq_region_t range_1;
+		  range_1.beg = old.beg;
+		  range_1.end = old.end;
+		  seq_region_t_List_push(these_regions,range_1);
 		}else{
-			seq_region_t *range_1 = malloc(sizeof(seq_region_t));
-			seq_region_t *range_2 = malloc(sizeof(seq_region_t));
-			range_1->beg = old->beg;
-			int halfway = ((old->end - old->beg)/2);
-			range_1->end = old->beg+halfway;
-			range_2->beg = old->beg+halfway+1;
-			range_2->end = old->end;
-			free(old);
-			List_push(these_regions,range_1);
-			List_push(these_regions,range_2);
+			seq_region_t range_1;
+			seq_region_t range_2;
+			range_1.beg = old.beg;
+			int halfway = ((old.end - old.beg)/2);
+			range_1.end = old.beg+halfway;
+			range_2.beg = old.beg+halfway+1;
+			range_2.end = old.end;
+			seq_region_t_List_push(these_regions,range_1);
+			seq_region_t_List_push(these_regions,range_2);
 		}
 	}
 
 	//Iterate through sections.
-	LIST_FOR_EACH_ELEMENT(these_regions, first, next, cur) {
-		printf("M-stepping section %s:%d-%d for mstep\n",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+	LIST_FOR_EACH_ELEMENT(seq_region_t, these_regions, first, next, cur) {
+		printf("M-stepping section %s:%d-%d for mstep\n",chr_name,cur.beg,cur.end);
 		//Get the reference sequence for this section
-		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,cur.beg,cur.end);
 
 		printf("fetched a reference seq of length %lu for this section.\n",strlen(ref_seq));
-		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,cur.beg,cur.end);
 		//Get all reads or pos pileups for section.
 		//Iterate through positions in section and mstep
-		int chk = algos_mstep_read_position(alg,covs,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end,ref_seq, split_size);
-		check(chk==0,"Error running mstep for region %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+		int chk = algos_mstep_read_position(alg,covs,chr_name,cur.beg,cur.end,ref_seq, split_size);
+		check(chk==0,"Error running mstep for region %s:%d-%d.",chr_name,cur.beg,cur.end);
 		free(ref_seq);
 	}
 
@@ -291,7 +289,7 @@ int mstep_main(int argc, char *argv[]){
 	free(cov_file);
 	alg_bean_destroy(alg);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count,ignore_regs);
-	List_clear_destroy(these_regions);
+	seq_region_t_List_destroy(these_regions);
 	return 0;
 
 error:
@@ -305,6 +303,6 @@ error:
 	if(alg_bean_file) fclose(alg_bean_file);
 	if(alg) alg_bean_destroy(alg);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count,ignore_regs);
-	List_clear_destroy(these_regions);
+	seq_region_t_List_destroy(these_regions);
 	return -1;
 }

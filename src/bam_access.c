@@ -24,11 +24,26 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+/*
 #include <List.h>
 #include <List_algos.h>
+*/
 #include <dbg.h>
 #include <bam_access.h>
 #include <time.h>
+
+#define ELEMENT_TYPE ref_seq_t
+#define ELEMENTS_PER_NODE 8
+#include <List.c>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
+
+#define ELEMENT_TYPE read_pos_t
+#define ELEMENTS_PER_NODE 4
+#include <List.c>
+#include <List_algos.c>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
 
 static file_holder *norm = NULL;
 static file_holder *tum = NULL;
@@ -224,11 +239,11 @@ error:
 	return NULL;
 }
 
-List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species){
+ref_seq_t_List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species){
 	assert(bam_file != NULL);
 	char *line = NULL;
-	ref_seq_t *ref = NULL;
-	List *conts = List_create();
+	ref_seq_t ref;
+	ref_seq_t_List *conts = ref_seq_t_List_create();
 	samfile_t *bam = samopen(bam_file, "rb", 0);
 	check(bam != 0,"Failed to open bam file to read contigs: %s.",bam_file);
 	char *head_txt = bam->header->text;
@@ -236,32 +251,33 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 	while(line != NULL){
 		//First check it's a sequence line
 		if(strncmp(line,"@SQ",3) == 0){
-			ref = malloc(sizeof(struct ref_seq_t));
 			//If we already have species and assembly don't look for them
 			if(assembly != NULL && species != NULL){
 				//Set assembly and species
-				ref->ass = assembly;
-				ref->spp = species;
+				ref.ass = assembly;
+				ref.spp = species;
+				ref.name = malloc(sizeof(char) * 100);
 				//Just match name and length
-				int chk = sscanf(line,"@SQ\tSN:%s\tLN:%d\t",ref->name,&ref->length);
+				int chk = sscanf(line,"@SQ\tSN:%s\tLN:%d\t",ref.name,&ref.length);
 				if(chk!=2){
-					free(ref);
-					sentinel("Sequence name and length not found in sequence line %s.",line);
+      				  free(ref.name);
+				  sentinel("Sequence name and length not found in sequence line %s.",line);
 				}
-				List_push(conts,ref);
+				ref_seq_t_List_push(conts,ref);
 			}else{
 				//Look for species and assembly
 				char spec[1000];
 				char assem[1000];
-				int chk = sscanf(line,"@SQ\tSN:%s\tLN:%d\tAS:%[A-Za-z0-9]\tSP:%s",ref->name,&ref->length,assem,spec);
+				ref.name = malloc(sizeof(char) * 100);
+				int chk = sscanf(line,"@SQ\tSN:%s\tLN:%d\tAS:%[A-Za-z0-9]\tSP:%s",ref.name,&ref.length,assem,spec);
 				check(chk==4,"Sequence name, length, assembly and species not found in sequence line %s.",line);
-				ref->ass = malloc(sizeof(char) * 100);
-				check_mem(ref->ass);
-				ref->spp = malloc(sizeof(char) * 100);
-				check_mem(ref->spp);
-				strcpy(ref->ass,assem);
-				strcpy(ref->spp,spec);
-				List_push(conts,ref);
+				ref.ass = malloc(sizeof(char) * 100);
+				check_mem(ref.ass);
+				ref.spp = malloc(sizeof(char) * 100);
+				check_mem(ref.spp);
+				strcpy(ref.ass,assem);
+				strcpy(ref.spp,spec);
+				ref_seq_t_List_push(conts,ref);
 			}
 		}//End of checking for sequence line
 		line = strtok(NULL,"\n");
@@ -273,8 +289,7 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 error:
 	if(line) free(line);
 	if(bam) samclose(bam);
-	if(ref) free(ref);
-	if(conts) List_clear_destroy(conts);
+	if(conts) ref_seq_t_List_destroy(conts);
 	return NULL;
 }
 
@@ -424,37 +439,31 @@ static int pileup_count_func(uint32_t tid, uint32_t pos, int n, const bam_pileup
    return 0;
 }
 
-void List_insert_sorted(List *list, void *value, List_compare cmp){
+void read_pos_t_List_insert_sorted(read_pos_t_List *list, read_pos_t value, read_pos_t_List_compare cmp){
   assert(list != NULL);
   if (list->last == NULL) {
-    List_push(list, value);
-  } else if (cmp(list->last->values[list->last->numElements-1], value) <= 0) {
-    List_push(list, value);
-  } else if (cmp(list->first->values[0], value) >= 0) {
-    List_shift(list, value);
+    read_pos_t_List_push(list, value);
+  } else if (cmp(List_last(list), value) <= 0) {
+    read_pos_t_List_push(list, value);
+  } else if (cmp(List_first(list), value) >= 0) {
+    read_pos_t_List_shift(list, value);
   } else {
     // Iterate backwards through the array.
-    LIST_FOR_EACH_NODE(list, last, prev, cur) {
+    LIST_FOR_EACH_NODE(read_pos_t, list, last, prev, cur) {
       int curi;
       for (curi=cur->numElements-1; curi>=0; --curi) {
 	if (cmp(cur->values[curi], value) <= 0) {
-	  List_insert(list, cur, curi+1, value);
+	  read_pos_t_List_insert(list, cur, curi+1, value);
 	  return;
 	}
       }
     }
   }
-  
- error:
-  return;
 }
 
-int bam_access_compare_read_pos_t(const void *in_a, const void *in_b){
-	const read_pos_t *a = in_a;
-	const read_pos_t *b = in_b;
-
-	if(a->ref_pos > b->ref_pos) return 1;
-	if(a->ref_pos < b->ref_pos) return -1;
+int bam_access_compare_read_pos_t(const read_pos_t a, const read_pos_t b){
+	if(a.ref_pos > b.ref_pos) return 1;
+	if(a.ref_pos < b.ref_pos) return -1;
 	return 0;
 }
 
@@ -471,35 +480,34 @@ static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const ba
 			uint8_t cbase = bam1_seqi(bam1_seq(algn),p->qpos);
 			if(!(p->is_del) && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
 				//Now we add a new read pos struct to the list since the read is valid.
-				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
-				check_mem(rp);
-				rp->rd_len = bam_cigar2qlen(&algn->core,bam1_cigar(algn));
-				rp->ref_pos = pos+1;
-				rp->rd_pos = p->qpos+1;
-				rp->called_base = cbase;
-				rp->map_qual = algn->core.qual;
-				rp->base_qual = bam1_qual(algn)[p->qpos];
+			        read_pos_t rp;
+				rp.rd_len = bam_cigar2qlen(&algn->core,bam1_cigar(algn));
+				rp.ref_pos = pos+1;
+				rp.rd_pos = p->qpos+1;
+				rp.called_base = cbase;
+				rp.map_qual = algn->core.qual;
+				rp.base_qual = bam1_qual(algn)[p->qpos];
 				//Check strandedness
 				if(algn->core.flag & BAM_FREVERSE){
-					rp->strand = 1;
-					rp->rd_pos = (rp->rd_len - rp->rd_pos) + 1;
+					rp.strand = 1;
+					rp.rd_pos = (rp.rd_len - rp.rd_pos) + 1;
 				}else{
-					rp->strand = 0;
+					rp.strand = 0;
 				}
 				//Check read order
 				if(algn->core.flag & BAM_FREAD1){
-					rp->read_order = 0;
+					rp.read_order = 0;
 				}else if(algn->core.flag & BAM_FREAD2){
-					rp->read_order = 1;
+					rp.read_order = 1;
 				}
 				nom = strcpy(nom,bam_aux2Z(bam_aux_get(algn,"RG")));
 				nom = strcat(nom,"_");
 				nom = strcat(nom,norm_char);
 				int lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
 				check(lane_i>=0,"Error calculating lane index %s.",nom);
-				rp->lane_i = lane_i;
-				rp->normal = isnorm;
-				List_push(tmp->reads,rp);
+				rp.lane_i = lane_i;
+				rp.normal = isnorm;
+				read_pos_t_List_push(tmp->reads,rp);
 			}
 		}//End of iteration through each pileup read in this pos.
 	}
@@ -524,35 +532,34 @@ static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1
 			uint8_t c = bam1_seqi(bam1_seq(p->b), p->qpos);
 			if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
 				//Now we add a new read pos struct to the list since the read is valid.
-				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
-				check_mem(rp);
-				rp->rd_len = bam_cigar2qlen(&p->b->core,bam1_cigar(p->b));
-				rp->ref_pos = pos+1;
-				rp->rd_pos = p->qpos+1;
-				rp->called_base = c;
-				rp->map_qual = p->b->core.qual;
-				rp->base_qual = qual;
+			        read_pos_t rp;
+				rp.rd_len = bam_cigar2qlen(&p->b->core,bam1_cigar(p->b));
+				rp.ref_pos = pos+1;
+				rp.rd_pos = p->qpos+1;
+				rp.called_base = c;
+				rp.map_qual = p->b->core.qual;
+				rp.base_qual = qual;
 				//Check strandedness
 				if(p->b->core.flag & BAM_FREVERSE){
-					rp->rd_pos = (rp->rd_len - rp->rd_pos) + 1;
-					rp->strand = 1;
+					rp.rd_pos = (rp.rd_len - rp.rd_pos) + 1;
+					rp.strand = 1;
 				}else{
-					rp->strand = 0;
+					rp.strand = 0;
 				}
 				//Check read order
 				if(p->b->core.flag & BAM_FREAD1){
-					rp->read_order = 0;
+					rp.read_order = 0;
 				}else if(p->b->core.flag & BAM_FREAD2){
-					rp->read_order = 1;
+					rp.read_order = 1;
 				}
 				nom = strcpy(nom,bam_aux2Z(bam_aux_get(p->b,"RG")));
 				nom = strcat(nom,"_");
 				nom = strcat(nom,norm_char);
 				int lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
 				check(lane_i>=0,"Error calculating lane index %s.",nom);
-				rp->lane_i = lane_i;
-				rp->normal = isnorm;
-				List_insert_sorted(tmp->reads, rp, (List_compare)bam_access_compare_read_pos_t);
+				rp.lane_i = lane_i;
+				rp.normal = isnorm;
+				read_pos_t_List_insert_sorted(tmp->reads, rp, bam_access_compare_read_pos_t);
 			}
 		}//End of iteration through each pileup read in this pos.
 		free(nom);
@@ -562,8 +569,8 @@ error:
    return 0;
 }
 
-List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop,
-																uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
+read_pos_t_List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop,
+							 uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
 	//Pileup and populate the list with valid reads.
 	char *region = NULL;
 	char sta[20];
@@ -571,7 +578,7 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
 	sprintf(region,"%s:%lu-%lu",chr_name,(long unsigned int)start,(long unsigned int)stop);
 	bams->beg = start;
 	bams->end = stop;
-	bams->reads = List_create();
+	bams->reads = read_pos_t_List_create();
 	bams->bean = bean;
 	int ref;
 	bam_plbuf_t *buf;
@@ -595,31 +602,31 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
 	return bams->reads;
 error:
 	if(region) free(region);
-	if(bams->reads) List_clear_destroy(bams->reads);
+	if(bams->reads) read_pos_t_List_destroy(bams->reads);
 	return NULL;
 }
 
-List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean){
+read_pos_t_List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean){
 	assert(norm->in != NULL);
 	assert(tum->in != NULL);
-	List *norm_rds = NULL;
-	List *tum_rds = NULL;
+	read_pos_t_List *norm_rds = NULL;
+	read_pos_t_List *tum_rds = NULL;
 
 	norm_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,norm,1);
 	check(norm_rds != NULL,"Error retrieving normal reads.");
 	tum_rds = bam_access_get_sorted_reads_at_this_pos(chr_name,start,stop,sorted,bean,tum,0);
 	check(tum_rds != NULL,"Error retrieving tumour reads.");
 	//Now merge the two sorted lists into one.
-	List *merged_sorted = List_merge(norm_rds,tum_rds,bam_access_compare_read_pos_t);
+	read_pos_t_List *merged_sorted = read_pos_t_List_merge(norm_rds,tum_rds,bam_access_compare_read_pos_t);
 	check(merged_sorted != NULL,"Error merging normal and tumour reads.");
 	//Free up the old lists
 	free(norm_rds);
 	free(tum_rds);
 	return merged_sorted;
 error:
-	if(norm_rds) List_clear_destroy(norm_rds);
-	if(tum_rds) List_clear_destroy(tum_rds);
-	if(merged_sorted) List_clear_destroy(merged_sorted);
+	if(norm_rds) read_pos_t_List_destroy(norm_rds);
+	if(tum_rds) read_pos_t_List_destroy(tum_rds);
+	if(merged_sorted) read_pos_t_List_destroy(merged_sorted);
 	return NULL;
 }
 
@@ -670,15 +677,15 @@ void bam_access_min_base_qual(int qual){
 	return;
 }
 
-List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
+String_List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	assert(bam_loc != NULL);
 	char *line = NULL;
-	List *li = NULL;
+	String_List *li = NULL;
 	samfile_t *bam =  NULL;
 	bam = samopen(bam_loc, "rb", 0);
 	check(bam != 0,"Bam file %s failed to open to read header.",bam_loc);
 	char *head_txt = bam->header->text;
-	li = List_create();
+	li = String_List_create();
 	line = strtok(head_txt,"\n");
 	while(line != NULL){
 		//Check for a read group line
@@ -691,13 +698,13 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 				lane = strcat(lane,"_");
 				lane = strcat(lane,isnorm);
 				int found = 0;
-				LIST_FOR_EACH_ELEMENT(li, first, next, cur) {
-					if(strcmp((char *)cur,lane)==0){
+				LIST_FOR_EACH_ELEMENT(String, li, first, next, cur) {
+					if(strcmp(cur,lane)==0){
 						found = 1;
 					}
 				}
 				if(found==0){
-					List_push(li,lane);
+					String_List_push(li,lane);
 				}else{
 					free(lane);
 					free(id);
@@ -716,7 +723,10 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 error:
 	if(line) free(line);
 	if(bam) samclose(bam);
-	if(li) List_clear_destroy(li);
+	LIST_FOR_EACH_ELEMENT(String, li, first, next, cur) {
+	  free(cur);
+	}
+	if(li) String_List_destroy(li);
 	return NULL;
 }
 

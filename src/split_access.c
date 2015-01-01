@@ -21,7 +21,6 @@
 
 #include <split_access.h>
 #include <dbg.h>
-#include <List.h>
 #include <ignore_reg_access.h>
 #include <assert.h>
 
@@ -54,16 +53,16 @@ error:
 	return;
 }
 
-List *split_access_get_all_split_sections(char *file_loc){
+seq_region_t_List *split_access_get_all_split_sections(char *file_loc){
 	assert(file_loc != NULL);
 	FILE *file;
 	char *chr = NULL;
-	seq_region_t *reg = NULL;
+	seq_region_t reg;
 	file = fopen(file_loc,"r");
 	check(file != NULL,"Error opening split list file.");
 	char line[250];
 	int i=0;
-	List *li = List_create();
+	seq_region_t_List *li = seq_region_t_List_create();
 
 	while ( fgets(line,sizeof(line),file) != NULL ){
 		i++;
@@ -73,19 +72,14 @@ List *split_access_get_all_split_sections(char *file_loc){
 		int stop = 0;
 		int chk = sscanf(line,"%s\t%d\t%d",chr,&start_zero_based,&stop);
 		check(chk==3,"Error parsing split file line number %d: %s.",i,line);
-		reg = malloc(sizeof(struct seq_region_t));
-		check_mem(reg);
-		reg->beg = start_zero_based+1;
-		reg->end = stop;
-		reg->chr_name = chr;
-		List_push(li,reg);
+		reg.beg = start_zero_based+1;
+		reg.end = stop;
+		reg.chr_name = chr;
+		seq_region_t_List_push(li,reg);
 	}
 	return li;
 error:
-	if(reg){
-		if(reg->chr_name) free(reg->chr_name);
-		free(reg);
-	}
+	if(reg.chr_name) free(reg.chr_name);
 	if(chr) free(chr);
 	return NULL;
 }

@@ -23,10 +23,10 @@
 #define _split_access_h
 
 #include <stdio.h>
-#include <List.h>
+#include <ignore_reg_access.h>
 
 int split_access_print_section(FILE *output, char *chr, int start_zero_based, int stop);
 void split_access_get_section_from_index(char *file_loc, char *chr, int *start_zero_based, int *stop, int index);
-List *split_access_get_all_split_sections(char *file_loc);
+seq_region_t_List *split_access_get_all_split_sections(char *file_loc);
 
 #endif

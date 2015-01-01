@@ -23,7 +23,6 @@
 #include <bam_access.h>
 #include <alg_bean.h>
 #include <ctype.h>
-#include <List.h>
 #include <ctype.h>
 
 char *bam_file = "testData/mt.bam";
@@ -38,24 +37,21 @@ char *test_bam_access_openbams_close_bams(){
 	return NULL;
 }
 
-int bam_access_compare_read_pos_t_test(const void *in_a, const void *in_b){
-	const read_pos_t *a = in_a;
-	const read_pos_t *b = in_b;
-
-	if(a->ref_pos > b->ref_pos) return 1;
-	if(a->ref_pos < b->ref_pos) return -1;
+int bam_access_compare_read_pos_t_test(read_pos_t a, read_pos_t b){
+	if(a.ref_pos > b.ref_pos) return 1;
+	if(a.ref_pos < b.ref_pos) return -1;
 	return 0;
 }
 
 char *test_list_algos_List_insert_sorted(){
-	List *li = List_create();
-	read_pos_t *p1 = malloc(sizeof(read_pos_t));
-	read_pos_t *p2 = malloc(sizeof(read_pos_t));
-	read_pos_t *p3 = malloc(sizeof(read_pos_t));
-	read_pos_t *p4 = malloc(sizeof(read_pos_t));
-	read_pos_t *p5 = malloc(sizeof(read_pos_t));
-	read_pos_t *p6 = malloc(sizeof(read_pos_t));
-	read_pos_t *p7 = malloc(sizeof(read_pos_t));
+	read_pos_t_List *li = read_pos_t_List_create();
+	read_pos_t p1;
+	read_pos_t p2;
+	read_pos_t p3;
+	read_pos_t p4;
+	read_pos_t p5;
+	read_pos_t p6;
+	read_pos_t p7;
 	unsigned long int on = 1;
 	unsigned long int tw = 2;
 	unsigned long int th = 3;
@@ -63,30 +59,30 @@ char *test_list_algos_List_insert_sorted(){
 	unsigned long int fi = 5;
 	unsigned long int si = 6;
 	unsigned long int se = 7;
-	p1->ref_pos = si;
-	p2->ref_pos = se;
-	p3->ref_pos = tw;
-	p4->ref_pos = fo;
-	p5->ref_pos = th;
-	p6->ref_pos = fi;
-	p7->ref_pos = on;
-	List_insert_sorted(li, p1, (List_compare) bam_access_compare_read_pos_t_test);
-	List_insert_sorted(li, p2, (List_compare) bam_access_compare_read_pos_t_test);
-	List_insert_sorted(li, p3, (List_compare) bam_access_compare_read_pos_t_test);
-	List_insert_sorted(li, p4, (List_compare) bam_access_compare_read_pos_t_test);
-	List_insert_sorted(li, p5, (List_compare) bam_access_compare_read_pos_t_test);
-	List_insert_sorted(li, p6, (List_compare) bam_access_compare_read_pos_t_test);
-	List_insert_sorted(li, p7, (List_compare) bam_access_compare_read_pos_t_test);
+	p1.ref_pos = si;
+	p2.ref_pos = se;
+	p3.ref_pos = tw;
+	p4.ref_pos = fo;
+	p5.ref_pos = th;
+	p6.ref_pos = fi;
+	p7.ref_pos = on;
+	read_pos_t_List_insert_sorted(li, p1, bam_access_compare_read_pos_t_test);
+	read_pos_t_List_insert_sorted(li, p2, bam_access_compare_read_pos_t_test);
+	read_pos_t_List_insert_sorted(li, p3, bam_access_compare_read_pos_t_test);
+	read_pos_t_List_insert_sorted(li, p4, bam_access_compare_read_pos_t_test);
+	read_pos_t_List_insert_sorted(li, p5, bam_access_compare_read_pos_t_test);
+	read_pos_t_List_insert_sorted(li, p6, bam_access_compare_read_pos_t_test);
+	read_pos_t_List_insert_sorted(li, p7, bam_access_compare_read_pos_t_test);
 	mu_assert(li != NULL, "NULL list found.");
 	mu_assert(li->first != NULL, "NULL list->first found.");
 	mu_assert(li->last != NULL, "NULL list->last found.");
 	mu_assert(List_count(li) == 7,"Incorrect number of elements in list.");
 	unsigned long int i=1;
-	LIST_FOR_EACH_ELEMENT(li, first, next, cur) {
-		mu_assert(((read_pos_t *)cur)->ref_pos == i,"Incorrect number in sorted order.");
+	LIST_FOR_EACH_ELEMENT(read_pos_t, li, first, next, cur) {
+		mu_assert(cur.ref_pos == i,"Incorrect number in sorted order.");
 		i++;
 	}
-	List_destroy(li);
+	read_pos_t_List_destroy(li);
 	return NULL;
 }
 
@@ -117,7 +113,7 @@ char *test_bam_access_get_reads_at_this_pos(){
 	int start = 17619559;
 	int stop = 17619559;
 	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(bam_file,bam_file);
-	List *got = bam_access_get_reads_at_this_pos(chr_name, start, stop,1,test_bean);
+	read_pos_t_List *got = bam_access_get_reads_at_this_pos(chr_name, start, stop,1,test_bean);
 	mu_assert(List_count(got)==2,"Wrong number of reads fetched from bam file.");
 	bam_access_closebams();
 
@@ -140,13 +136,12 @@ char *test_bam_access_get_reads_at_this_pos(){
 	mu_assert(List_count(got)==77,"Wrong number of reads fetched from know mutant bam files.");
 	int norm_count = 0;
 	int tum_count = 0;
-	LIST_FOR_EACH_ELEMENT(got, first, next, cur){
-		read_pos_t *rp = (read_pos_t *)cur;
-		if(rp->normal==1){
-			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C',"Wrong called base in normal.");
+	LIST_FOR_EACH_ELEMENT(read_pos_t, got, first, next, rp){
+		if(rp.normal==1){
+			mu_assert(toupper(bam_nt16_rev_table[rp.called_base])=='C',"Wrong called base in normal.");
 			norm_count++;
 		}else{
-			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C'||toupper(bam_nt16_rev_table[rp->called_base])=='A',"Wrong tumour called base.");
+			mu_assert(toupper(bam_nt16_rev_table[rp.called_base])=='C'||toupper(bam_nt16_rev_table[rp.called_base])=='A',"Wrong tumour called base.");
 			tum_count++;
 		}
 	}
@@ -157,7 +152,7 @@ char *test_bam_access_get_reads_at_this_pos(){
 }
 
 char *test_bam_access_get_lane_list_from_header(){
-	List *lanes = bam_access_get_lane_list_from_header(bam_file,"0");
+	String_List *lanes = bam_access_get_lane_list_from_header(bam_file,"0");
 	mu_assert(List_count(lanes)==2,"Wrong number of lanes fetched from bam file.");
 	return NULL;
 }
@@ -178,13 +173,13 @@ char *test_bam_access_sample_name_platform_from_header(){
 }
 
 char *test_bam_access_get_contigs_from_bam(){
-	List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, NULL, NULL);
+	ref_seq_t_List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, NULL, NULL);
 	mu_assert(List_count(contigs)==25,"Wrong number of contigs fetched from header.");
 	return NULL;
 }
 
 char *test_bam_access_get_contigs_from_bam_no_spp(){
-	List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, "ASSEMBLY", "SPP");
+	ref_seq_t_List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, "ASSEMBLY", "SPP");
 	mu_assert(List_count(contigs)==25,"Wrong number of contigs fetched from header.");
 	return NULL;
 }

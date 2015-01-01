@@ -19,17 +19,24 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#include <List.h>
+#ifdef ELEMENT_TYPE
+#ifdef ELEMENTS_PER_NODE
+
+#include <templates.h>
+
 #include <dbg.h>
 #include <assert.h>
 
-List *List_create() {
-  return calloc(1, sizeof(List));
+#define ListNode_TYPE TEMPLATE(ELEMENT_TYPE,ListNode)
+#define List_TYPE TEMPLATE(ELEMENT_TYPE,List)
+
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_create)() {
+  return calloc(1, sizeof(List_TYPE));
 }
 
-void List_destroy(List *list) {
+void TEMPLATE(ELEMENT_TYPE,List_destroy)(List_TYPE *list) {
   assert(list != NULL);
-  LIST_FOR_EACH_NODE(list, first, next, cur) {
+  LIST_FOR_EACH_NODE(ELEMENT_TYPE, list, first, next, cur) {
     if(cur->prev){
       free(cur->prev);
     }
@@ -38,25 +45,10 @@ void List_destroy(List *list) {
   free(list);
 }
 
-void List_clear(List *list) {
-  assert(list != NULL);
-  LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
-    free(cur);
-  }
-}
-
-void List_clear_destroy(List *list) {
-  assert(list != NULL);
-  if(List_count(list) > 0){
-    List_clear(list);
-  }	
-  List_destroy(list);
-}
-
-void List_push(List *list, void *value) {
+void TEMPLATE(ELEMENT_TYPE,List_push)(List_TYPE *list, ELEMENT_TYPE value) {
   assert(list != NULL);
   if ((list->last == NULL) || (list->last->numElements == ELEMENTS_PER_NODE)) {
-    ListNode *node = calloc(1, sizeof(ListNode));
+    ListNode_TYPE *node = calloc(1, sizeof(ListNode_TYPE));
     check_mem(node);
     node->numElements = 1;
     node->values[0] = value;
@@ -77,11 +69,11 @@ error:
   return;
 }
 
-void *List_pop(List *list) {
+ELEMENT_TYPE TEMPLATE(ELEMENT_TYPE,List_pop)(List_TYPE *list) {
   assert(list != NULL);
-  ListNode *node = list->last;
+  ListNode_TYPE *node = list->last;
   if (node != NULL) {
-    void *result = node->values[--node->numElements];
+    ELEMENT_TYPE result = node->values[--node->numElements];
     if (node->numElements == 0) {
       if (list->first == list->last) {
 	list->first = NULL;
@@ -95,14 +87,15 @@ void *List_pop(List *list) {
     list->count--;
     return result;
   } else {
-    return NULL;
+    fprintf(stderr, "error invoking List_pop on an empty list.");
+    exit(1);
   }
 }
 
-void List_shift(List *list, void *value) {
+void TEMPLATE(ELEMENT_TYPE,List_shift)(List_TYPE *list, ELEMENT_TYPE value) {
   assert(list != NULL);
   if ((list->first == NULL) || (list->first->numElements == ELEMENTS_PER_NODE)) {
-    ListNode *node = calloc(1, sizeof(ListNode));
+    ListNode_TYPE *node = calloc(1, sizeof(ListNode_TYPE));
     check_mem(node);
     node->numElements = 1;
     node->values[0] = value;
@@ -127,11 +120,11 @@ error:
   return;
 }
 
-void *List_unshift(List *list) {
+ELEMENT_TYPE TEMPLATE(ELEMENT_TYPE,List_unshift)(List_TYPE *list) {
   assert(list != NULL);
-  ListNode *node = list->first;
+  ListNode_TYPE *node = list->first;
   if (node != NULL) {
-    void *result = node->values[0];
+    ELEMENT_TYPE result = node->values[0];
     if (--node->numElements == 0) {
       if (list->first == list->last) {
 	list->first = NULL;
@@ -150,70 +143,86 @@ void *List_unshift(List *list) {
     list->count--;
     return result;
   } else {
-    return NULL;
+    fprintf(stderr, "error invoking List_unshift on an empty list.");
+    exit(1);
   }
 }
 
-List *List_copy(List *list) {
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_copy)(List_TYPE *list) {
   assert(list != NULL);
-  List *listCopy = List_create();
-  LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
-      List_push(listCopy, cur);
+  List_TYPE *listCopy = TEMPLATE(ELEMENT_TYPE,List_create)();
+  LIST_FOR_EACH_ELEMENT(ELEMENT_TYPE, list, first, next, cur) {
+    TEMPLATE(ELEMENT_TYPE,List_push)(listCopy, cur);
   }
   return listCopy;
 }
 
-List *List_join(List *list1, List *list2) {
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_join)(List_TYPE *list1, List_TYPE *list2) {
   assert(list1 != NULL);
   assert(list2 != NULL);
-  List *joined = List_copy(list1);
-  LIST_FOR_EACH_ELEMENT(list2, first, next, cur) {
-      List_push(joined, cur);
+  List_TYPE *joined = TEMPLATE(ELEMENT_TYPE,List_copy)(list1);
+  LIST_FOR_EACH_ELEMENT(ELEMENT_TYPE, list2, first, next, cur) {
+    TEMPLATE(ELEMENT_TYPE,List_push)(joined, cur);
   }
   return joined;
 }
 
-void List_split(List *list, int split_pos, List *left, List *right) {
+void TEMPLATE(ELEMENT_TYPE,List_split)(List_TYPE *list, int split_pos, List_TYPE *left, List_TYPE *right) {
   assert(list != NULL);
   assert(List_count(list)>0);
   assert(split_pos <= List_count(list));
-  LIST_FOR_EACH_ELEMENT(list, first, next, cur) {
+  LIST_FOR_EACH_ELEMENT(ELEMENT_TYPE, list, first, next, cur) {
       if(split_pos > 0) {
-	List_push(left,&cur);
+	TEMPLATE(ELEMENT_TYPE,List_push)(left,cur);
       } else {
-	List_push(right,&cur);
+	TEMPLATE(ELEMENT_TYPE,List_push)(right,cur);
       }
       split_pos--;
   }
   return;
 }
 
-void List_maybeSplitNode(List *list, ListNode *node) {
-  if (node->numElements == ELEMENTS_PER_NODE) {
-    ListNode *newNode = calloc(1, sizeof(ListNode));
+void TEMPLATE(ELEMENT_TYPE,List_splitNode)(List_TYPE *list, ListNode_TYPE *node) {
+  assert(node->numElements == ELEMENTS_PER_NODE);
+  ListNode_TYPE *newNode = calloc(1, sizeof(ListNode_TYPE));
+  if (node->next) {
     newNode->next = node->next;
-    newNode->prev = node;
-    newNode->numElements = ELEMENTS_PER_NODE/2;
-    int i;
-    for (i=0; i<ELEMENTS_PER_NODE/2; ++i) {
-      newNode->values[i] = node->values[i+ELEMENTS_PER_NODE/2];
-    }
-    node->next = newNode;
-    node->numElements -= ELEMENTS_PER_NODE/2;
-    if (list->last == node) list->last = newNode;
+    newNode->next->prev = newNode;
+  } else {
+    newNode->next = NULL;
   }
+  newNode->prev = node;
+  newNode->numElements = ELEMENTS_PER_NODE/2;
+  int i;
+  for (i=0; i<ELEMENTS_PER_NODE/2; ++i) {
+    newNode->values[i] = node->values[i+ELEMENTS_PER_NODE/2];
+  }
+  node->next = newNode;
+  node->numElements -= ELEMENTS_PER_NODE/2;
+  if (list->last == node) list->last = newNode;
 }
 
-void List_insert(List *list, ListNode *node, int index, void *value) {
-  List_maybeSplitNode(list, node);
-  if (index < node->numElements) {
-    int i;
-    for (i=++node->numElements; i>index; --i) {
-      node->values[i] = node->values[i-1];
+void TEMPLATE(ELEMENT_TYPE,List_insert)(List_TYPE *list, ListNode_TYPE *node, int index, ELEMENT_TYPE value) {
+  if (index <= node->numElements) {
+    if (node->numElements == ELEMENTS_PER_NODE)
+      TEMPLATE(ELEMENT_TYPE,List_splitNode)(list, node);
+    if (index <= node->numElements) {
+      assert(node->numElements < ELEMENTS_PER_NODE);
+      int i;
+      for (i=node->numElements; i>index; --i) {
+	node->values[i] = node->values[i-1];
+      }
+      node->values[index] = value;
+      node->numElements++;
+      list->count++;
+	return;
     }
-    node->values[index] = value;
-    list->count++;
-  } else {
-    List_insert(list, node->next, index-node->numElements, value);
   }
+  TEMPLATE(ELEMENT_TYPE,List_insert)(list, node->next, index-node->numElements, value);
 }
+
+#undef ListNode_TYPE
+#undef List_TYPE
+
+#endif
+#endif

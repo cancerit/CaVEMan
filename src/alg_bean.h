@@ -23,7 +23,7 @@
 #define _alg_bean_h
 
 #include <stdio.h>
-#include <List.h>
+#include <BasicLists.h>
 #include "sam.h"
 
 typedef struct alg_bean_intrange{
@@ -31,38 +31,44 @@ typedef struct alg_bean_intrange{
 	int to;
 } alg_bean_intrange;
 
+#define ELEMENT_TYPE alg_bean_intrange
+#define ELEMENTS_PER_NODE 16
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
+
 typedef struct alg_bean_t{
-	 List *rd_pos;
+	 float_List *rd_pos;
 	 int rd_pos_size;
-	 List *base_qual;
+	 alg_bean_intrange_List *base_qual;
 	 int base_qual_size;
-	 List *map_qual;
+	 alg_bean_intrange_List *map_qual;
 	 int map_qual_size;
-	 List *lane;	
+	 String_List *lane;	
 	 int lane_size;
-	 List *read_order;
+	 int_List *read_order;
 	 int read_order_size;
-	 List *ref_base;
+	 String_List *ref_base;
 	 int ref_base_size;
-	 List *call_base;
+	 String_List *call_base;
 	 int call_base_size;
-	 List *strand; 
+	 int_List *strand; 
 	 int strand_size;
 } alg_bean_t;
 
 int alg_bean_create_default_file(FILE *file, char *norm, char *tum);
 int alg_bean_write_file(FILE *file, alg_bean_t *bean);
-List *alg_bean_parse_int_range(char *txt);
-List *alg_bean_parse_str_list(char *txt);
-List *alg_bean_parse_float_list(char *txt);
+alg_bean_intrange_List *alg_bean_parse_int_range(char *txt);
+String_List *alg_bean_parse_str_list(char *txt);
+float_List *alg_bean_parse_float_list(char *txt);
 alg_bean_t *alg_bean_read_file(FILE *file);
 alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum);
 void alg_bean_destroy(alg_bean_t *bean);
-List *alg_bean_hard_copy_char_list(List *new_list, List *old);
-int alg_bean_get_index_for_str_arr(List *list,char *value);
-int alg_bean_get_index_for_intrange_arr(List *list,int value);
-int alg_bean_get_index_for_char_arr(List *list,char *value);
-int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len);
+String_List *alg_bean_hard_copy_char_list(String_List *new_list, String_List *old);
+int alg_bean_get_index_for_str_arr(String_List *list,char *value);
+int alg_bean_get_index_for_intrange_arr(alg_bean_intrange_List *list,int value);
+int alg_bean_get_index_for_char_arr(String_List *list,char *value);
+int alg_bean_get_index_for_read_pos_prop_arr(float_List *list,int pos,int rd_len);
 
 #define CEIL(a, b) (((a) / (b)) + (((a) % (b)) > 0 ? 1 : 0))
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))

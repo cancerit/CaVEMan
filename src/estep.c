@@ -24,7 +24,6 @@
 #include <getopt.h>
 #include <string.h>
 #include <assert.h>
-#include <List.h>
 #include <dbg.h>
 #include <file_tests.h>
 #include <covs_access.h>
@@ -310,11 +309,11 @@ int estep_main(int argc, char *argv[]){
 	alg_bean_t *alg = NULL;
 	char *fa_file = NULL;
 	int ignore_reg_count = 0;
-	List *these_regions = NULL;
+	seq_region_t_List *these_regions = NULL;
 	struct seq_region_t **ignore_regs = NULL;
 	char no_analysis_file_loc[500];
 	FILE *no_analysis_file = NULL;
-	List *no_analysis_list = NULL;
+	seq_region_t_List *no_analysis_list = NULL;
 	char *ref_seq = NULL;
 	FILE *debug_file = NULL;
 	FILE *snp_file = NULL;
@@ -407,7 +406,7 @@ int estep_main(int argc, char *argv[]){
    check(ignore_reg_count >= 0,"Error trying to check the number of ignored regions for this chromosome.");
 
    //A list structure to store the ignored regions and skipped bases.
-   no_analysis_list = List_create();
+   no_analysis_list = seq_region_t_List_create();
    output_set_no_analysis_section_list(no_analysis_list);
 
    //Now create a store for said regions.
@@ -428,24 +427,22 @@ int estep_main(int argc, char *argv[]){
 
 	// If there's only one split it in two.
 	if(List_count(these_regions) == 1){
-		seq_region_t *old = List_pop(these_regions);
-		if(old->beg == old->end){
-			seq_region_t *range_1 = malloc(sizeof(seq_region_t));
-			range_1->beg = old->beg;
-			range_1->end = old->end;
-			List_push(these_regions,range_1);
-			free(old);
+		seq_region_t old = seq_region_t_List_pop(these_regions);
+		if(old.beg == old.end){
+			seq_region_t range_1;
+			range_1.beg = old.beg;
+			range_1.end = old.end;
+			seq_region_t_List_push(these_regions,range_1);
 		}else{
-			seq_region_t *range_1 = malloc(sizeof(seq_region_t));
-			seq_region_t *range_2 = malloc(sizeof(seq_region_t));
-			range_1->beg = old->beg;
-			int halfway = ((old->end - old->beg)/2);
-			range_1->end = old->beg+halfway;
-			range_2->beg = old->beg+halfway+1;
-			range_2->end = old->end;
-			free(old);
-			List_push(these_regions,range_1);
-			List_push(these_regions,range_2);
+			seq_region_t range_1;
+			seq_region_t range_2;
+			range_1.beg = old.beg;
+			int halfway = ((old.end - old.beg)/2);
+			range_1.end = old.beg+halfway;
+			range_2.beg = old.beg+halfway+1;
+			range_2.end = old.end;
+			seq_region_t_List_push(these_regions,range_1);
+			seq_region_t_List_push(these_regions,range_2);
 		}
 	}
 
@@ -491,18 +488,18 @@ int estep_main(int argc, char *argv[]){
 
 	//Iterate through analysis sections
 	//Iterate through sections.
-	LIST_FOR_EACH_ELEMENT(these_regions, first, next, cur) {
-		printf("Estep section %s:%d-%d\n",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+	LIST_FOR_EACH_ELEMENT(seq_region_t, these_regions, first, next, cur) {
+		printf("Estep section %s:%d-%d\n",chr_name,cur.beg,cur.end);
 		//Get the reference sequence for this section
-		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,cur.beg,cur.end);
 
 		printf("fetched a reference seq of length %lu for this section.\n",strlen(ref_seq));
-		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+		check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,cur.beg,cur.end);
 		//Get all reads or pos pileups for section.
 		//Iterate through positions in section and mstep
-		int chk = algos_estep_read_position(alg,prob_arr,chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end,ref_seq,
+		int chk = algos_estep_read_position(alg,prob_arr,chr_name,cur.beg,cur.end,ref_seq,
 									norm_cn_loc, tum_cn_loc, snp_file, mut_file, debug_file, split_size);
-		check(chk==0,"Error running estep for region %s:%d-%d.",chr_name,((seq_region_t *)cur)->beg,((seq_region_t *)cur)->end);
+		check(chk==0,"Error running estep for region %s:%d-%d.",chr_name,cur.beg,cur.end);
 		free(ref_seq);
 	}
 
@@ -525,7 +522,7 @@ int estep_main(int argc, char *argv[]){
 	check(fcheck==0,"Error flushing no_analysis_file.");
 	fclose(no_analysis_file);
 	//cleanup
-	List_clear_destroy(these_regions);
+	seq_region_t_List_destroy(these_regions);
 	free(fa_file);
 	free(no_analysis_list);
 	bam_access_closebams();
@@ -535,8 +532,8 @@ int estep_main(int argc, char *argv[]){
 	alg_bean_destroy(alg);
 	return 0;
 error:
-	if(these_regions) List_clear_destroy(these_regions);
-	if(no_analysis_list) List_clear_destroy(no_analysis_list);
+	if(these_regions) seq_region_t_List_destroy(these_regions);
+	if(no_analysis_list) seq_region_t_List_destroy(no_analysis_list);
 	if(fa_file) free(fa_file);
 	if(ref_seq) free(ref_seq);
 	if(mut_file) fclose(mut_file);

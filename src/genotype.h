@@ -34,11 +34,35 @@ typedef struct genotype_t{
 	long double var_base_prop;
 }genotype_t;
 
+typedef genotype_t* genotype_t_ptr;
+
+#define ELEMENT_TYPE genotype_t_ptr
+#define ELEMENTS_PER_NODE 4
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
+
 typedef struct combined_genotype_t{
 	genotype_t *norm_geno;
 	genotype_t *tum_geno;
 	long double prob;
 }combined_genotype_t;
+
+typedef combined_genotype_t* combined_genotype_t_ptr;
+
+#define ELEMENT_TYPE combined_genotype_t_ptr
+#define ELEMENTS_PER_NODE 8
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
+
+typedef combined_genotype_t_ptr_List* combined_genotype_t_ptr_List_ptr;
+
+#define ELEMENT_TYPE combined_genotype_t_ptr_List_ptr
+#define ELEMENTS_PER_NODE 8
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
 
 typedef struct genotype_store_t{
 	long double ref_geno_norm_prob;
@@ -50,8 +74,8 @@ typedef struct genotype_store_t{
 	int tum_max;
 	int norm_max;
 	int total_max;
-	List *normal_genos;
-	List *tumour_genos;
+	genotype_t_ptr_List *normal_genos;
+	genotype_t_ptr_List *tumour_genos;
 	combined_genotype_t *ref_genotype;
 	combined_genotype_t **het_snp_norm_genotypes;
 	combined_genotype_t **het_snp_genotypes;
@@ -62,8 +86,8 @@ typedef struct genotype_store_t{
 int genotype_equals(genotype_t *g_a, genotype_t *g_b);
 genotype_t *genotype_init_genotype();
 void genotype_clear_genotype_cache();
-List *genotype_hard_copy_genotype_t_list(List *new_list, List *old);
-List *genotype_calculate_genotypes(int copy_num, char *ref_base);
+genotype_t_ptr_List *genotype_hard_copy_genotype_t_list(genotype_t_ptr_List *new_list, genotype_t_ptr_List *old);
+genotype_t_ptr_List *genotype_calculate_genotypes(int copy_num, char *ref_base);
 char *genotype_get_genotype_t_as_string(genotype_t *geno);
 long double genotype_get_var_base_proportion(genotype_t *gen, char ref_base, int copy_num);
 char genotype_get_var_base(genotype_t *geno, char ref_base);

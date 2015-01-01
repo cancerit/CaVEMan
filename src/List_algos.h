@@ -19,20 +19,24 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef List_algos_h
-#define List_algos_h
+#ifdef ELEMENT_TYPE
 
-#include <List.h>
+#include <templates.h>
+
 #include <assert.h>
 
-typedef int (*List_compare)(const void *a, const void *b);
+#define List_TYPE TEMPLATE(ELEMENT_TYPE,List)
+#define List_COMPARE TEMPLATE(ELEMENT_TYPE,List_compare)
 
-int List_bubble_sort(List *list, List_compare cmp);
+typedef int (*List_COMPARE)(const ELEMENT_TYPE a, const ELEMENT_TYPE b);
 
-List *List_merge_sort(List *list, List_compare cmp);
+int TEMPLATE(ELEMENT_TYPE,List_bubble_sort)(List_TYPE *list, List_COMPARE cmp);
 
-List *List_merge(List *left, List *right, List_compare cmp);
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_merge_sort)(List_TYPE *list, List_COMPARE cmp);
 
-void List_insert_sorted(List *list, void *value, List_compare cmp);
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_merge)(List_TYPE *left, List_TYPE *right, List_COMPARE cmp);
+
+#undef List_TYPE
+#undef List_COMPARE
 
 #endif

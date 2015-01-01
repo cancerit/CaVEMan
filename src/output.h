@@ -23,6 +23,7 @@
 #define _output_h
 
 #include <algos.h>
+#include <ignore_reg_access.h>
 
 int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom);
 int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
@@ -34,6 +35,6 @@ char *output_generate_reference_contig_lines(char *bam_file, char *assembly, cha
 int output_append_position_to_no_analysis(char *chr_name, int start_one_base, int stop);
 int output_flush_no_analysis(char *chr_name);
 void output_set_no_analysis_file(FILE *file);
-void output_set_no_analysis_section_list(List *sections);
+void output_set_no_analysis_section_list(seq_region_t_List *sections);
 
 #endif

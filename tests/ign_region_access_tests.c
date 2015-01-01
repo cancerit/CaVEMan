@@ -78,12 +78,12 @@ char *test_ignore_reg_access_get_ign_reg_contained(){
 	ignore_regs = malloc(sizeof(struct seq_region_t *) *  ignore_reg_count);
 	char *chr = "10";
 	ignore_reg_access_get_ign_reg_for_chr(test_ign_file,chr,ignore_reg_count, ignore_regs);
-	List *contained = ignore_reg_access_get_ign_reg_contained(10,5679,ignore_regs,ignore_reg_count);
+	seq_region_t_List *contained = ignore_reg_access_get_ign_reg_contained(10,5679,ignore_regs,ignore_reg_count);
 	mu_assert(List_count(contained)==1,"Incorrect number of regions found.\n")
-	List_clear_destroy(contained);
+	seq_region_t_List_destroy(contained);
 	contained = ignore_reg_access_get_ign_reg_contained(10,5700,ignore_regs,ignore_reg_count);
 	mu_assert(List_count(contained)==2,"Incorrect number of regions found.\n")
-	List_clear_destroy(contained);
+	seq_region_t_List_destroy(contained);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count, ignore_regs);
 	return NULL;
 }
@@ -97,13 +97,13 @@ char *test_ignore_reg_access_resolve_ignores_to_analysis_sections(){
 	ignore_reg_access_get_ign_reg_for_chr(test_ign_file,chr,ignore_reg_count, ignore_regs);
 //10	13	5678
 //10	5680	5699
-	List *sects = ignore_reg_access_resolve_ignores_to_analysis_sections(11,5679,ignore_regs,ignore_reg_count);
+	seq_region_t_List *sects = ignore_reg_access_resolve_ignores_to_analysis_sections(11,5679,ignore_regs,ignore_reg_count);
 	mu_assert(List_count(sects)==2,"Incorrect number of sections resolved.\n");
-	mu_assert(((seq_region_t *)sects->first->values[0])->beg == 11,"Incorrect first section start.\n");
-	mu_assert(((seq_region_t *)sects->first->values[0])->end == 12,"Incorrect first section stop.\n");
-	mu_assert(((seq_region_t *)sects->last->values[sects->last->numElements-1])->beg == 5679,"Incorrect first section start.\n");
-	mu_assert(((seq_region_t *)sects->last->values[sects->last->numElements-1])->end == 5679,"Incorrect first section stop.\n");
-	List_clear_destroy(sects);
+	mu_assert(List_first(sects).beg == 11,"Incorrect first section start.\n");
+	mu_assert(List_first(sects).end == 12,"Incorrect first section stop.\n");
+	mu_assert(List_last(sects).beg == 5679,"Incorrect first section start.\n");
+	mu_assert(List_last(sects).end == 5679,"Incorrect first section stop.\n");
+	seq_region_t_List_destroy(sects);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count, ignore_regs);
 	return NULL;
 }

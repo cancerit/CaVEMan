@@ -121,7 +121,7 @@ int estep_no_analysis(){
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	check(no_anal_out!=NULL,"Error opening file.");
 	output_set_no_analysis_file(no_anal_out);
-	output_set_no_analysis_section_list(List_create());
+	output_set_no_analysis_section_list(seq_region_t_List_create());
 	int estep = algos_estep_read_position(alg, probs,"1", 192462250, 192462300, ref_base, mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	output_flush_no_analysis("1");
 	check(estep==0,"Error running estep.");
@@ -175,7 +175,7 @@ char *test_algos_estep_read_position(){
 	FILE *dbg_out = fopen(test_dbg_out,"w");
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	output_set_no_analysis_file(no_anal_out);
-	output_set_no_analysis_section_list(List_create());
+	output_set_no_analysis_section_list(seq_region_t_List_create());
 	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	mu_assert(estep==0,"Error running estep.");
 	fclose(snp_out);
@@ -476,20 +476,20 @@ int test_per_read_estep(){
 	combined_genotype_t **het_norm_genotypes = NULL;
 
 	read_pos_t *norm_read = malloc(sizeof(read_pos_t));
-	norm_read->ref_base_probs[0] = &ldone;
-	norm_read->ref_base_probs[1] = &ldone;
-	norm_read->ref_base_probs[2] = &ldtwo;
-	norm_read->ref_base_probs[3] = &ldone;
+	norm_read->ref_base_probs[0] = ldone;
+	norm_read->ref_base_probs[1] = ldone;
+	norm_read->ref_base_probs[2] = ldtwo;
+	norm_read->ref_base_probs[3] = ldone;
 	norm_read->called_base = bam_nt16_table[cbase];
 	norm_read->normal = 1;
 	check_mem(norm_read);
 	read_pos_t *tum_read = malloc(sizeof(read_pos_t));
 	tum_read->called_base = bam_nt16_table[cbase];
 	tum_read->normal = 0;
-	tum_read->ref_base_probs[0] = &ldone;
-	tum_read->ref_base_probs[1] = &ldone;
-	tum_read->ref_base_probs[2] = &ldtwo;
-	tum_read->ref_base_probs[3] = &ldone;
+	tum_read->ref_base_probs[0] = ldone;
+	tum_read->ref_base_probs[1] = ldone;
+	tum_read->ref_base_probs[2] = ldtwo;
+	tum_read->ref_base_probs[3] = ldone;
 
 	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
 	check_mem(genos);
@@ -686,19 +686,19 @@ int test_estep_pos(){
 	read_pos_t *tum_read = malloc(sizeof(read_pos_t));
 	check_mem(tum_read);
 	check_mem(norm_read);
-	norm_read->ref_base_probs[0] = &ldone;
-	norm_read->ref_base_probs[1] = &ldone;
-	norm_read->ref_base_probs[2] = &ldtwo;
-	norm_read->ref_base_probs[3] = &ldone;
+	norm_read->ref_base_probs[0] = ldone;
+	norm_read->ref_base_probs[1] = ldone;
+	norm_read->ref_base_probs[2] = ldtwo;
+	norm_read->ref_base_probs[3] = ldone;
 	norm_read->called_base = bam_nt16_table[cbase];
 	norm_read->normal = 1;
 
 	tum_read->called_base = bam_nt16_table[cbase];
 	tum_read->normal = 0;
-	tum_read->ref_base_probs[0] = &ldone;
-	tum_read->ref_base_probs[1] = &ldone;
-	tum_read->ref_base_probs[2] = &ldtwo;
-	tum_read->ref_base_probs[3] = &ldone;
+	tum_read->ref_base_probs[0] = ldone;
+	tum_read->ref_base_probs[1] = ldone;
+	tum_read->ref_base_probs[2] = ldtwo;
+	tum_read->ref_base_probs[3] = ldone;
 
 	genos = malloc(sizeof(genotype_store_t));
 	check_mem(genos);

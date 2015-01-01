@@ -23,20 +23,25 @@
 #define _ignore_reg_access_h
 
 #include <stdio.h>
-#include <List.h>
 
 typedef struct seq_region_t{  
-   int beg;
-   int end;  
-	char *chr_name; 
-	int val;
-} seq_region_t;  
+  int beg;
+  int end;
+  char *chr_name;
+  int val;
+} seq_region_t;
+
+#define ELEMENT_TYPE seq_region_t
+#define ELEMENTS_PER_NODE 8
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
 
 int ignore_reg_access_get_ign_reg_count_for_chr(char *ign_file,char *chr);
 int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr,int entry_count,struct seq_region_t **regions);
 seq_region_t *ignore_reg_access_get_ign_reg_overlap(int pos, struct seq_region_t **regions, int entry_count);
 void ignore_reg_access_destroy_seq_region_t_arr(int entry_count, struct seq_region_t **regions);
-List *ignore_reg_access_get_ign_reg_contained(int from, int to, struct seq_region_t **regions, int entry_count);
-List *ignore_reg_access_resolve_ignores_to_analysis_sections(int from, int to, struct seq_region_t **regions, int entry_count);
+seq_region_t_List *ignore_reg_access_get_ign_reg_contained(int from, int to, struct seq_region_t **regions, int entry_count);
+seq_region_t_List *ignore_reg_access_resolve_ignores_to_analysis_sections(int from, int to, struct seq_region_t **regions, int entry_count);
 
 #endif

@@ -23,18 +23,38 @@
 #define _bam_access_h
 
 #include <stdio.h>
-#include <List.h>
+#include <BasicLists.h>
 #include <alg_bean.h>
-#include <List_algos.h>
 #include <stdint.h>
 #include "sam.h"
+
+typedef struct read_pos_t{
+	uint32_t ref_pos; /*4*/
+	uint16_t rd_len:9; /* total bits 9/16 - Max read length of 511*/
+	uint16_t normal:1;     /* total bits 10/16*/
+	uint16_t read_order:1; /* total bits  11/16*/
+	uint16_t strand:1;     /* total bits  12/16*/
+	uint16_t called_base:4;  /*Total bits 16/16*/
+	uint16_t rd_pos:9; /* total bits 9/16 - Max read length of 511 */
+	uint16_t base_qual:7; /* total bits 16/16 - Max base qual of 127 (60 is max as standard so this should be safe) */
+	uint8_t map_qual; /*1*/
+	uint8_t lane_i; /*1*/
+	long double ref_base_probs[4];
+} read_pos_t;
+
+#define ELEMENT_TYPE read_pos_t
+#define ELEMENTS_PER_NODE 4
+#include <List.h>
+#include <List_algos.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
 
 typedef struct file_holder{
 	int beg, end;
 	int base_counts_size;
 	samfile_t *in;
 	bam_index_t *idx;
-	List *reads;
+	read_pos_t_List *reads;
 	alg_bean_t *bean;
 	int **base_counts;
 
@@ -50,22 +70,14 @@ typedef struct ref_seq_t{
 	int length;
 	char *ass;
 	char *spp;
-	char name[100];
+	char *name;
 } ref_seq_t;
 
-typedef struct read_pos_t{
-	uint32_t ref_pos; /*4*/
-	uint16_t rd_len:9; /* total bits 9/16 - Max read length of 511*/
-	uint16_t normal:1;     /* total bits 10/16*/
-	uint16_t read_order:1; /* total bits  11/16*/
-	uint16_t strand:1;     /* total bits  12/16*/
-	uint16_t called_base:4;  /*Total bits 16/16*/
-	uint16_t rd_pos:9; /* total bits 9/16 - Max read length of 511 */
-	uint16_t base_qual:7; /* total bits 16/16 - Max base qual of 127 (60 is max as standard so this should be safe) */
-	uint8_t map_qual; /*1*/
-	uint8_t lane_i; /*1*/
-	long double *ref_base_probs[4];
-} read_pos_t;
+#define ELEMENT_TYPE ref_seq_t
+#define ELEMENTS_PER_NODE 8
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
 
 int bam_access_check_bam_flags(const bam1_t *b);
 
@@ -85,15 +97,15 @@ void bam_access_include_se(int inc);
 
 void bam_access_min_base_qual(int qual);
 
-List *bam_access_get_lane_list_from_header(char *bam_file_loc, char *isnorm);
+String_List *bam_access_get_lane_list_from_header(char *bam_file_loc, char *isnorm);
 
-List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean);
+read_pos_t_List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean);
 
 char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, char *plat);
 
-void List_insert_sorted(List *list, void *value, List_compare cmp);
+void read_pos_t_List_insert_sorted(read_pos_t_List *list, read_pos_t value, read_pos_t_List_compare cmp);
 
-List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species);
+ref_seq_t_List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species);
 
 file_holder *bam_access_get_by_position_counts(char *normFile, char *chr, uint32_t start, uint32_t end);
 

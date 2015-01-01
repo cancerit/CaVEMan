@@ -19,67 +19,72 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _List_h
-#define _List_h
-
 #include <stdlib.h>
 
-#define ELEMENTS_PER_NODE 8
+#ifdef ELEMENT_TYPE
+#ifdef ELEMENTS_PER_NODE
 
-struct ListNode;
+#include <templates.h>
 
-typedef struct ListNode{
-	struct ListNode *next;
-	struct ListNode *prev;
-        int numElements;
-	void *values[ELEMENTS_PER_NODE];
-} ListNode;
+#define ListNode_TYPE TEMPLATE(ELEMENT_TYPE,ListNode)
+#define List_TYPE TEMPLATE(ELEMENT_TYPE,List)
 
-typedef struct List{
+struct ListNode_TYPE;
+
+typedef struct ListNode_TYPE{
+  struct ListNode_TYPE *next;
+  struct ListNode_TYPE *prev;
+  int numElements;
+  ELEMENT_TYPE values[ELEMENTS_PER_NODE];
+} ListNode_TYPE;
+
+typedef struct List_TYPE{
 		int count;
-		ListNode *first;
-		ListNode *last;
-} List;
+		ListNode_TYPE *first;
+		ListNode_TYPE *last;
+} List_TYPE;
 
-List *List_create();
-void List_destroy(List *list);
-void List_clear(List *list);
-void List_clear_destroy(List *list);
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_create)();
+void TEMPLATE(ELEMENT_TYPE,List_destroy)(List_TYPE *list);
 
 #define List_count(A) ((A)->count)
-#define List_first(A) ((A)->first != NULL ? (A)->first->values[0] : NULL)
-#define List_last(A) ((A)->last != NULL ? (A)->last->values[(A)->last->numElements-1] : NULL)
+#define List_first(A) ((A)->first->values[0]) // unsafe!!!
+#define List_last(A) ((A)->last->values[(A)->last->numElements-1]) // unsafe!!!
 
-void List_push(List *list, void *value);
-void *List_pop(List *list);
+void TEMPLATE(ELEMENT_TYPE,List_push)(List_TYPE *list, ELEMENT_TYPE value);
+ELEMENT_TYPE TEMPLATE(ELEMENT_TYPE,List_pop)(List_TYPE *list);
 
-void *List_unshift(List *list);
-void List_shift(List *list, void *value);
+ELEMENT_TYPE TEMPLATE(ELEMENT_TYPE,List_unshift)(List_TYPE *list);
+void TEMPLATE(ELEMENT_TYPE,List_shift)(List_TYPE *list, ELEMENT_TYPE value);
 
-List *List_copy(List *list);
-List *List_join(List *list1, List *list2);
-void List_split(List *list, int split_index, List *left, List *right);
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_copy)(List_TYPE *list);
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_join)(List_TYPE *list1, List_TYPE *list2);
+void TEMPLATE(ELEMENT_TYPE,List_split)(List_TYPE *list, int split_index, List_TYPE *left, List_TYPE *right);
 
-void List_maybeSplitNode(List *list, ListNode *node);
-void List_insert(List *list, ListNode *node, int index, void *value);
+void TEMPLATE(ELEMENT_TYPE,List_splitNode)(List_TYPE *list, ListNode_TYPE *node);
+void TEMPLATE(ELEMENT_TYPE,List_insert)(List_TYPE *list, ListNode_TYPE *node, int index, ELEMENT_TYPE value);
 
-#define LIST_FOR_EACH_NODE(L, S, M, V) ListNode *_node = NULL; \
-  ListNode *V = NULL;					       \
+#define LIST_FOR_EACH_NODE(ELEMENT_TYPE, L, S, M, V) TEMPLATE(ELEMENT_TYPE,ListNode) *_node = NULL; \
+  TEMPLATE(ELEMENT_TYPE,ListNode) *V = NULL;				\
   for (V = _node = L->S; _node != NULL; V = _node = _node->M)
 
-#define LIST_FOR_EACH_ELEMENT(L, S, M, E) ListNode *_node = NULL;	\
+#define LIST_FOR_EACH_ELEMENT(ELEMENT_TYPE, L, S, M, E) TEMPLATE(ELEMENT_TYPE,ListNode) *_node = NULL; \
   int _i;								\
-  void *E;								\
+  ELEMENT_TYPE E;								\
   for (_node = L->S; _node != NULL; _node = _node->M)			\
     for (E = _node->values[_i = 0]; _i < _node->numElements; E = _node->values[++_i])
 
-#define LIST_FOR_EACH_ELEMENT_MORE(L, S, M, E, F) ListNode *_node = NULL; \
+#define LIST_FOR_EACH_ELEMENT_MORE(ELEMENT_TYPE, L, S, M, E, F) TEMPLATE(ELEMENT_TYPE,ListNode) *_node = NULL; \
   int _i;								\
-  void *E;								\
+  ELEMENT_TYPE E;								\
   int F;								\
   for (_node = L->S; _node != NULL; _node = _node->M)			\
     for (E = _node->values[_i = 0], F = (_i < _node->numElements-1) || (_node->next != NULL); \
 	 _i < _node->numElements;					\
-	 E = _node->values[++_i], F = (_i < _node->numElements-1) || (_node->next != NULL)) 
+	 E = _node->values[++_i], F = (_i < _node->numElements-1) || (_node->next != NULL))
 
+#undef ListNode_TYPE
+#undef List_TYPE
+
+#endif
 #endif

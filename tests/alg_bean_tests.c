@@ -21,7 +21,6 @@
 
 #include "minunit.h"
 #include <alg_bean.h>
-#include <List.h>
 #include <math.h>
 
 char *norm_file = "testData/mt.bam";
@@ -31,17 +30,17 @@ char *test_alg_loc = "testData/test_alg_bean";
 
 static alg_bean_t *test_bean;
 
-int check_base_lists(List *li){
+int check_base_lists(String_List *li){
 	int i=0;
-	LIST_FOR_EACH_ELEMENT(li,first,next,cur){
+	LIST_FOR_EACH_ELEMENT(String, li,first,next,cur){
 		if(i==0){
-			check(strcmp((char *)cur,"A") == 0,"Incorrect default base for entry 1.\n");
+			check(strcmp(cur,"A") == 0,"Incorrect default base for entry 1.\n");
 		}else if(i==1){
-			check(strcmp((char *)cur,"C") == 0,"Incorrect default base for entry 2.\n");
+			check(strcmp(cur,"C") == 0,"Incorrect default base for entry 2.\n");
 		}else if(i==2){
-			check(strcmp((char *)cur,"G") == 0,"Incorrect default base for entry 3.\n");
+			check(strcmp(cur,"G") == 0,"Incorrect default base for entry 3.\n");
 		}else if(i==3){
-			check(strcmp((char *)cur,"T") == 0,"Incorrect default base for entry 4.\n");
+			check(strcmp(cur,"T") == 0,"Incorrect default base for entry 4.\n");
 		}else{
 			sentinel("Too many entries in base List: %d\n",i+1);
 		}
@@ -52,30 +51,30 @@ error:
 	return 0;
 }
 
-int check_base_quality(List *li){
+int check_base_quality(alg_bean_intrange_List *li){
 	int i=0;
-	LIST_FOR_EACH_ELEMENT(li,first,next,cur){
+	LIST_FOR_EACH_ELEMENT(alg_bean_intrange,li,first,next,cur){
 		if(i==0){
-			check(((alg_bean_intrange *)cur)->from == 0,"Incorrect default base qual from for entry 1.\n");
-			check(((alg_bean_intrange *)cur)->to == 9,"Incorrect default base qual to for entry 1.\n");
+			check(cur.from == 0,"Incorrect default base qual from for entry 1.\n");
+			check(cur.to == 9,"Incorrect default base qual to for entry 1.\n");
 		}else if(i==1){
-			check(((alg_bean_intrange *)cur)->from == 10,"Incorrect default base qual from for entry 2.\n");
-			check(((alg_bean_intrange *)cur)->to == 19,"Incorrect default base qual to for entry 2.\n");
+			check(cur.from == 10,"Incorrect default base qual from for entry 2.\n");
+			check(cur.to == 19,"Incorrect default base qual to for entry 2.\n");
 		}else if(i==2){
-			check(((alg_bean_intrange *)cur)->from == 20,"Incorrect default base qual from for entry  3.\n");
-			check(((alg_bean_intrange *)cur)->to == 24,"Incorrect default base qual to for entry 3.\n");
+			check(cur.from == 20,"Incorrect default base qual from for entry  3.\n");
+			check(cur.to == 24,"Incorrect default base qual to for entry 3.\n");
 		}else if(i==3){
-			check(((alg_bean_intrange *)cur)->from == 25,"Incorrect default base qual from for entry  4.\n");
-			check(((alg_bean_intrange *)cur)->to == 29,"Incorrect default base qual to for entry 4.\n");
+			check(cur.from == 25,"Incorrect default base qual from for entry  4.\n");
+			check(cur.to == 29,"Incorrect default base qual to for entry 4.\n");
 		}else if(i==4){
-			check(((alg_bean_intrange *)cur)->from == 30,"Incorrect default base qual from for entry  5.\n");
-			check(((alg_bean_intrange *)cur)->to == 34,"Incorrect default base qual to for entry 5.\n");
+			check(cur.from == 30,"Incorrect default base qual from for entry  5.\n");
+			check(cur.to == 34,"Incorrect default base qual to for entry 5.\n");
 		}else if(i==5){
-			check(((alg_bean_intrange *)cur)->from == 35,"Incorrect default base qual from for entry 6.\n");
-			check(((alg_bean_intrange *)cur)->to == 39,"Incorrect default base qual to for entry 6.\n");
+			check(cur.from == 35,"Incorrect default base qual from for entry 6.\n");
+			check(cur.to == 39,"Incorrect default base qual to for entry 6.\n");
 		}else if(i==6){
-			check(((alg_bean_intrange *)cur)->from == 40,"Incorrect default base qual from for entry 7.\n");
-			check(((alg_bean_intrange *)cur)->to == 200,"Incorrect default base qual to for entry 7.\n");
+			check(cur.from == 40,"Incorrect default base qual from for entry 7.\n");
+			check(cur.to == 200,"Incorrect default base qual to for entry 7.\n");
 		}else{
 			sentinel("Too many entries in base qual List: %d\n",i+1);
 		}
@@ -86,15 +85,15 @@ error:
 	return 0;
 }
 
-int check_map_quality(List *li){
+int check_map_quality(alg_bean_intrange_List *li){
 	int i=0;
-	LIST_FOR_EACH_ELEMENT(li,first,next,cur){
+	LIST_FOR_EACH_ELEMENT(alg_bean_intrange, li,first,next,cur){
 		if(i==0){
-			check(((alg_bean_intrange *)cur)->from == 0,"Incorrect default map qual from for entry 1.\n");
-			check(((alg_bean_intrange *)cur)->to == 60,"Incorrect default map qual to for entry 1.\n");
+			check(cur.from == 0,"Incorrect default map qual from for entry 1.\n");
+			check(cur.to == 60,"Incorrect default map qual to for entry 1.\n");
 		}else if(i==1){
-			check(((alg_bean_intrange *)cur)->from == 255,"Incorrect default map qual from for entry 2.\n");
-			check(((alg_bean_intrange *)cur)->to == 255,"Incorrect default map qual to for entry 2.\n");
+			check(cur.from == 255,"Incorrect default map qual from for entry 2.\n");
+			check(cur.to == 255,"Incorrect default map qual to for entry 2.\n");
 		}else{
 			sentinel("Too many entries in map qual List: %d\n",i+1);
 		}
@@ -105,29 +104,29 @@ error:
 	return 0;
 }
 
-int check_read_position(List *li){
+int check_read_position(float_List *li){
 	int i=0;
-	LIST_FOR_EACH_ELEMENT(li,first,next,cur){
+	LIST_FOR_EACH_ELEMENT(float, li,first,next,cur){
 		if(i==0){
 			float exp = 2.63;
-			check(fabs(*(float *)cur - exp) < 0.00001,
-				"Incorrect default read position percentage for entry 1. %f != %f\n",*(float *)cur,exp);
+			check(fabs(cur - exp) < 0.00001,
+				"Incorrect default read position percentage for entry 1. %f != %f\n",cur,exp);
 		}else if(i==1){
 			float exp = 47.37;
-			check(fabs(*(float *)cur - exp) < 0.00001,
-				"Incorrect default read position percentage for entry 2. %f != %f\n",*(float *)cur,exp);
+			check(fabs(cur - exp) < 0.00001,
+				"Incorrect default read position percentage for entry 2. %f != %f\n",cur,exp);
 		}else if(i==2){
 			float exp = 23.68;
-			check(fabs(*(float *)cur - exp) < 0.00001,
-				"Incorrect default read position percentage for entry 3. %f != %f\n",*(float *)cur,exp);
+			check(fabs(cur - exp) < 0.00001,
+				"Incorrect default read position percentage for entry 3. %f != %f\n",cur,exp);
 		}else if(i==3){
 			float exp = 13.16;
-			check(fabs(*(float *)cur - exp) < 0.00001,
-				"Incorrect default read position percentage for entry 4. %f != %f\n",*(float *)cur,exp);
+			check(fabs(cur - exp) < 0.00001,
+				"Incorrect default read position percentage for entry 4. %f != %f\n",cur,exp);
 		}else if(i==4){
 			float exp = 13.16;
-			check(fabs(*(float *)cur - exp) < 0.00001,
-				"Incorrect default read position percentage for entry 5. %f != %f\n",*(float *)cur,exp);
+			check(fabs(cur - exp) < 0.00001,
+				"Incorrect default read position percentage for entry 5. %f != %f\n",cur,exp);
 		}else{
 			sentinel("Too many entries in read pos array: %d\n",i+1);
 		}
@@ -142,8 +141,7 @@ int check_alg_bean_defaults(alg_bean_t *test_bean){
 	//lane ids:	6514_2	6640_4
 	//We actually have 4 lanes despite 2 being the same as they're copied headers!
 	check(test_bean->lane != NULL,"Lane list unset.\n");
-	LIST_FOR_EACH_ELEMENT(test_bean->lane,first,next,cur){
-		char *lane_id = ((char *)cur);
+	LIST_FOR_EACH_ELEMENT(String, test_bean->lane,first,next,lane_id){
 		check((strcmp(lane_id,"6514_2_1") == 0 || strcmp(lane_id,"6514_2_0") == 0 || strcmp(lane_id,"6640_4_1") == 0 || strcmp(lane_id,"6640_4_0") == 0),
 								"Unexpected lane id recorded.\n");
 	}
@@ -245,12 +243,18 @@ char *test_alg_bean_generate_default_alg_bean(){
 
 char *test_alg_bean_hard_copy_char_list(){
 	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
-	List *one = test_bean->lane;
-	List *joined = List_create();
+	String_List *one = test_bean->lane;
+	String_List *joined = String_List_create();
 	alg_bean_hard_copy_char_list(joined,one);
 	mu_assert(List_count(one) == List_count(joined),"Wrong number of elements after hard copy");
-	List_clear_destroy(one);
-	List_clear_destroy(joined);
+	{LIST_FOR_EACH_ELEMENT(String, one, first, next, cur) {
+	    free(cur);
+	  }}
+	String_List_destroy(one);
+	{LIST_FOR_EACH_ELEMENT(String, joined, first, next, cur) {
+	    free(cur);
+	  }}
+	String_List_destroy(joined);
 	return NULL;
 }
 

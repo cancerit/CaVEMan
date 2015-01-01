@@ -73,7 +73,7 @@ static const char *VCF_INFO_DBNSP_ID = "ID=DS,Number=.,Type=String,Description=\
 
 FILE *no_analysis = NULL;
 int no_analysis_cache_size = 500;
-List *no_analysis_sects = NULL;
+seq_region_t_List *no_analysis_sects = NULL;
 
 char algos_bases[4] = {'A','C','G','T'};
 
@@ -194,20 +194,19 @@ char *output_generate_CaVEMan_process_log(char *cave_version){
 
 char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species){
 	assert(bam_file != NULL);
-	List *contig_list = bam_access_get_contigs_from_bam(bam_file, assembly, species);
+	ref_seq_t_List *contig_list = bam_access_get_contigs_from_bam(bam_file, assembly, species);
 	check(contig_list != NULL,"Error fetching contigs from bam file.");
 	char *contigs = malloc(sizeof(char) * 1000 * List_count(contig_list));
 	strcpy(contigs,"");
-	LIST_FOR_EACH_ELEMENT(contig_list, first,next,cur) {
-		ref_seq_t *ref = (ref_seq_t *)cur;
+	LIST_FOR_EACH_ELEMENT(ref_seq_t, contig_list, first,next,ref) {
 		char contig_str[1000];
-		sprintf(contig_str,"##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n",ref->name,ref->length,ref->ass,ref->spp);
+		sprintf(contig_str,"##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n",ref.name,ref.length,ref.ass,ref.spp);
 		strcat(contigs,contig_str);
 	}
-	List_clear_destroy(contig_list);
+	ref_seq_t_List_destroy(contig_list);
 	return contigs;
 error:
-	if(contig_list) List_clear_destroy(contig_list);
+	if(contig_list) ref_seq_t_List_destroy(contig_list);
 	return NULL;
 }
 
@@ -346,14 +345,13 @@ error:
 }
 
 int output_append_position_to_no_analysis(char *chr_name, int start_one_base, int stop){
-	if(List_count(no_analysis_sects) > 0 && (((seq_region_t *)List_last(no_analysis_sects))->end + 1) == start_one_base){
-		((seq_region_t *)List_last(no_analysis_sects))->end = stop;
+	if(List_count(no_analysis_sects) > 0 && (List_last(no_analysis_sects).end + 1) == start_one_base){
+		List_last(no_analysis_sects).end = stop;
 	}else{
-		struct seq_region_t *reg = malloc(sizeof(struct seq_region_t));
-		check_mem(reg);
-		reg->beg = start_one_base;
-		reg->end = stop;
-		List_push(no_analysis_sects,reg);
+		struct seq_region_t reg;
+		reg.beg = start_one_base;
+		reg.end = stop;
+		seq_region_t_List_push(no_analysis_sects,reg);
 	}
 	if(List_count(no_analysis_sects) > no_analysis_cache_size){
 		int chk = output_flush_no_analysis(chr_name);
@@ -365,23 +363,22 @@ error:
 }
 
 int output_flush_no_analysis(char *chr_name){
-	//output all the no_analysis regions to file....
-	LIST_FOR_EACH_ELEMENT(no_analysis_sects, first, next, cur) {
-		seq_region_t *reg = (seq_region_t *) cur;
-		int chk = fprintf(no_analysis,"%s\t%d\t%d\n",chr_name,(reg->beg-1),reg->end);
-		check(chk>=0,"Error writing to no analysis bed file.");
-	}
-	List_clear_destroy(no_analysis_sects);
-	no_analysis_sects = List_create();
-	return 0;
-error:
-	return -1;
+  //output all the no_analysis regions to file....
+  LIST_FOR_EACH_ELEMENT(seq_region_t, no_analysis_sects, first, next, reg) {
+    int chk = fprintf(no_analysis,"%s\t%d\t%d\n",chr_name,(reg.beg-1),reg.end);
+    check(chk>=0,"Error writing to no analysis bed file.");
+  }
+  seq_region_t_List_destroy(no_analysis_sects);
+  no_analysis_sects = seq_region_t_List_create();
+  return 0;
+ error:
+  return -1;
 }
 
 void output_set_no_analysis_file(FILE *file){
 	no_analysis = file;
 }
 
-void output_set_no_analysis_section_list(List *sections){
+void output_set_no_analysis_section_list(seq_region_t_List *sections){
 	no_analysis_sects = sections;
 }

@@ -28,6 +28,12 @@
 #include <alg_bean.h>
 #include <ignore_reg_access.h>
 
+#define ELEMENT_TYPE seq_region_t
+#define ELEMENTS_PER_NODE 8
+#include <List.c>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
+
 int ignore_reg_access_get_ign_reg_count_for_chr(char *ign_file, char *chr){
 	assert(ign_file != NULL);
 	assert(chr != NULL);
@@ -124,43 +130,36 @@ error:
 	return -1;
 }
 
-List *ignore_reg_access_get_ign_reg_contained(int from, int to, struct seq_region_t **regions, int entry_count){
-	List *li = List_create();
+seq_region_t_List *ignore_reg_access_get_ign_reg_contained(int from, int to, struct seq_region_t **regions, int entry_count){
+	seq_region_t_List *li = seq_region_t_List_create();
 	int i=0;
 	for(i=0; i<entry_count; i++){
 		if(regions[i]->beg >= from && regions[i]->end <= to){
 			//Make a copy of this region and put in the list
-			seq_region_t *reg_copy = malloc(sizeof(struct seq_region_t));
-			check_mem(reg_copy);
-			reg_copy->beg = regions[i]->beg;
-			reg_copy->end = regions[i]->end;
-			List_push(li,reg_copy);
+			seq_region_t_List_push(li,*regions[i]);
 		}
 	}
 	return li;
-error:
-	return NULL;
 }
 
-List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end, struct seq_region_t **regions, int entry_count){
-	List *li = ignore_reg_access_get_ign_reg_contained(start,end,regions,entry_count);
+seq_region_t_List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end, struct seq_region_t **regions, int entry_count){
+	seq_region_t_List *li = ignore_reg_access_get_ign_reg_contained(start,end,regions,entry_count);
 	check(li != NULL,"Error fetching contained ignore regions.");
 
-	List *reg_for_analysis = List_create();
-	seq_region_t *range = malloc(sizeof(struct seq_region_t));
-	range->beg = start;
-	LIST_FOR_EACH_ELEMENT(li, first, next, cur) {
-		range->end = ((seq_region_t *) cur)->beg - 1;
-		List_push(reg_for_analysis,range);
-		range = malloc(sizeof(struct seq_region_t));
-		range->beg = ((seq_region_t *) cur)->end + 1;
+	seq_region_t_List *reg_for_analysis = seq_region_t_List_create();
+	seq_region_t range;
+	range.beg = start;
+	LIST_FOR_EACH_ELEMENT(seq_region_t, li, first, next, cur) {
+		range.end = cur.beg - 1;
+		seq_region_t_List_push(reg_for_analysis,range);
+		range.beg = cur.end + 1;
 	}
-	range->end = end;
-	List_push(reg_for_analysis,range);
-	List_clear_destroy(li);
+	range.end = end;
+	seq_region_t_List_push(reg_for_analysis,range);
+	seq_region_t_List_destroy(li);
 	return reg_for_analysis;
 error:
-	List_clear_destroy(li);
+	seq_region_t_List_destroy(li);
 	return NULL;
 
 }
