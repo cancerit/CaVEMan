@@ -217,7 +217,8 @@ int mstep_main(int argc, char *argv[]){
 
 	// If there's only one split it in two.
 	if(List_count(these_regions) == 1){
-		seq_region_t old = seq_region_t_List_pop(these_regions);
+		seq_region_t old;
+		seq_region_t_List_pop(these_regions, &old);
 		if(old.beg == old.end){
 		  seq_region_t range_1;
 		  range_1.beg = old.beg;

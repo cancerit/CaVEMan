@@ -247,14 +247,8 @@ char *test_alg_bean_hard_copy_char_list(){
 	String_List *joined = String_List_create();
 	alg_bean_hard_copy_char_list(joined,one);
 	mu_assert(List_count(one) == List_count(joined),"Wrong number of elements after hard copy");
-	{LIST_FOR_EACH_ELEMENT(String, one, first, next, cur) {
-	    free(cur);
-	  }}
-	String_List_destroy(one);
-	{LIST_FOR_EACH_ELEMENT(String, joined, first, next, cur) {
-	    free(cur);
-	  }}
-	String_List_destroy(joined);
+	List_clear_destroy(String, one);
+	List_clear_destroy(String, joined);
 	return NULL;
 }
 

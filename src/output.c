@@ -365,8 +365,8 @@ error:
 int output_flush_no_analysis(char *chr_name){
   //output all the no_analysis regions to file....
   LIST_FOR_EACH_ELEMENT(seq_region_t, no_analysis_sects, first, next, reg) {
-    int chk = fprintf(no_analysis,"%s\t%d\t%d\n",chr_name,(reg.beg-1),reg.end);
-    check(chk>=0,"Error writing to no analysis bed file.");
+	  int chk = fprintf(no_analysis,"%s\t%d\t%d\n",chr_name,(reg.beg-1),reg.end);
+	  check(chk>=0,"Error writing to no analysis bed file.");
   }
   seq_region_t_List_destroy(no_analysis_sects);
   no_analysis_sects = seq_region_t_List_create();

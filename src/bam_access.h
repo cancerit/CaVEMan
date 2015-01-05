@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include "sam.h"
 
-typedef struct read_pos_t{
+typedef struct read_pos_t {
 	uint32_t ref_pos; /*4*/
 	uint16_t rd_len:9; /* total bits 9/16 - Max read length of 511*/
 	uint16_t normal:1;     /* total bits 10/16*/
@@ -49,7 +49,7 @@ typedef struct read_pos_t{
 #undef ELEMENT_TYPE
 #undef ELEMENTS_PER_NODE
 
-typedef struct file_holder{
+typedef struct file_holder {
 	int beg, end;
 	int base_counts_size;
 	samfile_t *in;
@@ -61,12 +61,12 @@ typedef struct file_holder{
 	char *bam_access_bases;
 } file_holder;
 
-typedef struct{
+typedef struct {
 	int beg, end;
 	samfile_t *in;
 } tmpstruct_t;
 
-typedef struct ref_seq_t{
+typedef struct ref_seq_t {
 	int length;
 	char *ass;
 	char *spp;

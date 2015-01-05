@@ -26,7 +26,7 @@
 #include <BasicLists.h>
 #include "sam.h"
 
-typedef struct alg_bean_intrange{
+typedef struct alg_bean_intrange {
 	int from;
 	int to;
 } alg_bean_intrange;
@@ -37,23 +37,23 @@ typedef struct alg_bean_intrange{
 #undef ELEMENT_TYPE
 #undef ELEMENTS_PER_NODE
 
-typedef struct alg_bean_t{
-	 float_List *rd_pos;
-	 int rd_pos_size;
-	 alg_bean_intrange_List *base_qual;
-	 int base_qual_size;
-	 alg_bean_intrange_List *map_qual;
-	 int map_qual_size;
-	 String_List *lane;	
-	 int lane_size;
-	 int_List *read_order;
-	 int read_order_size;
-	 String_List *ref_base;
-	 int ref_base_size;
-	 String_List *call_base;
-	 int call_base_size;
-	 int_List *strand; 
-	 int strand_size;
+typedef struct alg_bean_t {
+	float_List *rd_pos;
+	int rd_pos_size;
+	alg_bean_intrange_List *base_qual;
+	int base_qual_size;
+	alg_bean_intrange_List *map_qual;
+	int map_qual_size;
+	String_List *lane;	
+	int lane_size;
+	int_List *read_order;
+	int read_order_size;
+	String_List *ref_base;
+	int ref_base_size;
+	String_List *call_base;
+	int call_base_size;
+	int_List *strand; 
+	int strand_size;
 } alg_bean_t;
 
 int alg_bean_create_default_file(FILE *file, char *norm, char *tum);

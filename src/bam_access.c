@@ -24,10 +24,6 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-/*
-#include <List.h>
-#include <List_algos.h>
-*/
 #include <dbg.h>
 #include <bam_access.h>
 #include <time.h>
@@ -55,7 +51,7 @@ int min_base_qual = 10;
 uint8_t isnorm = 0;
 char norm_char[5];
 
-int bam_access_openbams(char *norm_file, char *tum_file){
+int bam_access_openbams(char *norm_file, char *tum_file) {
 	assert(norm_file != NULL);
 	assert(tum_file != NULL);
 	//Assign memory for the file name etc holding structs
@@ -76,14 +72,14 @@ int bam_access_openbams(char *norm_file, char *tum_file){
 	tum->idx = bam_index_load(tum_file);
 	check(tum->idx != 0,"Normal index file %s failed to open.",tum_file);
 	return 0;
-error:
+ error:
 	if(norm->in) samclose(norm->in);
 	if(tum->in) samclose(tum->in);
 	return -1;
 }
 
 // callback for bam_fetch()
-static int fetch_umnorm_counts_func(const bam1_t *b, void *data){
+static int fetch_umnorm_counts_func(const bam1_t *b, void *data) {
 	//check Mapping Quality and not un mapped //4 // read unmapped
 	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
 		return 0;
@@ -110,11 +106,11 @@ static int fetch_umnorm_counts_func(const bam1_t *b, void *data){
 // callback for bam_plbuf_init()
 static int pileup_umnorm_counts(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pl, void *data) {
 	file_holder *tmp = (file_holder*)data;
-  if ((pos+1) > tmp->beg && pos+1 <= tmp->end) {
-  	int i=0;
-   	for(i=0;i<n;i++){
-   		const bam_pileup1_t *p = pl + i;
-   		bam1_t *algn = p->b;
+	if ((pos+1) > tmp->beg && pos+1 <= tmp->end) {
+		int i=0;
+		for(i=0;i<n;i++){
+			const bam_pileup1_t *p = pl + i;
+			bam1_t *algn = p->b;
 			uint8_t cbase = bam1_seqi(bam1_seq(algn),p->qpos);
 			if(!(p->is_del) && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
 				int loc = (pos) - tmp->beg;
@@ -134,11 +130,11 @@ static int pileup_umnorm_counts(uint32_t tid, uint32_t pos, int n, const bam_pil
 		}//End of iteration through each pileup read in this pos.
 	}
 	return 0;
-error:
-  return -1;
+ error:
+	return -1;
 }
 
-file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint32_t start, uint32_t end){
+file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint32_t start, uint32_t end) {
 	//Open bam related stuff
 	assert(norm_file != NULL);
 	//Assign memory for the file name etc holding structs
@@ -173,15 +169,15 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 	bam_plbuf_t *buf;
 	// parse the region
 	bam_parse_region(norm->in->header, region, &ref,
-						 &norm->beg, &norm->end);
+			 &norm->beg, &norm->end);
 	check(ref >= 0,"Invalid tumour region: %s.",region);
 
 	// initialize pileup
 	buf = bam_plbuf_init(pileup_umnorm_counts, norm);
 
-  bam_fetch(norm->in->x.bam, norm->idx, ref, norm->beg, norm->end, buf, fetch_umnorm_counts_func);
+	bam_fetch(norm->in->x.bam, norm->idx, ref, norm->beg, norm->end, buf, fetch_umnorm_counts_func);
 	bam_plbuf_push(0, buf); // finalize pileup
-  bam_plbuf_destroy(buf);
+	bam_plbuf_destroy(buf);
 	free(region);
 
 
@@ -190,7 +186,7 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 	if(norm->idx) bam_index_destroy(norm->idx);
 	if(norm->in) samclose(norm->in);
 	return norm;
-error:
+ error:
 	if(norm->idx) bam_index_destroy(norm->idx);
 	if(norm->in) samclose(norm->in);
 	if(norm->base_counts){
@@ -205,7 +201,7 @@ error:
 	return NULL;
 }
 
-char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, char *plat){
+char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, char *plat) {
 	assert(bam_file != NULL);
 	samfile_t *bam = samopen(bam_file, "rb", 0);
 	check(bam != 0,"Failed to open bam file to read sample name: %s.",bam_file);
@@ -234,12 +230,12 @@ char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, c
 	check(sample!= NULL,"Sample name was not found in RG line for VCF output.");
 	samclose(bam);
 	return "";
-error:
+ error:
 	if(bam) samclose(bam);
 	return NULL;
 }
 
-ref_seq_t_List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species){
+ref_seq_t_List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species) {
 	assert(bam_file != NULL);
 	char *line = NULL;
 	ref_seq_t ref;
@@ -260,8 +256,8 @@ ref_seq_t_List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, 
 				//Just match name and length
 				int chk = sscanf(line,"@SQ\tSN:%s\tLN:%d\t",ref.name,&ref.length);
 				if(chk!=2){
-      				  free(ref.name);
-				  sentinel("Sequence name and length not found in sequence line %s.",line);
+					free(ref.name);
+					sentinel("Sequence name and length not found in sequence line %s.",line);
 				}
 				ref_seq_t_List_push(conts,ref);
 			}else{
@@ -286,14 +282,14 @@ ref_seq_t_List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, 
 	free(line);
 	samclose(bam);
 	return conts;
-error:
+ error:
 	if(line) free(line);
 	if(bam) samclose(bam);
 	if(conts) ref_seq_t_List_destroy(conts);
 	return NULL;
 }
 
-void bam_access_closebams(){
+void bam_access_closebams() {
 	if(norm->idx) bam_index_destroy(norm->idx);
 	if(norm->in) samclose(norm->in);
 	if(tum->idx) bam_index_destroy(tum->idx);
@@ -303,7 +299,7 @@ void bam_access_closebams(){
 	return;
 }
 
-int bam_access_get_count_for_region(char *chr_name, uint32_t start, uint32_t stop){
+int bam_access_get_count_for_region(char *chr_name, uint32_t start, uint32_t stop) {
 	assert(chr_name != NULL);
 	int count = bam_access_get_count_with_bam(chr_name,start,stop,tum);
 	check(count >= 0,"Invalid count returned from tum.");
@@ -311,11 +307,11 @@ int bam_access_get_count_for_region(char *chr_name, uint32_t start, uint32_t sto
 	check(cn >= 0,"Invalid count returned from normal.");
 	count += cn;
 	return count;
-error:
+ error:
 	return -1;
 }
 
-int bam_access_check_bam_flags(const bam1_t *b){
+int bam_access_check_bam_flags(const bam1_t *b) {
 	//check Mapping Quality and not un mapped //4 // read unmapped
 	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
 		return 0;
@@ -348,14 +344,14 @@ int bam_access_check_bam_flags(const bam1_t *b){
 }
 
 /*// callback for bam_fetch()
-static int fetch_count_func(const bam1_t *b, void *data){
+static int fetch_count_func(const bam1_t *b, void *data) {
   if(bam_access_check_bam_flags(b) == 1){
 		counter++;
 	}
 	return 0;
 }
 
-static int fetch_algo_func(const bam1_t *b, void *data){
+static int fetch_algo_func(const bam1_t *b, void *data) {
 	if(bam_access_check_bam_flags(b) == 1){
 		bam_plbuf_t *pileup = (bam_plbuf_t*) data;
 		bam_plbuf_push(b,pileup);
@@ -364,7 +360,7 @@ static int fetch_algo_func(const bam1_t *b, void *data){
 }*/
 
 // callback for bam_fetch()
-static int fetch_count_func(const bam1_t *b, void *data){
+static int fetch_count_func(const bam1_t *b, void *data) {
 	//check Mapping Quality and not un mapped //4 // read unmapped
 	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
 		return 0;
@@ -396,13 +392,13 @@ static int fetch_count_func(const bam1_t *b, void *data){
 	//checkCigar(rec)
 
 	counter++;
-   return 0;
+	return 0;
 }
 
-static int fetch_algo_func(const bam1_t *b, void *data){
+static int fetch_algo_func(const bam1_t *b, void *data) {
   	bam_plbuf_t *pileup = (bam_plbuf_t*) data;
 
-  //check Mapping Quality and not un mapped //4 // read unmapped
+	//check Mapping Quality and not un mapped //4 // read unmapped
 	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
 		return 0;
 	}
@@ -436,32 +432,32 @@ static int fetch_algo_func(const bam1_t *b, void *data){
 
 // callback for bam_plbuf_init()
 static int pileup_count_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pl, void *data) {
-   return 0;
+	return 0;
 }
 
-void read_pos_t_List_insert_sorted(read_pos_t_List *list, read_pos_t value, read_pos_t_List_compare cmp){
-  assert(list != NULL);
-  if (list->last == NULL) {
-    read_pos_t_List_push(list, value);
-  } else if (cmp(List_last(list), value) <= 0) {
-    read_pos_t_List_push(list, value);
-  } else if (cmp(List_first(list), value) >= 0) {
-    read_pos_t_List_shift(list, value);
-  } else {
-    // Iterate backwards through the array.
-    LIST_FOR_EACH_NODE(read_pos_t, list, last, prev, cur) {
-      int curi;
-      for (curi=cur->numElements-1; curi>=0; --curi) {
-	if (cmp(cur->values[curi], value) <= 0) {
-	  read_pos_t_List_insert(list, cur, curi+1, value);
-	  return;
+void read_pos_t_List_insert_sorted(read_pos_t_List *list, read_pos_t value, read_pos_t_List_compare cmp) {
+	assert(list != NULL);
+	if (list->last == NULL) {
+		read_pos_t_List_push(list, value);
+	} else if (cmp(List_last(list), value) <= 0) {
+		read_pos_t_List_push(list, value);
+	} else if (cmp(List_first(list), value) >= 0) {
+		read_pos_t_List_shift(list, value);
+	} else {
+		// Iterate backwards through the array.
+		LIST_FOR_EACH_NODE(read_pos_t, list, last, prev, cur) {
+			int curi;
+			for (curi=cur->count-1; curi>=0; --curi) {
+				if (cmp(cur->values[curi], value) <= 0) {
+					read_pos_t_List_insert(list, cur, curi+1, value);
+					return;
+				}
+			}
+		}
 	}
-      }
-    }
-  }
 }
 
-int bam_access_compare_read_pos_t(const read_pos_t a, const read_pos_t b){
+int bam_access_compare_read_pos_t(const read_pos_t a, const read_pos_t b) {
 	if(a.ref_pos > b.ref_pos) return 1;
 	if(a.ref_pos < b.ref_pos) return -1;
 	return 0;
@@ -469,14 +465,14 @@ int bam_access_compare_read_pos_t(const read_pos_t a, const read_pos_t b){
 
 static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pil, void *data) {
 	//Finally check the base quality is more than or equal to the min base quality and it's not an 'N'.
-   file_holder *tmp = (file_holder*)data;
-   char *nom = malloc(sizeof(char) * 350);
-   check_mem(nom);
-   if ((pos+1) > tmp->beg && pos+1 <= tmp->end) {
-   	int i=0;
-   	for(i=0;i<n;i++){
-   		const bam_pileup1_t *p = pil + i;
-   		bam1_t *algn = p->b;
+	file_holder *tmp = (file_holder*)data;
+	char *nom = malloc(sizeof(char) * 350);
+	check_mem(nom);
+	if ((pos+1) > tmp->beg && pos+1 <= tmp->end) {
+		int i=0;
+		for(i=0;i<n;i++){
+			const bam_pileup1_t *p = pil + i;
+			bam1_t *algn = p->b;
 			uint8_t cbase = bam1_seqi(bam1_seq(algn),p->qpos);
 			if(!(p->is_del) && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
 				//Now we add a new read pos struct to the list since the read is valid.
@@ -513,21 +509,21 @@ static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const ba
 	}
 	free(nom);
 	return 0;
-error:
+ error:
 	if(nom) free(nom);
-  return 0;
+	return 0;
 }
 
 // callback for bam_plbuf_init()
 static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pil, void *data) {
 
-   //Finally check the base quality is more than or equal to the min base quality and it's not an 'N'.
-   file_holder *tmp = (file_holder*)data;
-   char *nom = malloc(sizeof(char) * 350);
-   if ((pos+1) > tmp->beg && (pos+1) <= tmp->end) {
-   	int i=0;
-   	for(i=0;i<n;i++){
-   		const bam_pileup1_t *p = pil + i;
+	//Finally check the base quality is more than or equal to the min base quality and it's not an 'N'.
+	file_holder *tmp = (file_holder*)data;
+	char *nom = malloc(sizeof(char) * 350);
+	if ((pos+1) > tmp->beg && (pos+1) <= tmp->end) {
+		int i=0;
+		for(i=0;i<n;i++){
+			const bam_pileup1_t *p = pil + i;
 			int qual = bam1_qual(p->b)[p->qpos];
 			uint8_t c = bam1_seqi(bam1_seq(p->b), p->qpos);
 			if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
@@ -565,12 +561,12 @@ static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1
 		free(nom);
 	}
 	return 0;
-error:
-   return 0;
+ error:
+	return 0;
 }
 
 read_pos_t_List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop,
-							 uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
+							 uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal) {
 	//Pileup and populate the list with valid reads.
 	char *region = NULL;
 	char sta[20];
@@ -586,7 +582,7 @@ read_pos_t_List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_
 	sprintf(norm_char,"%i",(int)normal);
 	// parse the tumour region
 	bam_parse_region(bams->in->header, region, &ref,
-						 &bams->beg, &bams->end);
+			 &bams->beg, &bams->end);
 	check(ref >= 0,"Invalid tumour region: %s.",region);
 
 	// initialize pileup
@@ -595,18 +591,18 @@ read_pos_t_List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_
 	}else{
 		buf = bam_plbuf_init(pileup_algo_unsorted_func, bams);
 	}
-   bam_fetch(bams->in->x.bam, bams->idx, ref, bams->beg, bams->end, buf, fetch_algo_func);
+	bam_fetch(bams->in->x.bam, bams->idx, ref, bams->beg, bams->end, buf, fetch_algo_func);
 	bam_plbuf_push(0, buf); // finalize pileup
-   bam_plbuf_destroy(buf);
+	bam_plbuf_destroy(buf);
 	free(region);
 	return bams->reads;
-error:
+ error:
 	if(region) free(region);
 	if(bams->reads) read_pos_t_List_destroy(bams->reads);
 	return NULL;
 }
 
-read_pos_t_List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean){
+read_pos_t_List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean) {
 	assert(norm->in != NULL);
 	assert(tum->in != NULL);
 	read_pos_t_List *norm_rds = NULL;
@@ -623,14 +619,14 @@ read_pos_t_List *bam_access_get_reads_at_this_pos(char *chr_name, uint32_t start
 	free(norm_rds);
 	free(tum_rds);
 	return merged_sorted;
-error:
+ error:
 	if(norm_rds) read_pos_t_List_destroy(norm_rds);
 	if(tum_rds) read_pos_t_List_destroy(tum_rds);
 	if(merged_sorted) read_pos_t_List_destroy(merged_sorted);
 	return NULL;
 }
 
-int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop, file_holder *fh){
+int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop, file_holder *fh) {
 	counter = 0;
 	tmpstruct_t tmp;
 	tmp.beg = fh->beg; tmp.end = fh->end;
@@ -642,42 +638,42 @@ int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop,
 	region = malloc(sizeof(chr_name)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
 	sprintf(region,"%s:%d-%d",chr_name,start,stop);
 	bam_parse_region(tmp.in->header, region, &ref,
-						 &tmp.beg, &tmp.end); // parse the region
+			 &tmp.beg, &tmp.end); // parse the region
 	check(ref >= 0,"Invalid region: %s.",region);
 	free(region);
 	buf = bam_plbuf_init(pileup_count_func, &tmp); // initialize pileup
-   bam_fetch(tmp.in->x.bam, fh->idx, ref, tmp.beg, tmp.end, buf, fetch_count_func);
-   //bam_plbuf_push(0, buf); // finalize pileup
-   //Do something with the buffer.
-   bam_plbuf_destroy(buf);
-   return counter;
-error:
+	bam_fetch(tmp.in->x.bam, fh->idx, ref, tmp.beg, tmp.end, buf, fetch_count_func);
+	//bam_plbuf_push(0, buf); // finalize pileup
+	//Do something with the buffer.
+	bam_plbuf_destroy(buf);
+	return counter;
+ error:
 	if(region) free(region);
 	if(buf) bam_plbuf_destroy(buf);
 	return -1;
 }
 
-void bam_access_include_sw(int inc){
+void bam_access_include_sw(int inc) {
 	include_sw = inc;
 	return;
 }
 
-void bam_access_include_dup(int inc){
+void bam_access_include_dup(int inc) {
 	include_dup = inc;
 	return;
 }
 
-void bam_access_include_se(int inc){
+void bam_access_include_se(int inc) {
 	include_se = inc;
 	return;
 }
 
-void bam_access_min_base_qual(int qual){
+void bam_access_min_base_qual(int qual) {
 	min_base_qual = qual;
 	return;
 }
 
-String_List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
+String_List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm) {
 	assert(bam_loc != NULL);
 	char *line = NULL;
 	String_List *li = NULL;
@@ -720,37 +716,34 @@ String_List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	if(line) free(line);
 	samclose(bam);
 	return li;
-error:
+ error:
 	if(line) free(line);
 	if(bam) samclose(bam);
-	LIST_FOR_EACH_ELEMENT(String, li, first, next, cur) {
-	  free(cur);
-	}
-	if(li) String_List_destroy(li);
+	if(li) List_clear_destroy(String, li);
 	return NULL;
 }
 
-samFile *bam_access_populate_file(const char *bam_loc){
+samFile *bam_access_populate_file(const char *bam_loc) {
 	samFile *sf = NULL;
 	sf = sam_open(bam_loc);
 	check(sf != 0,"File %s failed to open.",bam_loc);
 	return sf;
-error:
+ error:
 	if(sf) sam_close(sf);
 	return NULL;
 }
 
-hts_idx_t *bam_access_populate_file_index(samFile *sf, const char *bam_loc){
+hts_idx_t *bam_access_populate_file_index(samFile *sf, const char *bam_loc) {
 	hts_idx_t *idx = NULL;
 	idx = sam_index_load(sf,bam_loc);
 	check(idx != NULL,"Index %s failed to open.",bam_loc);
 	return idx;
-error:
+ error:
 	if(idx) bam_index_destroy(idx);
 	return NULL;
 }
 
-hts_itr_t *bam_access_get_hts_itr(samFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to){
+hts_itr_t *bam_access_get_hts_itr(samFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to) {
 	hts_itr_t *iter = NULL;
 	bam_hdr_t *head = NULL;
 	head = sam_hdr_read(sf);
@@ -759,7 +752,7 @@ hts_itr_t *bam_access_get_hts_itr(samFile *sf, hts_idx_t *idx, const char *chr, 
 	iter = sam_itr_queryi(idx, tid, from, to);
 	check(iter!=0,"Error fetching iterator %s:%d-%d.",chr,from,to);
 	return iter;
-error:
+ error:
 	if(iter) hts_itr_destroy(iter);
 	return NULL;
 }

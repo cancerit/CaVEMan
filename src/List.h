@@ -31,30 +31,30 @@
 
 struct ListNode_TYPE;
 
-typedef struct ListNode_TYPE{
-  struct ListNode_TYPE *next;
-  struct ListNode_TYPE *prev;
-  int numElements;
-  ELEMENT_TYPE values[ELEMENTS_PER_NODE];
+typedef struct ListNode_TYPE {
+	struct ListNode_TYPE *next;
+	struct ListNode_TYPE *prev;
+	int count;
+	ELEMENT_TYPE values[ELEMENTS_PER_NODE];
 } ListNode_TYPE;
 
-typedef struct List_TYPE{
-		int count;
-		ListNode_TYPE *first;
-		ListNode_TYPE *last;
+typedef struct List_TYPE {
+	int count;
+	ListNode_TYPE *first;
+	ListNode_TYPE *last;
 } List_TYPE;
 
 List_TYPE *TEMPLATE(ELEMENT_TYPE,List_create)();
 void TEMPLATE(ELEMENT_TYPE,List_destroy)(List_TYPE *list);
 
 #define List_count(A) ((A)->count)
-#define List_first(A) ((A)->first->values[0]) // unsafe!!!
-#define List_last(A) ((A)->last->values[(A)->last->numElements-1]) // unsafe!!!
-
+#define List_first(A) ((A)->first->values[0])
+#define List_last(A) ((A)->last->values[(A)->last->count-1])
+					
 void TEMPLATE(ELEMENT_TYPE,List_push)(List_TYPE *list, ELEMENT_TYPE value);
-ELEMENT_TYPE TEMPLATE(ELEMENT_TYPE,List_pop)(List_TYPE *list);
+int TEMPLATE(ELEMENT_TYPE,List_pop)(List_TYPE *list, ELEMENT_TYPE *result);
 
-ELEMENT_TYPE TEMPLATE(ELEMENT_TYPE,List_unshift)(List_TYPE *list);
+int TEMPLATE(ELEMENT_TYPE,List_unshift)(List_TYPE *list, ELEMENT_TYPE *result);
 void TEMPLATE(ELEMENT_TYPE,List_shift)(List_TYPE *list, ELEMENT_TYPE value);
 
 List_TYPE *TEMPLATE(ELEMENT_TYPE,List_copy)(List_TYPE *list);
@@ -65,23 +65,26 @@ void TEMPLATE(ELEMENT_TYPE,List_splitNode)(List_TYPE *list, ListNode_TYPE *node)
 void TEMPLATE(ELEMENT_TYPE,List_insert)(List_TYPE *list, ListNode_TYPE *node, int index, ELEMENT_TYPE value);
 
 #define LIST_FOR_EACH_NODE(ELEMENT_TYPE, L, S, M, V) TEMPLATE(ELEMENT_TYPE,ListNode) *_node = NULL; \
-  TEMPLATE(ELEMENT_TYPE,ListNode) *V = NULL;				\
-  for (V = _node = L->S; _node != NULL; V = _node = _node->M)
+	TEMPLATE(ELEMENT_TYPE,ListNode) *V = NULL;			\
+	for (V = _node = L->S; _node != NULL; V = _node = _node->M)
 
 #define LIST_FOR_EACH_ELEMENT(ELEMENT_TYPE, L, S, M, E) TEMPLATE(ELEMENT_TYPE,ListNode) *_node = NULL; \
-  int _i;								\
-  ELEMENT_TYPE E;								\
-  for (_node = L->S; _node != NULL; _node = _node->M)			\
-    for (E = _node->values[_i = 0]; _i < _node->numElements; E = _node->values[++_i])
+	int _i;								\
+	ELEMENT_TYPE E;							\
+	for (_node = L->S; _node != NULL; _node = _node->M)		\
+		for (E = _node->values[_i = 0]; _i < _node->count; E = _node->values[++_i])
 
 #define LIST_FOR_EACH_ELEMENT_MORE(ELEMENT_TYPE, L, S, M, E, F) TEMPLATE(ELEMENT_TYPE,ListNode) *_node = NULL; \
-  int _i;								\
-  ELEMENT_TYPE E;								\
-  int F;								\
-  for (_node = L->S; _node != NULL; _node = _node->M)			\
-    for (E = _node->values[_i = 0], F = (_i < _node->numElements-1) || (_node->next != NULL); \
-	 _i < _node->numElements;					\
-	 E = _node->values[++_i], F = (_i < _node->numElements-1) || (_node->next != NULL))
+	int _i;								\
+	ELEMENT_TYPE E;							\
+	int F;								\
+	for (_node = L->S; _node != NULL; _node = _node->M)		\
+		for (E = _node->values[_i = 0], F = (_i < _node->count-1) || (_node->next != NULL); \
+		     _i < _node->count;					\
+		     E = _node->values[++_i], F = (_i < _node->count-1) || (_node->next != NULL))
+
+#define List_clear(ELEMENT_TYPE, A) {LIST_FOR_EACH_ELEMENT(ELEMENT_TYPE, A, first, next, cur) {free(cur);}}
+#define List_clear_destroy(ELEMENT_TYPE, A) {List_clear(ELEMENT_TYPE, A); TEMPLATE(ELEMENT_TYPE,List_destroy)(A);}
 
 #undef ListNode_TYPE
 #undef List_TYPE

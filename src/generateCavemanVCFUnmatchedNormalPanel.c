@@ -221,16 +221,16 @@ void gen_panel_setup_options(int argc, char *argv[]){
    return;
 }
 
-int gen_panel_write_sample_lines(sample_bam_ptr_List *samples,FILE *vcf_out){
-  LIST_FOR_EACH_ELEMENT(sample_bam_ptr, samples, first, next, cur) {
-    check(fprintf(vcf_out,VCF_SAMPLE,cur->sample_name,platform,protocol)>0,"Error writing file format line to VCF");
-  }
-  return 0;
+int gen_panel_write_sample_lines(sample_bam_ptr_List *samples,FILE *vcf_out) {
+	LIST_FOR_EACH_ELEMENT(sample_bam_ptr, samples, first, next, cur) {
+		check(fprintf(vcf_out,VCF_SAMPLE,cur->sample_name,platform,protocol)>0,"Error writing file format line to VCF");
+	}
+	return 0;
  error:
-  return 1;
+	return 1;
 }
 
-int gen_panel_write_VCF_header(sample_bam_ptr_List *samples,FILE *vcf_out){
+int gen_panel_write_VCF_header(sample_bam_ptr_List *samples,FILE *vcf_out) {
 	//Print header to VCF output file
 	char *contigs = NULL;
 	check(fprintf(vcf_out,"%s\n",VCF_FILE_FORMAT)>0,"Error writing file format line to VCF");
@@ -255,12 +255,12 @@ int gen_panel_write_VCF_header(sample_bam_ptr_List *samples,FILE *vcf_out){
 	check(fprintf(vcf_out,VCF_HEADER,sample_names)>0,"Error writing file format line to VCF");
 	free(contigs);
 	return 0;
-error:
+ error:
 	if(contigs) free(contigs);
 	return 1;
 }
 
-sample_bam_ptr_List *gen_panel_get_list_of_samples_and_locs(){
+sample_bam_ptr_List *gen_panel_get_list_of_samples_and_locs() {
 	//Create list of sample names & bam files, at the same time converting sample_names to a tab separated string.
 	sample_bam_ptr_List *samples = NULL;
 	char *sampchar = NULL;
@@ -271,8 +271,8 @@ sample_bam_ptr_List *gen_panel_get_list_of_samples_and_locs(){
 	check_mem(new_sample_names);
 	sampchar = strtok(sample_names,",");
 	while(sampchar != NULL){
-	  struct sample_bam *this_samp = malloc(sizeof(struct sample_bam));
-	  check_mem(this_samp);
+		struct sample_bam *this_samp = malloc(sizeof(struct sample_bam));
+		check_mem(this_samp);
 		this_samp->sample_name = malloc(sizeof(char) * (strlen(sampchar) + 1));
 		check_mem(this_samp->sample_name);
 		strcpy(this_samp->sample_name,sampchar);
@@ -292,14 +292,14 @@ sample_bam_ptr_List *gen_panel_get_list_of_samples_and_locs(){
 		char *tmp = strcpy(cur->bam_file,bamchar);
 		check(tmp != NULL,"Error copying bam location to object.");
 		if(check_exist(cur->bam_file) != 1){
-		  printf("Bam file %s does not appear to exist.\n",cur->bam_file);
-		  gen_panel_print_usage(1);
+			printf("Bam file %s does not appear to exist.\n",cur->bam_file);
+			gen_panel_print_usage(1);
 		}
 		char *chk=NULL;
 		chk=strcat(new_sample_names,cur->sample_name);
 		check(chk!=NULL,"Error appending new sample names.");
 		if (more) {
-		  strcat(new_sample_names,"\t");
+			strcat(new_sample_names,"\t");
 		}
 		bamchar = strtok(NULL,",");
 	}
@@ -307,15 +307,15 @@ sample_bam_ptr_List *gen_panel_get_list_of_samples_and_locs(){
 	free(new_sample_names);
 	free(bamchar);
 	return samples;
-error:
+ error:
 	if(new_sample_names) free(new_sample_names);
 	if(bamchar) free(bamchar);
 	if(samples) sample_bam_ptr_List_destroy(samples);
 	return NULL;
 }
 
-void gen_panel_clear_pileups(sample_bam_ptr_List *samples){
-  LIST_FOR_EACH_ELEMENT(sample_bam_ptr, samples, first, next, this) {
+void gen_panel_clear_pileups(sample_bam_ptr_List *samples) {
+	LIST_FOR_EACH_ELEMENT(sample_bam_ptr, samples, first, next, this) {
 		if(this->holder){
 			if(this->holder->base_counts){
 				int i=0;
@@ -331,7 +331,7 @@ void gen_panel_clear_pileups(sample_bam_ptr_List *samples){
 	return;
 }
 
-int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, int start, int end, sample_bam_ptr_List *samples, FILE *vcf_out){
+int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, int start, int end, sample_bam_ptr_List *samples, FILE *vcf_out) {
 	char *ref_seq = fai_access_get_ref_seqeuence_for_pos(ref_file_loc,chr_name,start,end);
 	check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,start,end);
 	fprintf(stdout,"PILEUP REGION: %s:%d-%d\n",chr_name,start,end);
@@ -349,9 +349,9 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 		if(!(ref_base == 'A' || ref_base == 'C' || ref_base == 'G' || ref_base == 'T')) continue;
 		int sum = 0;
 		int write = fprintf(vcf_out,VCF_VAR_LINE_START,
-										chr_name,
-										start+i,
-										ref_base);
+				    chr_name,
+				    start+i,
+				    ref_base);
 		check(write>0,"Error writing VCF beginning of variant line for position %d.",start+i);
 		char *last_of_line = NULL;
 		int sizeoflist = List_count(samples);
@@ -361,16 +361,16 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 		LIST_FOR_EACH_ELEMENT_MORE(sample_bam_ptr, samples, first, next, this, more) {
 			if(this->holder->base_counts[i] != 0){
 				sum += (this->holder->base_counts[i][0]+
-								this->holder->base_counts[i][1]+
-								this->holder->base_counts[i][2]+
-								this->holder->base_counts[i][3]);
+					this->holder->base_counts[i][1]+
+					this->holder->base_counts[i][2]+
+					this->holder->base_counts[i][3]);
 				char tmp[128];
 				int chk = 0;
 				chk = sprintf(	tmp,VCF_VAR_LINE,
-																						this->holder->base_counts[i][0],
-																						this->holder->base_counts[i][1],
-																						this->holder->base_counts[i][2],
-																						this->holder->base_counts[i][3]);
+						this->holder->base_counts[i][0],
+						this->holder->base_counts[i][1],
+						this->holder->base_counts[i][2],
+						this->holder->base_counts[i][3]);
 				check(chk>0,"Error copying allele counts string.");
 				strcat(last_of_line,tmp);
 			}else{
@@ -395,21 +395,21 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 	free(ref_seq);
 	return 0;
 
-error:
+ error:
 	gen_panel_clear_pileups(samples);
 	if(ref_seq) free(ref_seq);
 	return 1;
 
 }
 
-void gen_panel_destroy_sample_list(sample_bam_ptr_List *samples){
-  LIST_FOR_EACH_ELEMENT(sample_bam_ptr, samples, first, next, cur) {
-    free(cur->bam_file);
-    free(cur->sample_name);
-    free(cur);
-  }
-  sample_bam_ptr_List_destroy(samples);
-  return;
+void gen_panel_destroy_sample_list(sample_bam_ptr_List *samples) {
+	LIST_FOR_EACH_ELEMENT(sample_bam_ptr, samples, first, next, cur) {
+		free(cur->bam_file);
+		free(cur->sample_name);
+		free(cur);
+	}
+	sample_bam_ptr_List_destroy(samples);
+	return;
 }
 
 int main(int argc, char *argv[]){

@@ -51,95 +51,95 @@ uint8_t snp_warnings = 0; //By default SNP warnings are off.
 char bases_char[4] = {'A','C','G','T'};
 char *bases_list_str[4] = {"A","C","G","T"};
 
-void set_snp_warnings(){
+void set_snp_warnings() {
 	snp_warnings = 1;
 }
 
-float get_min_mut_prob(){
+float get_min_mut_prob() {
 	return min_m_prob;
 }
 
-float get_min_snp_prob(){
+float get_min_snp_prob() {
 	return min_s_prob;
 }
 
-float get_norm_contam(){
+float get_norm_contam() {
 	return norm_cont;
 }
 
-float get_ref_bias(){
+float get_ref_bias() {
 	return ref_b;
 }
 
-float get_prior_mut_prob(){
+float get_prior_mut_prob() {
 	return prior_m_prob;
 }
 
-float get_prior_snp_prob(){
+float get_prior_snp_prob() {
 	return prior_s_prob;
 }
 
-int get_min_tum_cvg(){
+int get_min_tum_cvg() {
 	return min_t_cvg;
 }
 
-int get_normal_cn(){
-  return normal_cn;
+int get_normal_cn() {
+	return normal_cn;
 }
 
-void set_normal_cn(int i){
-  normal_cn = i;
+void set_normal_cn(int i) {
+	normal_cn = i;
 }
 
-int get_tumour_cn(){
-  return tumour_cn;
+int get_tumour_cn() {
+	return tumour_cn;
 }
 
-void set_tumour_cn(int i){
-  tumour_cn = i;
+void set_tumour_cn(int i) {
+	tumour_cn = i;
 }
 
-int get_min_norm_cvg(){
+int get_min_norm_cvg() {
 	return min_n_cvg;
 }
 
-void set_min_mut_prob(float f){
+void set_min_mut_prob(float f) {
 	min_m_prob = f;
 }
 
-void set_min_snp_prob(float f){
+void set_min_snp_prob(float f) {
 	min_s_prob = f;
 }
 
-void set_norm_contam(float f){
+void set_norm_contam(float f) {
 	norm_cont = f;
 }
 
-void set_ref_bias(float f){
+void set_ref_bias(float f) {
 	ref_b = f;
 }
 
-void set_prior_mut_prob(float f){
+void set_prior_mut_prob(float f) {
 	prior_m_prob = f;
 }
 
-void set_prior_snp_prob(float f){
+void set_prior_snp_prob(float f) {
 	prior_s_prob = f;
 }
 
-void set_min_tum_cvg(int i){
+void set_min_tum_cvg(int i) {
 	min_t_cvg = i;
 }
 
-void set_min_norm_cvg(int i){
+void set_min_norm_cvg(int i) {
 	min_n_cvg = i;
 }
 
-void set_max_tum_cvg(int i){
+void set_max_tum_cvg(int i) {
 	max_tum_cvg = i;
 }
 
-int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size){
+int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size) {
 	//Fetch all reads for this pos? Or a struct for a single read at that position?
 	read_pos_t_List *reads = NULL;
 	char *cbase = NULL;
@@ -159,7 +159,7 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 				//char ref_b_up = toupper(ref_base[((pos_t.ref_pos)-from)]);
 				char ref_b_up = toupper(ref_base[((pos_t.ref_pos)-from)]);
 				if((ref_b_up != 'N') && ((ref_b_up == 'A') || (ref_b_up == 'C')
-															|| (ref_b_up == 'G') || (ref_b_up = 'T')) ){
+							 || (ref_b_up == 'G') || (ref_b_up = 'T')) ){
 					//int lane_i = alg_bean_get_index_for_str_arr(alg->lane,pos_t.lane);
 					//check(lane_i>=0,"Error calculating lane index.");
 					int rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->rd_pos,pos_t.rd_pos,pos_t.rd_len);
@@ -181,13 +181,13 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 					check(callbase_i>=0,"Error calculating called base '%s' index.",cbase);
 					free(cbase);
 					covs[pos_t.read_order]
-								[pos_t.strand]
-								[pos_t.lane_i]
-								[rpos_i]
-								[mq_i]
-								[bq_i]
-								[rbase_i]
-								[callbase_i]++;
+						[pos_t.strand]
+						[pos_t.lane_i]
+						[rpos_i]
+						[mq_i]
+						[bq_i]
+						[rbase_i]
+						[callbase_i]++;
 				}
 			}
 			//free(pos_t->lane);
@@ -196,14 +196,14 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 	}//End of each section.
 
 	return 0;
-error:
+ error:
 	read_pos_t_List_destroy(reads);
 	if(cbase) free(cbase);
 	if(ref_b) free(ref_b);
 	return -1;
 }
 
-void destroy_positions_array(estep_position_t **pos_arr, int size){
+void destroy_positions_array(estep_position_t **pos_arr, int size) {
 	int i=0;
 	if(pos_arr != NULL){
 		for(i=0;i<size;i++){
@@ -224,7 +224,7 @@ void destroy_positions_array(estep_position_t **pos_arr, int size){
 	return;
 }
 
-void destroy_position(estep_position_t *pos_arr){
+void destroy_position(estep_position_t *pos_arr) {
 	if(pos_arr->genos != NULL){
 		genotype_destroy_genotype_store(pos_arr->genos);
 	}
@@ -237,26 +237,26 @@ void destroy_position(estep_position_t *pos_arr){
 	return;
 }
 
-inline long double algos_calculate_per_base_normal_contamination(uint8_t norm_copy_no, uint8_t tum_copy_no){
+inline long double algos_calculate_per_base_normal_contamination(uint8_t norm_copy_no, uint8_t tum_copy_no) {
 	long double per_base_norm = ((long double)norm_cont * (long double)norm_copy_no) /
-								(
-									(
-										(
-											(long double)1 - (long double)norm_cont
-										)
-										*
-										(long double)tum_copy_no
-									)
-									+
-									(
-										(long double)norm_cont * (long double)norm_copy_no
-									)
+		(
+		 (
+		  (
+		   (long double)1 - (long double)norm_cont
+		   )
+		  *
+		  (long double)tum_copy_no
+		  )
+		 +
+		 (
+		  (long double)norm_cont * (long double)norm_copy_no
+		  )
 
-								);
+		 );
 	return per_base_norm;
 }
 
-int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int8_t ref_base_idx, long double base_norm_contam){
+int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int8_t ref_base_idx, long double base_norm_contam) {
 	//Normal read
 	if(read->normal==1){
 		//Calculate initial normal probabilities.
@@ -270,8 +270,8 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 			//Hom snps
 
 			if(iter<genos->hom_count){
-          	       	  long double ans = genos->hom_snp_genotypes[iter]->prob + read->ref_base_probs[(genos->hom_snp_genotypes[iter]->norm_geno->var_base_idx)];
-			  genos->hom_snp_genotypes[iter]->prob = ans;
+				long double ans = genos->hom_snp_genotypes[iter]->prob + read->ref_base_probs[(genos->hom_snp_genotypes[iter]->norm_geno->var_base_idx)];
+				genos->hom_snp_genotypes[iter]->prob = ans;
 			}//End of iteration through hom snps
 
 			//Het snps
@@ -280,13 +280,13 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				long double nu_fx = (long double)ref_b * norm_var_base_prop;
 				long double tmp_psi_var_prob_norm = nu_fx / (nu_fx + ((long double)1 - norm_var_base_prop));
 				long double ans = genos->het_snp_norm_genotypes[iter]->prob +
-												(
-													logl(
-														expl( ref_base_prob + logl((long double)1 - tmp_psi_var_prob_norm) )
-															+
-														expl( read->ref_base_probs[(genos->het_snp_norm_genotypes[iter]->norm_geno->var_base_idx)] + logl(tmp_psi_var_prob_norm) )
-													)
-												);
+					(
+					 logl(
+					      expl( ref_base_prob + logl((long double)1 - tmp_psi_var_prob_norm) )
+					      +
+					      expl( read->ref_base_probs[(genos->het_snp_norm_genotypes[iter]->norm_geno->var_base_idx)] + logl(tmp_psi_var_prob_norm) )
+					      )
+					 );
 				genos->het_snp_norm_genotypes[iter]->prob = ans;
 			}//End of iteration through het snps
 		}
@@ -307,13 +307,13 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				long double log_tmp_psi_var_prob = logl(tmp_psi_var_prob);
 				long double log_1_minus_tmp_psi_var_prob = logl((long double)1 - tmp_psi_var_prob);
 				long double ans = genos->somatic_genotypes[iter]->prob +
-																	logl(
-																		(
-																			expl( (ref_base_prob + log_1_minus_tmp_psi_var_prob) )
-																				+
-																			expl( (read->ref_base_probs[genos->somatic_genotypes[iter]->tum_geno->var_base_idx] + log_tmp_psi_var_prob) )
-																		)
-																	);
+					logl(
+					     (
+					      expl( (ref_base_prob + log_1_minus_tmp_psi_var_prob) )
+					      +
+					      expl( (read->ref_base_probs[genos->somatic_genotypes[iter]->tum_geno->var_base_idx] + log_tmp_psi_var_prob) )
+					      )
+					     );
 				genos->somatic_genotypes[iter]->prob = ans;
 
 			}//End of somatics
@@ -321,7 +321,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 			//Hom snps
 			if(iter<genos->hom_count){
 				long double ans = genos->hom_snp_genotypes[iter]->prob +
-																			read->ref_base_probs[(genos->hom_snp_genotypes[iter]->tum_geno->var_base_idx)];
+					read->ref_base_probs[(genos->hom_snp_genotypes[iter]->tum_geno->var_base_idx)];
 				genos->hom_snp_genotypes[iter]->prob = ans;
 			}//End of hom snps
 
@@ -332,18 +332,18 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 
 				long double nu_fx_two = (long double)ref_b * genos->het_snp_genotypes[iter]->tum_geno->var_base_prop;
 				long double tmp_psi_var_prob_tum = ((nu_fx_two * ((long double)1 - (long double)base_norm_contam))
-															/
-														(nu_fx_two + ((long double)1 - genos->het_snp_genotypes[iter]->tum_geno->var_base_prop)))
-														+
-														( (long double)base_norm_contam * tmp_psi_var_prob_norm);
+								    /
+								    (nu_fx_two + ((long double)1 - genos->het_snp_genotypes[iter]->tum_geno->var_base_prop)))
+					+
+					( (long double)base_norm_contam * tmp_psi_var_prob_norm);
 				long double tum_res = genos->het_snp_genotypes[iter]->prob +
-												(
-													logl(
-														expl( ref_base_prob + logl((long double)1 - tmp_psi_var_prob_tum) )
-															+
-														expl( read->ref_base_probs[(genos->het_snp_genotypes[iter]->norm_geno->var_base_idx)] + logl(tmp_psi_var_prob_tum) )
-													)
-												);
+					(
+					 logl(
+					      expl( ref_base_prob + logl((long double)1 - tmp_psi_var_prob_tum) )
+					      +
+					      expl( read->ref_base_probs[(genos->het_snp_genotypes[iter]->norm_geno->var_base_idx)] + logl(tmp_psi_var_prob_tum) )
+					      )
+					 );
 
 				genos->het_snp_genotypes[iter]->prob = tum_res;
 			}//End of het snps
@@ -356,25 +356,25 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 	return 0;
 }
 
-inline long double calculateLogSumExpNormFactor(estep_position_t *pos,long double norm_factor_max){
+inline long double calculateLogSumExpNormFactor(estep_position_t *pos,long double norm_factor_max) {
 	long double sum_tot = 0.0;
-   //Reference
-   sum_tot += expl(pos->genos->ref_genotype->prob - norm_factor_max);
+	//Reference
+	sum_tot += expl(pos->genos->ref_genotype->prob - norm_factor_max);
 
-   //Somatic
-   int somatic_i = 0;
-   for(somatic_i = 0;somatic_i<pos->genos->somatic_count;somatic_i++){
-   	sum_tot += expl(pos->genos->somatic_genotypes[somatic_i]->prob - norm_factor_max);
-   }
+	//Somatic
+	int somatic_i = 0;
+	for(somatic_i = 0;somatic_i<pos->genos->somatic_count;somatic_i++){
+		sum_tot += expl(pos->genos->somatic_genotypes[somatic_i]->prob - norm_factor_max);
+	}
 
-   //het
-   int het_snp_it=0;
-   for(het_snp_it=0;het_snp_it<pos->genos->het_count;het_snp_it++){
-   	sum_tot += expl(pos->genos->het_snp_genotypes[het_snp_it]->prob - norm_factor_max);
-  }
+	//het
+	int het_snp_it=0;
+	for(het_snp_it=0;het_snp_it<pos->genos->het_count;het_snp_it++){
+		sum_tot += expl(pos->genos->het_snp_genotypes[het_snp_it]->prob - norm_factor_max);
+	}
 
-   //Hom
-   int hom_snp_i=0;
+	//Hom
+	int hom_snp_i=0;
 	for(hom_snp_i=0;hom_snp_i<pos->genos->hom_count;hom_snp_i++){
 		sum_tot += expl(pos->genos->hom_snp_genotypes[hom_snp_i]->prob - norm_factor_max);
 	}
@@ -384,7 +384,7 @@ inline long double calculateLogSumExpNormFactor(estep_position_t *pos,long doubl
   	return norm_factor;
 }
 
-inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor_max){
+inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor_max) {
 
 	combined_genotype_t *top_geno = NULL;
 	combined_genotype_t *sec_geno = NULL;
@@ -461,14 +461,13 @@ inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long 
 	return;
 }
 
-inline long double calculate_ref_prob(const long double norm, const long double tum){
+inline long double calculate_ref_prob(const long double norm, const long double tum) {
 	long double ref_prob;
-	ref_prob = logl(((long double)1 - (long double)prior_s_prob) - (long double)prior_m_prob)
-							+ norm + tum;
+	ref_prob = logl(((long double)1 - (long double)prior_s_prob) - (long double)prior_m_prob) + norm + tum;
 	return ref_prob;
 }
 
-void algos_run_per_position_estep_maths(estep_position_t *pos){
+void algos_run_per_position_estep_maths(estep_position_t *pos) {
 	//Put together the reference genotype probability.
 	long double norm_factor_max = -DBL_MAX;
 	pos->genos->ref_genotype->prob = 0.0;
@@ -486,7 +485,7 @@ void algos_run_per_position_estep_maths(estep_position_t *pos){
 		//Somatics
 		if(iter<pos->genos->somatic_count){
 			long double res = logl((long double)prior_m_prob) - logl((long double)pos->genos->somatic_count)
-							+ pos->genos->ref_geno_norm_prob + pos->genos->somatic_genotypes[iter]->prob;
+				+ pos->genos->ref_geno_norm_prob + pos->genos->somatic_genotypes[iter]->prob;
 
 			pos->genos->somatic_genotypes[iter]->prob = res;
 
@@ -502,7 +501,7 @@ void algos_run_per_position_estep_maths(estep_position_t *pos){
 				//find the correct het normal genotype
 				if(genotype_equals(pos->genos->het_snp_norm_genotypes[het_norm_i]->norm_geno,pos->genos->het_snp_genotypes[iter]->norm_geno)==1){
 					long double res = logl((long double)prior_s_prob) - logl((long double)(pos->genos->het_count + pos->genos->hom_count))
-								+ pos->genos->het_snp_norm_genotypes[het_norm_i]->prob + pos->genos->het_snp_genotypes[iter]->prob;
+						+ pos->genos->het_snp_norm_genotypes[het_norm_i]->prob + pos->genos->het_snp_genotypes[iter]->prob;
 
 					pos->genos->het_snp_genotypes[iter]->prob = res;
 
@@ -527,7 +526,7 @@ void algos_run_per_position_estep_maths(estep_position_t *pos){
 
 }
 
-inline int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, int *rpos_i, int *mq_i, int *bq_i, int *callbase_i){
+inline int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, int *rpos_i, int *mq_i, int *bq_i, int *callbase_i) {
 
 	*rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->rd_pos,pos_t->rd_pos,pos_t->rd_len);
 	check(*rpos_i>=0,"Error calculating read position index.");
@@ -543,11 +542,11 @@ inline int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, i
 	free(cbase);
 	check(*callbase_i>=0,"Error calculating called base index.");
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type,uint8_t warnings){
+int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type,uint8_t warnings) {
 	//Check top genotype isn't reference, if that's the case it we already print the second genotype
 	if(pos->top_geno->tum_geno->var_base != pos->ref_base[0]){
 		if(genotype_get_base_count(pos->tum_fwd_cvg,pos->top_geno->tum_geno->var_base)+genotype_get_base_count(pos->tum_rev_cvg,pos->top_geno->tum_geno->var_base)>0){
@@ -583,7 +582,7 @@ int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char
 }
 
 int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char *chr_name, uint32_t from, uint32_t to,
-						char *ref_base, char *norm_cn, char *tum_cn, FILE *snp_out, FILE *tum_out, FILE *debug_output, int split_size){
+			      char *ref_base, char *norm_cn, char *tum_cn, FILE *snp_out, FILE *tum_out, FILE *debug_output, int split_size) {
 
 	read_pos_t_List *reads = NULL;
 	//If this region is larger than n bases, split it into regions of length n.
@@ -611,7 +610,7 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 		//Iterate through each read once to generate position beans.
 		//Change position when we reach a new position as list is sorted
 		if(List_count(reads) > 0){
-		  LIST_FOR_EACH_ELEMENT(read_pos_t, reads, first, next, pos_t) {
+			LIST_FOR_EACH_ELEMENT(read_pos_t, reads, first, next, pos_t) {
 				if(pos == NULL || pos->ref_pos < pos_t.ref_pos){
 					if(pos != NULL){
 						//Finish the last position we ran over
@@ -620,7 +619,7 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 							int rounded_mut = (int)(round(floorl(pos->total_mut_prob*100 + 0.5)));
 							int rounded_snp = (int)(round(floorl(pos->total_snp_prob*100 + 0.5)));
 							if(rounded_mut >= ((int)(min_m_prob * 100))){
-							//if((((floorl(pos->total_mut_prob*100 + 0.5)/100) - (long double)min_m_prob)) >= (long double)0){
+								//if((((floorl(pos->total_mut_prob*100 + 0.5)/100) - (long double)min_m_prob)) >= (long double)0){
 								if(algos_check_var_position_alleles(pos,chr_name,"SOMATIC",1)==1){
 									int write = output_vcf_variant_position(pos,tum_out,chr_name);
 									check(write==0,"Error writing mutation to file.");
@@ -646,13 +645,13 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 					check(norm_co != -1,"Error fetching normal copy number for %s:%d\n",chr_name,pos_t.ref_pos);
 					pos->norm_cn = norm_co;
 					if(pos->norm_cn < 2){
-            pos->norm_cn = normal_cn;
+						pos->norm_cn = normal_cn;
 					}
 					int8_t tum_co = cn_access_get_copy_number_for_location(tum_cn,chr_name,pos_t.ref_pos,0);
 					check(tum_co!=-1,"Error fetching tumour copy number for %s:%d\n",chr_name,pos_t.ref_pos);
 					pos->tum_cn =tum_co;
 					if(pos->tum_cn < 2){
-					  pos->tum_cn = tumour_cn;
+						pos->tum_cn = tumour_cn;
 					}
 					char *ref_b = malloc(sizeof(char) *2);
 					check_mem(ref_b);
@@ -662,7 +661,7 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 					//Uppercase ref base to ensure all comparisons are like for like
 					pos->ref_base = ref_b;
 					if((strcmp(ref_b,"A") == 0 || strcmp(ref_b,"C") == 0 || strcmp(ref_b,"G") == 0 || strcmp(ref_b,"T") == 0)
-																				&& pos->norm_cn > 0 && pos->tum_cn > 0){
+					   && pos->norm_cn > 0 && pos->tum_cn > 0){
 						pos->ref_base_idx = alg_bean_get_index_for_char_arr(alg->ref_base,ref_b);
 						//build up genotype stores for genotype_store_t *genos
 						pos->genos = genotype_generate_genotype_list_for_cn_and_ref_base(pos->norm_cn, pos->tum_cn, ref_b);
@@ -723,13 +722,13 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 						int tmp_index = alg_bean_get_index_for_char_arr(alg->ref_base,bases_list_str[ref_base_iter]);
 
 						pos_t.ref_base_probs[ref_base_iter] = prob_arr[pos_t.read_order]
-								[pos_t.strand]
-								[pos_t.lane_i]
-								[rpos_i]
-								[mq_i]
-								[bq_i]
-								[tmp_index]
-								[callbase_i];
+							[pos_t.strand]
+							[pos_t.lane_i]
+							[rpos_i]
+							[mq_i]
+							[bq_i]
+							[tmp_index]
+							[callbase_i];
 					}
 
 					//With all the indexes we need for now, and the genotypes calculated we can run the mathematical part...
@@ -742,7 +741,7 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 				int rounded_mut = (int)(round(floorl(pos->total_mut_prob*100 + 0.5)));
 				int rounded_snp = (int)(round(floorl(pos->total_snp_prob*100 + 0.5)));
 				if(rounded_mut >= ((int)(min_m_prob * 100))){
-				//if((((floorl(pos->total_mut_prob*100 + 0.5)/100) - (long double)min_m_prob)) >= (long double)0){
+					//if((((floorl(pos->total_mut_prob*100 + 0.5)/100) - (long double)min_m_prob)) >= (long double)0){
 					if(algos_check_var_position_alleles(pos,chr_name,"SOMATIC",1)==1){
 						int write = output_vcf_variant_position(pos,tum_out,chr_name);
 						check(write==0,"Error writing mutation to file.");
@@ -781,7 +780,7 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 	clear_copy_number_store();
 	genotype_clear_genotype_cache();
 	return 0;
-error:
+ error:
 	if(pos) destroy_position(pos);
 	genotype_clear_genotype_cache();
 	clear_copy_number_store();

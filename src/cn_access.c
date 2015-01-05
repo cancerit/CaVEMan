@@ -31,7 +31,7 @@
 seq_region_t_List *cns[2] = {NULL,NULL};
 static int max_cn = 10;
 
-int cn_access_populate_cn(char *file_loc,uint8_t is_normal){
+int cn_access_populate_cn(char *file_loc,uint8_t is_normal) {
 	assert(file_loc != NULL);
 	if(cns[is_normal] != NULL) return 1;
 	FILE *cn_file = NULL;
@@ -68,24 +68,24 @@ int cn_access_populate_cn(char *file_loc,uint8_t is_normal){
 	cns[is_normal] = li;
 	fclose(cn_file);
 	return 1;
-error:
+ error:
 	if(cn_file) fclose(cn_file);
 	return 0;
 
 }
 
-int check_overlap(int reg_start, int reg_stop, uint32_t start, uint32_t stop){
+int check_overlap(int reg_start, int reg_stop, uint32_t start, uint32_t stop) {
 	if(	(reg_start>=start && reg_stop<=stop) || //Region contained
-					(start >= reg_start && start <= reg_stop) ||//overlaps start
-					(stop >= reg_start && stop <= reg_stop)||//overlaps end
-					(reg_start>=start && reg_start<=stop)||//Reg_start overlaps
-					(reg_stop>=start && reg_stop<=stop)){//reg_end overlaps
-			return 1;
+		(start >= reg_start && start <= reg_stop) ||//overlaps start
+		(stop >= reg_start && stop <= reg_stop)||//overlaps end
+		(reg_start>=start && reg_start<=stop)||//Reg_start overlaps
+		(reg_stop>=start && reg_stop<=stop)){//reg_end overlaps
+		return 1;
 	}
 	return 0;
 }
 
-int8_t cn_access_get_mean_cn_for_range(char *file_loc,char *chr,uint32_t start,uint32_t stop,uint8_t is_normal){
+int8_t cn_access_get_mean_cn_for_range(char *file_loc,char *chr,uint32_t start,uint32_t stop,uint8_t is_normal) {
 	if(file_loc != NULL){
 		int pop_cn_chk = cn_access_populate_cn(file_loc,is_normal);
 		check(pop_cn_chk==1,"Error populating copy number from file %s.",file_loc);
@@ -94,15 +94,15 @@ int8_t cn_access_get_mean_cn_for_range(char *file_loc,char *chr,uint32_t start,u
 	int total_cn = 0;
 	int count_cn_entries = 0;
 	if(cns[is_normal] != NULL){
-	  LIST_FOR_EACH_ELEMENT(seq_region_t, cns[is_normal], first, next, cur) {
-	      int reg_start = cur.beg;
-	      int reg_stop = cur.end;
-	      if(strcmp(cur.chr_name,chr) == 0
-		 && check_overlap(reg_start,reg_stop,start,stop) == 1){
-		total_cn += cur.val;
-		count_cn_entries++;
-	      }
-	  }
+		LIST_FOR_EACH_ELEMENT(seq_region_t, cns[is_normal], first, next, cur) {
+			int reg_start = cur.beg;
+			int reg_stop = cur.end;
+			if(strcmp(cur.chr_name,chr) == 0
+			   && check_overlap(reg_start,reg_stop,start,stop) == 1){
+				total_cn += cur.val;
+				count_cn_entries++;
+			}
+		}
 	}
 
 	int result = 2;//Default to cn 2
@@ -110,12 +110,12 @@ int8_t cn_access_get_mean_cn_for_range(char *file_loc,char *chr,uint32_t start,u
 		result = total_cn/count_cn_entries;
 	}
 	return result;
-error:
+ error:
 	return -1;
 
 }
 
-int8_t cn_access_get_copy_number_for_location(char *file_loc,char *chr,uint32_t pos, uint8_t is_normal){
+int8_t cn_access_get_copy_number_for_location(char *file_loc,char *chr,uint32_t pos, uint8_t is_normal) {
 	if(file_loc != NULL){
 		int pop_cn_chk = cn_access_populate_cn(file_loc,is_normal);
 		check(pop_cn_chk==1,"Error populating copy number from file %s.",file_loc);
@@ -124,40 +124,40 @@ int8_t cn_access_get_copy_number_for_location(char *file_loc,char *chr,uint32_t 
 	}
 	int cn = 0;
 	if(cns[is_normal] != NULL){
-	  LIST_FOR_EACH_ELEMENT(seq_region_t, cns[is_normal], first, next, cur) {
-	    if(strcmp(cur.chr_name,chr) == 0 && pos >= cur.beg && pos <= cur.end){
-	      cn = cur.val;
-	      goto end_foreach;
-	    }
-	  }
+		LIST_FOR_EACH_ELEMENT(seq_region_t, cns[is_normal], first, next, cur) {
+			if(strcmp(cur.chr_name,chr) == 0 && pos >= cur.beg && pos <= cur.end){
+				cn = cur.val;
+				goto end_foreach;
+			}
+		}
 	end_foreach:;
 	}else{
 		sentinel("Somehow copy number for location %s:%d was not available.",chr,pos);
 	}
 	return cn;
-error:
+ error:
 	return -1;
 }
 
-void cn_access_set_max_cn(int max_copy_number){
+void cn_access_set_max_cn(int max_copy_number) {
 	max_cn = max_copy_number;
 }
 
-void clear_copy_number_store(){
+void clear_copy_number_store() {
 	if(cns[0] != NULL){
-	  LIST_FOR_EACH_ELEMENT(seq_region_t, cns[0], first, next, cur) {
-	    free(cur.chr_name);
-	  }
-	  seq_region_t_List_destroy(cns[0]);
-	  cns[0] = NULL;
+		LIST_FOR_EACH_ELEMENT(seq_region_t, cns[0], first, next, cur) {
+			free(cur.chr_name);
+		}
+		seq_region_t_List_destroy(cns[0]);
+		cns[0] = NULL;
 	}
 
 	if(cns[1] != NULL){
-	  LIST_FOR_EACH_ELEMENT(seq_region_t, cns[1], first, next, cur) {
-	    free(cur.chr_name);
-	  }
-	  seq_region_t_List_destroy(cns[1]);
-	  cns[1] = NULL;
+		LIST_FOR_EACH_ELEMENT(seq_region_t, cns[1], first, next, cur) {
+			free(cur.chr_name);
+		}
+		seq_region_t_List_destroy(cns[1]);
+		cns[1] = NULL;
 	}
 	return;
 }

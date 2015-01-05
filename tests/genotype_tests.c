@@ -52,14 +52,8 @@ char *test_genotype_hard_copy_genotype_t_list(){
 		//Only one element...
 		mu_assert(cur->c_count == 10, "Wrong c count in copied value.");
 	}
-	{LIST_FOR_EACH_ELEMENT(genotype_t_ptr, new_list, first, next, cur) {
-	    free(cur);
-	  }}
-	genotype_t_ptr_List_destroy(new_list);
-	{LIST_FOR_EACH_ELEMENT(genotype_t_ptr, old, first, next, cur) {
-	    free(cur);
-	  }}
-	genotype_t_ptr_List_destroy(old);
+	List_clear_destroy(genotype_t_ptr, new_list);
+	List_clear_destroy(genotype_t_ptr, old);
 	return NULL;
 }
 

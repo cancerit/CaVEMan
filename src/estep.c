@@ -427,7 +427,8 @@ int estep_main(int argc, char *argv[]){
 
 	// If there's only one split it in two.
 	if(List_count(these_regions) == 1){
-		seq_region_t old = seq_region_t_List_pop(these_regions);
+		seq_region_t old;
+		seq_region_t_List_pop(these_regions, &old);
 		if(old.beg == old.end){
 			seq_region_t range_1;
 			range_1.beg = old.beg;
@@ -498,7 +499,7 @@ int estep_main(int argc, char *argv[]){
 		//Get all reads or pos pileups for section.
 		//Iterate through positions in section and mstep
 		int chk = algos_estep_read_position(alg,prob_arr,chr_name,cur.beg,cur.end,ref_seq,
-									norm_cn_loc, tum_cn_loc, snp_file, mut_file, debug_file, split_size);
+						    norm_cn_loc, tum_cn_loc, snp_file, mut_file, debug_file, split_size);
 		check(chk==0,"Error running estep for region %s:%d-%d.",chr_name,cur.beg,cur.end);
 		free(ref_seq);
 	}

@@ -49,7 +49,7 @@ const char *lane_id = "lane";
 
 
 
-int alg_bean_create_default_file(FILE *file, char *norm, char *tum){
+int alg_bean_create_default_file(FILE *file, char *norm, char *tum) {
 	assert(file != NULL);
 	assert(norm!= NULL);
 	assert(tum!= NULL);
@@ -58,12 +58,12 @@ int alg_bean_create_default_file(FILE *file, char *norm, char *tum){
 	check(rchk==0,"Error writing alg bean.");
 	alg_bean_destroy(bean);
 	return 0;
-error:
+ error:
 	if(bean) alg_bean_destroy(bean);
 	return 1;
 }
 
-alg_bean_t *alg_bean_read_file(FILE *file){
+alg_bean_t *alg_bean_read_file(FILE *file) {
 	assert(file != NULL);
 	struct alg_bean_t *bean = malloc(sizeof(struct alg_bean_t));
 	char line [ 5000 ];
@@ -124,66 +124,66 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 	bean->read_order_size = 2;
 
 	return bean;
-error:
+ error:
 	return NULL;
 }
 
-int alg_bean_get_index_for_str_arr(String_List *list,char *val){
+int alg_bean_get_index_for_str_arr(String_List *list,char *val) {
 	int i=0;
 	LIST_FOR_EACH_ELEMENT(String, list, first, next, cur) {
-	    if(strcmp(cur,val)==0){
-	      return i;
-	    }
-	    i++;
+		if(strcmp(cur,val)==0){
+			return i;
+		}
+		i++;
 	}
 	return -1;
 }
 
-int alg_bean_get_index_for_intrange_arr(alg_bean_intrange_List *list,int val){
+int alg_bean_get_index_for_intrange_arr(alg_bean_intrange_List *list,int val) {
 	int i=0;
 	LIST_FOR_EACH_ELEMENT(alg_bean_intrange, list, first, next, cur) {
-	    if(cur.from <= val && cur.to >= val){
-	      return i;
-	    }
-	    i++;
+		if(cur.from <= val && cur.to >= val){
+			return i;
+		}
+		i++;
 	}
 	return -1;
 }
 
-int alg_bean_get_index_for_char_arr(String_List *list,char *val){
+int alg_bean_get_index_for_char_arr(String_List *list,char *val) {
 	int i=0;
 	LIST_FOR_EACH_ELEMENT(String, list, first, next, cur) {
-	    if(strcmp(cur,val) == 0){
-	      return i;
-	    }
-	    i++;
+		if(strcmp(cur,val) == 0){
+			return i;
+		}
+		i++;
 	}
 	return -1;
 }
 
-int alg_bean_get_index_for_read_pos_prop_arr(float_List *list,int pos,int rd_len){
+int alg_bean_get_index_for_read_pos_prop_arr(float_List *list,int pos,int rd_len) {
 	alg_bean_intrange_List *lengths = alg_bean_intrange_List_create();
 	int i=0;
 	int last_stop = 1;
 	LIST_FOR_EACH_ELEMENT(float, list, first, next, pct) {
-	    int lng = (((float)rd_len/(float)100) * pct);
-	    alg_bean_intrange range;
-	    if(i==0){
-	      range.from = 1;
-	    }else{
-	      range.from = last_stop + 1;
-	    }
-	    range.to = (range.from) + lng;
-	    last_stop = range.to;
-	    alg_bean_intrange_List_push(lengths,range);
-	    i++;
+		int lng = (((float)rd_len/(float)100) * pct);
+		alg_bean_intrange range;
+		if(i==0){
+			range.from = 1;
+		}else{
+			range.from = last_stop + 1;
+		}
+		range.to = (range.from) + lng;
+		last_stop = range.to;
+		alg_bean_intrange_List_push(lengths,range);
+		i++;
 	}
 	int result = alg_bean_get_index_for_intrange_arr(lengths,pos);
 	alg_bean_intrange_List_destroy(lengths);
 	return result;
 }
 
-String_List *alg_bean_parse_str_list(char *txt){
+String_List *alg_bean_parse_str_list(char *txt) {
 	String_List *li = String_List_create();
 	char *ftchar;
 	ftchar = strtok(txt,";");
@@ -197,7 +197,7 @@ String_List *alg_bean_parse_str_list(char *txt){
 	return li;
 }
 
-float_List *alg_bean_parse_float_list(char *txt){
+float_List *alg_bean_parse_float_list(char *txt) {
 	float_List *li = float_List_create();
 	char *ftchar;
 	ftchar = strtok(txt,";");
@@ -210,7 +210,7 @@ float_List *alg_bean_parse_float_list(char *txt){
 	return li;
 }
 
-alg_bean_intrange_List *alg_bean_parse_int_range(char *txt){
+alg_bean_intrange_List *alg_bean_parse_int_range(char *txt) {
 	alg_bean_intrange_List *li = alg_bean_intrange_List_create();
 	char *rge;
 	rge = strtok(txt,";");
@@ -222,11 +222,11 @@ alg_bean_intrange_List *alg_bean_parse_int_range(char *txt){
 		rge = strtok(NULL,";");
 	}
 	return li;
-error:
+ error:
 	return NULL;
 }
 
-int alg_bean_write_list_alg_bean_intrange(FILE *file, alg_bean_intrange_List *li){
+int alg_bean_write_list_alg_bean_intrange(FILE *file, alg_bean_intrange_List *li) {
 	assert(file != NULL);
 	assert(li != NULL);
 	assert(List_count(li) > 0);
@@ -242,11 +242,11 @@ int alg_bean_write_list_alg_bean_intrange(FILE *file, alg_bean_intrange_List *li
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-int alg_bean_write_list_float(FILE *file, float_List *li){
+int alg_bean_write_list_float(FILE *file, float_List *li) {
 	assert(file != NULL);
 	assert(li != NULL);
 	assert(List_count(li) > 0);
@@ -262,11 +262,11 @@ int alg_bean_write_list_float(FILE *file, float_List *li){
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-int alg_bean_write_list_char(FILE *file, String_List *li){
+int alg_bean_write_list_char(FILE *file, String_List *li) {
 	assert(file != NULL);
 	assert(li != NULL);
 	assert(List_count(li) > 0);
@@ -282,11 +282,11 @@ int alg_bean_write_list_char(FILE *file, String_List *li){
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-int alg_bean_write_file(FILE *file, alg_bean_t *bean){
+int alg_bean_write_file(FILE *file, alg_bean_t *bean) {
 	assert(file != NULL);
 	assert(bean != NULL);
 	//Check we've got a good bean
@@ -326,11 +326,11 @@ int alg_bean_write_file(FILE *file, alg_bean_t *bean){
 	check(chk==0,"Error when writing lane ranges to file.");
 
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-void alg_bean_destroy(alg_bean_t *bean){
+void alg_bean_destroy(alg_bean_t *bean) {
 	if(bean != NULL){
 		if(bean->rd_pos != NULL){
 			float_List_destroy(bean->rd_pos);
@@ -342,10 +342,7 @@ void alg_bean_destroy(alg_bean_t *bean){
 			alg_bean_intrange_List_destroy(bean->map_qual);
 		}
 		if(bean->lane != NULL){
-		  LIST_FOR_EACH_ELEMENT(String, bean->lane, first, next, cur) {
-		    free(cur);
-		  }
-		  String_List_destroy(bean->lane);
+			List_clear_destroy(String, bean->lane);
 		}
 		if(bean->ref_base){
 			String_List_destroy(bean->ref_base);
@@ -358,7 +355,7 @@ void alg_bean_destroy(alg_bean_t *bean){
 	return;
 }
 
-alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
+alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum) {
 	assert(norm!= NULL);
 	assert(tum!= NULL);
 	struct alg_bean_t *bn = malloc(sizeof(struct alg_bean_t));
@@ -439,14 +436,8 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 
 	//split the lanes into a string array.
 	bn->lane = joined_lanes;
-	{LIST_FOR_EACH_ELEMENT(String, norm_lanes, first, next, cur) {
-	    free(cur);
-	  }}
-	String_List_destroy(norm_lanes);
-	{LIST_FOR_EACH_ELEMENT(String, tum_lanes, first, next, cur) {
-	  free(cur);
-	  }}
-	String_List_destroy(tum_lanes);
+	List_clear_destroy(String, norm_lanes);
+	List_clear_destroy(String, tum_lanes);
 
 	//Read position
 	float_List *float_list = float_List_create();
@@ -457,7 +448,7 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	float_List_push(float_list,f5);
 	bn->rd_pos = float_list;
 	/*alg_bean_intrange **rd_pos;
-	 int rd_pos_size; */
+	  int rd_pos_size; */
 
 	//Alg bean store file will be in the format NAMEOFCORVARIATE\trange1;range2;range3
 	//Excluding read pos which needs to be relative to read length.
@@ -466,11 +457,11 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	return bn;
 }
 
-String_List *alg_bean_hard_copy_char_list(String_List *new_list, String_List *old){
-  LIST_FOR_EACH_ELEMENT(String, old, first, next, cur) {
-    char *tmp = malloc(sizeof(char) * (strlen(cur)+1));
-    strcpy(tmp,cur);
-    String_List_push(new_list,tmp);
-  }
-  return new_list;
+String_List *alg_bean_hard_copy_char_list(String_List *new_list, String_List *old) {
+	LIST_FOR_EACH_ELEMENT(String, old, first, next, cur) {
+		char *tmp = malloc(sizeof(char) * (strlen(cur)+1));
+		strcpy(tmp,cur);
+		String_List_push(new_list,tmp);
+	}
+	return new_list;
 }

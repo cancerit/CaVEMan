@@ -146,12 +146,12 @@ int merge_main(int argc, char *argv[]){
 		int chck = sprintf(cov_loc,"%s/%s/%d_%d.covs",results,chr,start,stop);
 		check(chck>0,"Error creating path to covs file.");
 		uint64_t ********to_append = covs_access_read_covs_from_file(cov_loc,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
-							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+									     List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 		//append retrieved array to the new one
 		covs_access_merge_count_arrays(covs,to_append,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
-							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+					       List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 		covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
-							List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),to_append);
+							    List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),to_append);
 		free(cur.chr_name);
 	}
 	//Destroy the list of split sections.

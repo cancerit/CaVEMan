@@ -49,12 +49,12 @@ char *bases_str[4] = {"A","C","G","T"};
 //Making a huge assumption that copy number will not go above 250 here....
 genotype_t_ptr_List *geno_cache[250][4] = {};
 
-genotype_t_ptr_List *genotype_hard_copy_genotype_t_list(genotype_t_ptr_List *new_list, genotype_t_ptr_List *old){
-  LIST_FOR_EACH_ELEMENT(genotype_t_ptr, old, first, next, cur) {
-    genotype_t *tmp = genotype_copy_genotype(cur);
-    genotype_t_ptr_List_push(new_list,tmp);
-  }
-  return new_list;
+genotype_t_ptr_List *genotype_hard_copy_genotype_t_list(genotype_t_ptr_List *new_list, genotype_t_ptr_List *old) {
+	LIST_FOR_EACH_ELEMENT(genotype_t_ptr, old, first, next, cur) {
+		genotype_t *tmp = genotype_copy_genotype(cur);
+		genotype_t_ptr_List_push(new_list,tmp);
+	}
+	return new_list;
 }
 
 void genotype_add_base_to_count(genotype_t *geno, const char base){
@@ -165,7 +165,7 @@ error:
 	return NULL;
 }
 
-genotype_t_ptr_List *genotype_generate_unique_genotype_list(genotype_t_ptr_List *li){
+genotype_t_ptr_List *genotype_generate_unique_genotype_list(genotype_t_ptr_List *li) {
 	int geno_size = List_count(li);
 	genotype_t **genos;
 	genos = malloc(sizeof(genotype_t *) * geno_size);
@@ -195,16 +195,13 @@ genotype_t_ptr_List *genotype_generate_unique_genotype_list(genotype_t_ptr_List 
 	free(genos);
 	genotype_t_ptr_List_destroy(li);
 	return uniq;
-error:
-	{LIST_FOR_EACH_ELEMENT(genotype_t_ptr, li, first, next, cur) {
-	  free(cur);
-	  }}
-	genotype_t_ptr_List_destroy(li);
+ error:
+	List_clear_destroy(genotype_t_ptr, li);
 	if(genos) free(genos);
 	return NULL;
 }
 
-genotype_t_ptr_List *genotype_calculate_genotypes(int copy_num, char *ref_base){
+genotype_t_ptr_List *genotype_calculate_genotypes(int copy_num, char *ref_base) {
 	//Use a store of copy number then reference base to get the list (if it doesn't exist we create it).
 	//Use the copy number to store the location in the cn-cache array. if it's not there or NULL we default to the creation.
 	int bs=0;
@@ -228,42 +225,39 @@ genotype_t_ptr_List *genotype_calculate_genotypes(int copy_num, char *ref_base){
 	int i=0;
 	for(i=0; i<copy_num; i++){
 		// If genotypes have already been made, we need to append to them.
-      if(List_count(genos)>0){
-      	genotype_t_ptr_List *tmp = genotype_t_ptr_List_create();
-         //We need four copies of each genotype to append one of each bean to.
-	LIST_FOR_EACH_ELEMENT(genotype_t_ptr, genos, first, next, cur) {
-         	genotype_t *gen = cur;
-         	//Create 2 copies, one will be reference, the next will be mutant base.
-         	genotype_t *gen1 = genotype_copy_genotype(gen);
-         	genotype_t *gen2 = genotype_copy_genotype(gen1);
-         	genotype_add_base_to_count(gen2,ref_base[0]);
-         	genotype_t_ptr_List_push(tmp,gen2);
-         	int j=0;
-      		for(j=0; j<4; j++){
-      			int base_count = genotype_get_base_count(gen1,bases[j]);
-      			check(base_count >= 0, "Error fetching base count for base: %c with genotype: %s.",bases[j],genotype_get_genotype_t_as_string(gen1));
-						if(base_count>=1 && ref_base[0] != bases[j]){
-							genotype_add_base_to_count(gen1,bases[j]);
-							genotype_t_ptr_List_push(tmp,gen1);
-						}
-      		}
-      		if(genotype_equals(List_last(tmp),gen1)!=1) free(gen1);
-         }
-	{LIST_FOR_EACH_ELEMENT(genotype_t_ptr, genos, first, next, cur) {
-	  free(cur);
-	  }}
-         genotype_t_ptr_List_destroy(genos);
-         genos = tmp;
-      }else{
-      	//Create a genotype for each possible base.
-      	int j=0;
-      	for(j=0; j<4; j++){
-      		genotype_t *gen = genotype_init_genotype();
-      		check(gen != NULL, "Error generating genotype.");
-      		genotype_add_base_to_count(gen,bases[j]);
-      		genotype_t_ptr_List_push(genos,gen);
-      	}
-      }
+		if(List_count(genos)>0){
+			genotype_t_ptr_List *tmp = genotype_t_ptr_List_create();
+			//We need four copies of each genotype to append one of each bean to.
+			LIST_FOR_EACH_ELEMENT(genotype_t_ptr, genos, first, next, cur) {
+				genotype_t *gen = cur;
+				//Create 2 copies, one will be reference, the next will be mutant base.
+				genotype_t *gen1 = genotype_copy_genotype(gen);
+				genotype_t *gen2 = genotype_copy_genotype(gen1);
+				genotype_add_base_to_count(gen2,ref_base[0]);
+				genotype_t_ptr_List_push(tmp,gen2);
+				int j=0;
+				for(j=0; j<4; j++){
+					int base_count = genotype_get_base_count(gen1,bases[j]);
+					check(base_count >= 0, "Error fetching base count for base: %c with genotype: %s.",bases[j],genotype_get_genotype_t_as_string(gen1));
+					if(base_count>=1 && ref_base[0] != bases[j]){
+						genotype_add_base_to_count(gen1,bases[j]);
+						genotype_t_ptr_List_push(tmp,gen1);
+					}
+				}
+				if(genotype_equals(List_last(tmp),gen1)!=1) free(gen1);
+			}
+			List_clear_destroy(genotype_t_ptr, genos);
+			genos = tmp;
+		}else{
+			//Create a genotype for each possible base.
+			int j=0;
+			for(j=0; j<4; j++){
+				genotype_t *gen = genotype_init_genotype();
+				check(gen != NULL, "Error generating genotype.");
+				genotype_add_base_to_count(gen,bases[j]);
+				genotype_t_ptr_List_push(genos,gen);
+			}
+		}
 	}
 
 	unique = genotype_generate_unique_genotype_list(genos);
@@ -288,56 +282,46 @@ genotype_t_ptr_List *genotype_calculate_genotypes(int copy_num, char *ref_base){
 	geno_cache[copy_num][bs] = unique;
 	return unique;
 
-error:
-	if (unique) {
-	  LIST_FOR_EACH_ELEMENT(genotype_t_ptr, unique, first, next, cur) {
-	      free(cur);
-	  }
-	  genotype_t_ptr_List_destroy(unique);
-	}
-	if (genos) {
-	  LIST_FOR_EACH_ELEMENT(genotype_t_ptr, genos, first, next, cur) {
-	    free(cur);
-	  }
-	  genotype_t_ptr_List_destroy(genos);
-	}
+ error:
+	if (unique) List_clear_destroy(genotype_t_ptr, unique);
+	if (genos) List_clear_destroy(genotype_t_ptr, genos);
 	return NULL;
 }
 
-long double genotype_get_var_base_proportion(genotype_t *gen, const char ref_base, int copy_num){
+long double genotype_get_var_base_proportion(genotype_t *gen, const char ref_base, int copy_num) {
 	if(genotype_get_base_count(gen,ref_base) == copy_num){
 		return (long double)0;
 	}
 	int i=0;
-   for(i=0; i<4; i++){
-   	if(ref_base != bases[i] && genotype_get_base_count(gen,bases[i])){
-   		long double prop = (long double)genotype_get_base_count(gen,bases[i]) / (long double)copy_num;
-   		return prop;
-   	}
+	for(i=0; i<4; i++){
+		if(ref_base != bases[i] && genotype_get_base_count(gen,bases[i])){
+			long double prop = (long double)genotype_get_base_count(gen,bases[i]) / (long double)copy_num;
+			return prop;
+		}
 	}
 	return (long double)-1;
 }
 
-char *genotype_get_genotype_t_as_string(genotype_t *geno){
+char *genotype_get_genotype_t_as_string(genotype_t *geno) {
 	char *gen_str = malloc(
-								(sizeof(char) * genotype_get_base_count(geno,'A')) +
-								(sizeof(char) * genotype_get_base_count(geno,'C')) +
-								(sizeof(char) * genotype_get_base_count(geno,'G')) +
-								(sizeof(char) * genotype_get_base_count(geno,'T')) +
-								+ sizeof(char) * 5);
+			       (sizeof(char) * genotype_get_base_count(geno,'A')) +
+			       (sizeof(char) * genotype_get_base_count(geno,'C')) +
+			       (sizeof(char) * genotype_get_base_count(geno,'G')) +
+			       (sizeof(char) * genotype_get_base_count(geno,'T')) +
+			       + sizeof(char) * 5);
 	check_mem(gen_str);
 	gen_str = strcpy(gen_str,"");
 	int i=0;
-   for(i=0; i<4; i++){
-   	int count = genotype_get_base_count(geno,bases[i]);
-   	int app = 0;
-   	while(app<count){
-   		strcat(gen_str,bases_str[i]);
-   		app++;
-     	}
-   }
-   return gen_str;
-error:
+	for(i=0; i<4; i++){
+		int count = genotype_get_base_count(geno,bases[i]);
+		int app = 0;
+		while(app<count){
+			strcat(gen_str,bases_str[i]);
+			app++;
+		}
+	}
+	return gen_str;
+ error:
 	if(gen_str) free(gen_str);
 	return NULL;
 }
@@ -352,7 +336,7 @@ char genotype_get_var_base(genotype_t *geno, const char ref_base){
 	return ref_base;
 }
 
-combined_genotype_t_ptr_List *genotype_create_combined_List(genotype_t_ptr_List *li, genotype_t *norm){
+combined_genotype_t_ptr_List *genotype_create_combined_List(genotype_t_ptr_List *li, genotype_t *norm) {
 	combined_genotype_t_ptr_List *out = combined_genotype_t_ptr_List_create();
 	LIST_FOR_EACH_ELEMENT(genotype_t_ptr, li,first,next,cur) {
 		combined_genotype_t *combo = malloc(sizeof(combined_genotype_t));
@@ -363,26 +347,21 @@ combined_genotype_t_ptr_List *genotype_create_combined_List(genotype_t_ptr_List 
 		combined_genotype_t_ptr_List_push(out,combo);
 	}
 	return out;
-error:
-	if (out) {
-	  LIST_FOR_EACH_ELEMENT(combined_genotype_t_ptr, out, first, next, cur) {
-	    free(cur);
-	  }
-	  combined_genotype_t_ptr_List_destroy(out);
+ error:
+	if (out) List_clear_destroy(combined_genotype_t_ptr, out);
+	return NULL;
+}
+
+genotype_t *genotype_find_ref_genotype(genotype_t_ptr_List *tum_genos,int tum_cn, const char ref_base) {
+	LIST_FOR_EACH_ELEMENT(genotype_t_ptr, tum_genos, first, next, tum) {
+		if(genotype_get_base_count(tum, ref_base) == tum_cn){
+			return tum;
+		}
 	}
 	return NULL;
 }
 
-genotype_t *genotype_find_ref_genotype(genotype_t_ptr_List *tum_genos,int tum_cn, const char ref_base){
-  LIST_FOR_EACH_ELEMENT(genotype_t_ptr, tum_genos, first, next, tum) {
-    if(genotype_get_base_count(tum, ref_base) == tum_cn){
-      return tum;
-    }
-  }
-  return NULL;
-}
-
-combined_genotype_t_ptr_List *genotype_calculate_related_genotypes(genotype_t *norm,genotype_t_ptr_List *tum_genos,int *count, int tum_cn, const char ref_base){
+combined_genotype_t_ptr_List *genotype_calculate_related_genotypes(genotype_t *norm,genotype_t_ptr_List *tum_genos,int *count, int tum_cn, const char ref_base) {
 	assert(norm != NULL);
 	assert(tum_genos != NULL);
 	//Iterate through each tumour genotype and see if it can fit with the normal genotype passed. If it can, add it to the list.
@@ -394,7 +373,7 @@ combined_genotype_t_ptr_List *genotype_calculate_related_genotypes(genotype_t *n
 			//Hom SNPs
 			if(norm->var_base == tum->var_base && norm->var_base_prop == 1.0 && tum->var_base_prop == 1.0){
 				genotype_t_ptr_List_push(store,tum);
-			//HET SNPs
+				//HET SNPs
 			}else if((tum->var_base == norm->var_base || tum->var_base == ref_base) && norm->var_base_prop != 1.0){
 				genotype_t_ptr_List_push(store,tum);
 			}
@@ -409,7 +388,7 @@ combined_genotype_t_ptr_List *genotype_calculate_related_genotypes(genotype_t *n
 	return list;
 }
 
-int genotype_get_size_of_list_of_lists(combined_genotype_t_ptr_List_ptr_List *li){
+int genotype_get_size_of_list_of_lists(combined_genotype_t_ptr_List_ptr_List *li) {
 	int count = 0;
 	LIST_FOR_EACH_ELEMENT(combined_genotype_t_ptr_List_ptr, li,first,next,this) {
 		count += List_count(this);
@@ -417,20 +396,20 @@ int genotype_get_size_of_list_of_lists(combined_genotype_t_ptr_List_ptr_List *li
 	return count;
 }
 
-void genotype_put_genotype_combos_into_array(combined_genotype_t **combos,combined_genotype_t_ptr_List_ptr_List *list){
+void genotype_put_genotype_combos_into_array(combined_genotype_t **combos,combined_genotype_t_ptr_List_ptr_List *list) {
 	//int size = genotype_get_size_of_list_of_lists(list);
 	int i=0;
 	LIST_FOR_EACH_ELEMENT(combined_genotype_t_ptr_List_ptr, list,first,next,this) {
-	  LIST_FOR_EACH_ELEMENT(combined_genotype_t_ptr, this, first, next, here){
-	    combos[i] = here;
-	    i++;
-	  }
-	  combined_genotype_t_ptr_List_destroy(this);
+		LIST_FOR_EACH_ELEMENT(combined_genotype_t_ptr, this, first, next, here){
+			combos[i] = here;
+			i++;
+		}
+		combined_genotype_t_ptr_List_destroy(this);
 	}
 	return;
 }
 
-void genotype_fill_het_snp_norms_list(genotype_t_ptr_List *het_snps_norm,combined_genotype_t **het_snp_norm_genotypes){
+void genotype_fill_het_snp_norms_list(genotype_t_ptr_List *het_snps_norm,combined_genotype_t **het_snp_norm_genotypes) {
 	int i=0;
 	LIST_FOR_EACH_ELEMENT(genotype_t_ptr, het_snps_norm, first, next, this) {
 		combined_genotype_t *g = malloc(sizeof(struct combined_genotype_t));
@@ -441,11 +420,11 @@ void genotype_fill_het_snp_norms_list(genotype_t_ptr_List *het_snps_norm,combine
 		i++;
 	}
 	return;
-error:
+ error:
 	return;
 }
 
-void genotype_set_snp_and_mut_genotypes(genotype_t_ptr_List *norm_genos, genotype_t_ptr_List *tum_genos, int norm_cn, int tum_cn, char *ref_base, genotype_store_t *store){
+void genotype_set_snp_and_mut_genotypes(genotype_t_ptr_List *norm_genos, genotype_t_ptr_List *tum_genos, int norm_cn, int tum_cn, char *ref_base, genotype_store_t *store) {
 	int somatic_count = 0;
 	int het_count = 0;
 	int hom_count = 0;
@@ -535,7 +514,7 @@ void genotype_set_snp_and_mut_genotypes(genotype_t_ptr_List *norm_genos, genotyp
 	combined_genotype_t_ptr_List_ptr_List_destroy(somatics);
 	genotype_t_ptr_List_destroy(het_snps_norm);
 	return;
-error:
+ error:
 	combined_genotype_t_ptr_List_ptr_List_destroy(hom_snps);
 	combined_genotype_t_ptr_List_ptr_List_destroy(het_snps);
 	combined_genotype_t_ptr_List_ptr_List_destroy(somatics);
@@ -548,7 +527,7 @@ error:
 	return;
 }
 
-int genotype_equals(genotype_t *g_a,genotype_t *g_b){
+int genotype_equals(genotype_t *g_a,genotype_t *g_b) {
 	if(g_a->a_count != g_b->a_count){
 		return 0;
 	}
@@ -632,10 +611,7 @@ void genotype_clear_genotype_cache(){
 		int j=0;
 		for(j=0;j<4;j++){
 			if(geno_cache[i][j] != NULL && List_count(geno_cache[i][j]) > 0 ){
-			  LIST_FOR_EACH_ELEMENT(genotype_t_ptr, geno_cache[i][j], first, next, cur) {
-			    free(cur);
-			  }
-			  genotype_t_ptr_List_destroy(geno_cache[i][j]);
+			  List_clear_destroy(genotype_t_ptr, geno_cache[i][j]);
 			  geno_cache[i][j] = NULL;
 			}
 		}
