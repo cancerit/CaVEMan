@@ -108,7 +108,7 @@ valgrind:
 
 clean:
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
-	rm -rf ./bin
+	rm -rf ./bin $(HTSTMP)
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^
