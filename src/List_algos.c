@@ -19,90 +19,106 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
+#ifdef ELEMENT_TYPE
+
+#include <templates.h>
+
 #include <List_algos.h>
 #include <dbg.h>
 
-inline void ListNode_swap(ListNode *a, ListNode *b)
-{
-    void *temp = a->value;
-    a->value = b->value;
-    b->value = temp;
+#define ListNode_TYPE TEMPLATE(ELEMENT_TYPE,ListNode)
+#define List_TYPE TEMPLATE(ELEMENT_TYPE,List)
+#define List_COMPARE TEMPLATE(ELEMENT_TYPE,List_compare)
+
+int TEMPLATE(ELEMENT_TYPE,List_bubble_sort)(List_TYPE *list, List_COMPARE cmp) {
+	int sorted = 1;
+
+	if(List_count(list) <= 1) {
+		return 0;  // already sorted
+	}
+
+	do {
+		sorted = 1;
+		LIST_FOR_EACH_NODE(ELEMENT_TYPE, list, first, next, cur) {
+			int curi;
+			for (curi=0; curi<cur->count; ++curi) {
+				if (curi<cur->count-1) {
+					if (cmp(cur->values[curi], cur->values[curi+1]) > 0) {
+						ELEMENT_TYPE tmp = cur->values[curi];
+						cur->values[curi] = cur->values[curi+1];
+						cur->values[curi+1] = tmp;
+						sorted = 0;
+					}
+				} else if(cur->next) {
+					if(cmp(cur->values[curi], cur->next->values[0]) > 0) {
+						ELEMENT_TYPE tmp = cur->values[curi];
+						cur->values[curi] = cur->next->values[0];
+						cur->next->values[0] = tmp;
+						sorted = 0;
+					}
+				}
+			}
+		}
+	} while(!sorted);
+
+	return 0;
 }
 
-int List_bubble_sort(List *list, List_compare cmp)
-{
-    int sorted = 1;
+inline List_TYPE *TEMPLATE(ELEMENT_TYPE,List_merge)(List_TYPE *left, List_TYPE *right, List_COMPARE cmp) {
+	List_TYPE *result = TEMPLATE(ELEMENT_TYPE,List_create)();
+	ELEMENT_TYPE val;
 
-    if(List_count(list) <= 1) {
-        return 0;  // already sorted
-    }
+	while(List_count(left) > 0 || List_count(right) > 0) {
+		if(List_count(left) > 0 && List_count(right) > 0) {
+			if(cmp(List_first(left), List_first(right)) <= 0) {
+				TEMPLATE(ELEMENT_TYPE,List_unshift)(left, &val);
+			} else {
+				TEMPLATE(ELEMENT_TYPE,List_unshift)(right, &val);
+			}
 
-    do {
-        sorted = 1;
-        LIST_FOREACH(list, first, next, cur) {
-            if(cur->next) {
-                if(cmp(cur->value, cur->next->value) > 0) {
-                    ListNode_swap(cur, cur->next);
-                    sorted = 0;
-                }
-            }
-        }
-    } while(!sorted);
+			TEMPLATE(ELEMENT_TYPE,List_push)(result, val);
+		} else if(List_count(left) > 0) {
+			TEMPLATE(ELEMENT_TYPE,List_unshift)(left, &val);
+			TEMPLATE(ELEMENT_TYPE,List_push)(result, val);
+		} else if(List_count(right) > 0) {
+			TEMPLATE(ELEMENT_TYPE,List_unshift)(right, &val);
+			TEMPLATE(ELEMENT_TYPE,List_push)(result, val);
+		}
+	}
 
-    return 0;
+	return result;
 }
 
-inline List *List_merge(List *left, List *right, List_compare cmp)
-{
-    List *result = List_create();
-    void *val = NULL;
+List_TYPE *TEMPLATE(ELEMENT_TYPE,List_merge_sort)(List_TYPE *list, List_COMPARE cmp) {
+	if(List_count(list) <= 1) {
+		return list;
+	}
 
-    while(List_count(left) > 0 || List_count(right) > 0) {
-        if(List_count(left) > 0 && List_count(right) > 0) {
-            if(cmp(List_first(left), List_first(right)) <= 0) {
-                val = List_unshift(left);
-            } else {
-                val = List_unshift(right);
-            }
+	List_TYPE *left = TEMPLATE(ELEMENT_TYPE,List_create)();
+	List_TYPE *right = TEMPLATE(ELEMENT_TYPE,List_create)();
+	int middle = List_count(list) / 2;
 
-            List_push(result, val);
-        } else if(List_count(left) > 0) {
-            val = List_unshift(left);
-            List_push(result, val);
-        } else if(List_count(right) > 0) {
-            val = List_unshift(right);
-            List_push(result, val);
-        }
-    }
+	LIST_FOR_EACH_ELEMENT(ELEMENT_TYPE, list, first, next, cur) {
+		if(middle > 0) {
+			TEMPLATE(ELEMENT_TYPE,List_push)(left, cur);
+		} else {
+			TEMPLATE(ELEMENT_TYPE,List_push)(right, cur);
+		}
 
-    return result;
+		middle--;
+	}
+
+	List_TYPE *sort_left = TEMPLATE(ELEMENT_TYPE,List_merge_sort)(left, cmp);
+	List_TYPE *sort_right = TEMPLATE(ELEMENT_TYPE,List_merge_sort)(right, cmp);
+
+	if(sort_left != left) TEMPLATE(ELEMENT_TYPE,List_destroy)(left);
+	if(sort_right != right) TEMPLATE(ELEMENT_TYPE,List_destroy)(right);
+
+	return TEMPLATE(ELEMENT_TYPE,List_merge)(sort_left, sort_right, cmp);
 }
 
-List *List_merge_sort(List *list, List_compare cmp)
-{
-    if(List_count(list) <= 1) {
-        return list;
-    }
+#undef ListNode_TYPE
+#undef List_TYPE
+#undef List_COMPARE
 
-    List *left = List_create();
-    List *right = List_create();
-    int middle = List_count(list) / 2;
-
-    LIST_FOREACH(list, first, next, cur) {
-        if(middle > 0) {
-            List_push(left, cur->value);
-        } else {
-            List_push(right, cur->value);
-        }
-
-        middle--;
-    }
-
-    List *sort_left = List_merge_sort(left, cmp);
-    List *sort_right = List_merge_sort(right, cmp);
-
-    if(sort_left != left) List_destroy(left);
-    if(sort_right != right) List_destroy(right);
-
-    return List_merge(sort_left, sort_right, cmp);
-}
+#endif

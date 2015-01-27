@@ -1,7 +1,8 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
+* Copyright (c) 2015 Genome Research Ltd. 
 * 
 * Author: Cancer Genome Project cgpit@sanger.ac.uk 
+* This code is based on http://arnold.uthar.net/index.php?n=Work.TemplatesC
 * 
 * This file is part of CaVEMan. 
 * 
@@ -19,14 +20,10 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _split_access_h
-#define _split_access_h
+#ifndef TEMPLATES_H_
+#define TEMPLATES_H_
 
-#include <stdio.h>
-#include <ignore_reg_access.h>
-
-int split_access_print_section(FILE *output, char *chr, int start_zero_based, int stop);
-void split_access_get_section_from_index(char *file_loc, char *chr, int *start_zero_based, int *stop, int index);
-seq_region_t_List *split_access_get_all_split_sections(char *file_loc);
+#define CAT(X,Y) X##_##Y
+#define TEMPLATE(X,Y) CAT(X,Y)
 
 #endif

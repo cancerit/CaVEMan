@@ -25,6 +25,12 @@
 #include <alg_bean.h>
 #include <bam_access.h>
 
+#define ELEMENT_TYPE alg_bean_intrange
+#define ELEMENTS_PER_NODE 16
+#include <List.c>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
+
 static float f1 = 2.63f;
 static float f2 = 47.37f;
 static float f3 = 23.68f;
@@ -43,7 +49,7 @@ const char *lane_id = "lane";
 
 
 
-int alg_bean_create_default_file(FILE *file, char *norm, char *tum){
+int alg_bean_create_default_file(FILE *file, char *norm, char *tum) {
 	assert(file != NULL);
 	assert(norm!= NULL);
 	assert(tum!= NULL);
@@ -52,12 +58,12 @@ int alg_bean_create_default_file(FILE *file, char *norm, char *tum){
 	check(rchk==0,"Error writing alg bean.");
 	alg_bean_destroy(bean);
 	return 0;
-error:
+ error:
 	if(bean) alg_bean_destroy(bean);
 	return 1;
 }
 
-alg_bean_t *alg_bean_read_file(FILE *file){
+alg_bean_t *alg_bean_read_file(FILE *file) {
 	assert(file != NULL);
 	struct alg_bean_t *bean = malloc(sizeof(struct alg_bean_t));
 	char line [ 5000 ];
@@ -70,15 +76,15 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 			bean->rd_pos = alg_bean_parse_float_list(list_txt);
 			bean->rd_pos_size = List_count(bean->rd_pos);
 		}else if(strcmp(text_id,base_qual_id)==0){
-			List *base_qual_ranges = alg_bean_parse_int_range(list_txt);
+			alg_bean_intrange_List *base_qual_ranges = alg_bean_parse_int_range(list_txt);
 			bean->base_qual = base_qual_ranges;
 			bean->base_qual_size = List_count(base_qual_ranges);
 		}else if(strcmp(text_id,map_qual_id)==0){
-			List *map_qual_ranges = alg_bean_parse_int_range(list_txt);
+			alg_bean_intrange_List *map_qual_ranges = alg_bean_parse_int_range(list_txt);
 			bean->map_qual = map_qual_ranges;
 			bean->map_qual_size = List_count(map_qual_ranges);
 		}else if(strcmp(text_id,lane_id)==0){
-			List *lanes_list = alg_bean_parse_str_list(list_txt);
+			String_List *lanes_list = alg_bean_parse_str_list(list_txt);
 			bean->lane = lanes_list;
 			bean->lane_size = List_count(lanes_list);
 		}else{
@@ -95,11 +101,11 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 	//Now populate the last few that aren't manually allocated.
 	//Called and ref base
 	//Ref and called bases
-	List *ref_base = List_create();
-	List_push(ref_base,chara);
-	List_push(ref_base,charc);
-	List_push(ref_base,charg);
-	List_push(ref_base,chart);
+	String_List *ref_base = String_List_create();
+	String_List_push(ref_base,chara);
+	String_List_push(ref_base,charc);
+	String_List_push(ref_base,charg);
+	String_List_push(ref_base,chart);
 	bean->ref_base = ref_base;
 	bean->call_base = ref_base;
 	bean->ref_base_size = 4;
@@ -109,23 +115,23 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 	//Strands
 	int a=1;
 	int b=0;
-	List *strand = List_create();
-	List_push(strand,&b);
-	List_push(strand,&a);
+	int_List *strand = int_List_create();
+	int_List_push(strand,b);
+	int_List_push(strand,a);
 	bean->strand = strand;
 	bean->read_order = strand;
 	bean->strand_size = 2;
 	bean->read_order_size = 2;
 
 	return bean;
-error:
+ error:
 	return NULL;
 }
 
-int alg_bean_get_index_for_str_arr(List *list,char *val){
+int alg_bean_get_index_for_str_arr(String_List *list,char *val) {
 	int i=0;
-	LIST_FOREACH(list, first, next, cur){
-		if(strcmp((char *)cur->value,val)==0){
+	LIST_FOR_EACH_ELEMENT(String, list, first, next, cur) {
+		if(strcmp(cur,val)==0){
 			return i;
 		}
 		i++;
@@ -133,10 +139,10 @@ int alg_bean_get_index_for_str_arr(List *list,char *val){
 	return -1;
 }
 
-int alg_bean_get_index_for_intrange_arr(List *list,int val){
+int alg_bean_get_index_for_intrange_arr(alg_bean_intrange_List *list,int val) {
 	int i=0;
-	LIST_FOREACH(list, first, next, cur){
-		if(((alg_bean_intrange *)cur->value)->from <= val && ((alg_bean_intrange *)cur->value)->to >= val){
+	LIST_FOR_EACH_ELEMENT(alg_bean_intrange, list, first, next, cur) {
+		if(cur.from <= val && cur.to >= val){
 			return i;
 		}
 		i++;
@@ -144,10 +150,10 @@ int alg_bean_get_index_for_intrange_arr(List *list,int val){
 	return -1;
 }
 
-int alg_bean_get_index_for_char_arr(List *list,char *val){
+int alg_bean_get_index_for_char_arr(String_List *list,char *val) {
 	int i=0;
-	LIST_FOREACH(list, first, next, cur){
-		if(strcmp(((char *)cur->value),val) == 0){
+	LIST_FOR_EACH_ELEMENT(String, list, first, next, cur) {
+		if(strcmp(cur,val) == 0){
 			return i;
 		}
 		i++;
@@ -155,82 +161,80 @@ int alg_bean_get_index_for_char_arr(List *list,char *val){
 	return -1;
 }
 
-int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len){
-	List *lengths = List_create();
+int alg_bean_get_index_for_read_pos_prop_arr(float_List *list,int pos,int rd_len) {
+	alg_bean_intrange_List *lengths = alg_bean_intrange_List_create();
 	int i=0;
 	int last_stop = 1;
-	LIST_FOREACH(list, first, next, cur){
-		float pct = *((float *)cur->value);
+	LIST_FOR_EACH_ELEMENT(float, list, first, next, pct) {
 		int lng = (((float)rd_len/(float)100) * pct);
-		alg_bean_intrange *range = malloc(sizeof(alg_bean_intrange));
+		alg_bean_intrange range;
 		if(i==0){
-			range->from = 1;
+			range.from = 1;
 		}else{
-			range->from = last_stop + 1;
+			range.from = last_stop + 1;
 		}
-		range->to = (range->from) + lng;
-		last_stop = range->to;
-		List_push(lengths,range);
+		range.to = (range.from) + lng;
+		last_stop = range.to;
+		alg_bean_intrange_List_push(lengths,range);
 		i++;
 	}
 	int result = alg_bean_get_index_for_intrange_arr(lengths,pos);
-	List_clear_destroy(lengths);
+	alg_bean_intrange_List_destroy(lengths);
 	return result;
 }
 
-List *alg_bean_parse_str_list(char *txt){
-	List *li = List_create();
+String_List *alg_bean_parse_str_list(char *txt) {
+	String_List *li = String_List_create();
 	char *ftchar;
 	ftchar = strtok(txt,";");
 	while(ftchar != NULL){
 		char *tmp = malloc(sizeof(char) *50);
 		strcpy(tmp,ftchar);
-		List_push(li,tmp);
+		String_List_push(li,tmp);
 		ftchar = strtok(NULL,";");
 	}
 	if(ftchar) free(ftchar);
 	return li;
 }
 
-List *alg_bean_parse_float_list(char *txt){
-	List *li = List_create();
+float_List *alg_bean_parse_float_list(char *txt) {
+	float_List *li = float_List_create();
 	char *ftchar;
 	ftchar = strtok(txt,";");
 	while(ftchar != NULL){
-		float *tmp = malloc(sizeof(float));
-		*tmp = atof(ftchar);
-		List_push(li,tmp);
+		float tmp = atof(ftchar);
+		float_List_push(li,tmp);
 		ftchar = strtok(NULL,";");
 	}
 	free(ftchar);
 	return li;
 }
 
-List *alg_bean_parse_int_range(char *txt){
-	List *li = List_create();
+alg_bean_intrange_List *alg_bean_parse_int_range(char *txt) {
+	alg_bean_intrange_List *li = alg_bean_intrange_List_create();
 	char *rge;
 	rge = strtok(txt,";");
 	while(rge != NULL){
-		alg_bean_intrange	*range = malloc(sizeof(struct alg_bean_intrange));
-		int chk = sscanf(rge,"%d-%d",&range->from,&range->to);
+	        alg_bean_intrange range;
+		int chk = sscanf(rge,"%d-%d",&range.from,&range.to);
 		check(chk==2,"Couldn't resolve range from text %s.",txt);
-		List_push(li,range);
+		alg_bean_intrange_List_push(li,range);
 		rge = strtok(NULL,";");
 	}
 	return li;
-error:
+ error:
 	return NULL;
 }
 
-int alg_bean_write_list_alg_bean_intrange(FILE *file, List *li){
+int alg_bean_write_list_alg_bean_intrange(FILE *file, alg_bean_intrange_List *li) {
 	assert(file != NULL);
 	assert(li != NULL);
 	assert(List_count(li) > 0);
 	int chk = 0;
-	LIST_FOREACH(li, first, next, cur){
-		chk = fprintf(file,"%d-%d",((alg_bean_intrange *)cur->value)->from,((alg_bean_intrange *)cur->value)->to);
+	LIST_FOR_EACH_ELEMENT_MORE(alg_bean_intrange, li, first, next, cur, more) {
+		chk = fprintf(file,"%d-%d",cur.from,cur.to);
 		check(chk>0,"Error writing intrange.");
-		if(cur->next != NULL){
+		if (more) {
 			chk = fprintf(file,";");
 			check(chk>0,"Error writing string separator.");
 		}
@@ -238,19 +242,19 @@ int alg_bean_write_list_alg_bean_intrange(FILE *file, List *li){
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-int alg_bean_write_list_float(FILE *file, List *li){
+int alg_bean_write_list_float(FILE *file, float_List *li) {
 	assert(file != NULL);
 	assert(li != NULL);
 	assert(List_count(li) > 0);
 	int chk = 0;
-	LIST_FOREACH(li, first, next, cur){
-		chk = fprintf(file,"%.2f",*(float *)cur->value);
+	LIST_FOR_EACH_ELEMENT_MORE(float, li, first, next, cur, more) {
+		chk = fprintf(file,"%.2f",cur);
 		check(chk>0,"Error writing float.");
-		if(cur->next != NULL){
+		if (more) {
 			chk = fprintf(file,";");
 			check(chk>0,"Error writing string separator.");
 		}
@@ -258,19 +262,19 @@ int alg_bean_write_list_float(FILE *file, List *li){
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-int alg_bean_write_list_char(FILE *file, List *li){
+int alg_bean_write_list_char(FILE *file, String_List *li) {
 	assert(file != NULL);
 	assert(li != NULL);
 	assert(List_count(li) > 0);
 	int chk = 0;
-	LIST_FOREACH(li, first, next, cur){
-		chk = fprintf(file,"%s",(char *)cur->value);
+	LIST_FOR_EACH_ELEMENT_MORE(String, li, first, next, cur, more) {
+		chk = fprintf(file,"%s",cur);
 		check(chk>=0,"Error writing string.");
-		if(cur->next != NULL){
+		if (more) {
 			chk = fprintf(file,";");
 			check(chk>0,"Error writing string separator.");
 		}
@@ -278,11 +282,11 @@ int alg_bean_write_list_char(FILE *file, List *li){
 	chk = fprintf(file,"\n");
 	check(chk!=0,"Error writing end.");
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-int alg_bean_write_file(FILE *file, alg_bean_t *bean){
+int alg_bean_write_file(FILE *file, alg_bean_t *bean) {
 	assert(file != NULL);
 	assert(bean != NULL);
 	//Check we've got a good bean
@@ -322,109 +326,100 @@ int alg_bean_write_file(FILE *file, alg_bean_t *bean){
 	check(chk==0,"Error when writing lane ranges to file.");
 
 	return 0;
-error:
+ error:
 	return -1;
 }
 
-void alg_bean_destroy(alg_bean_t *bean){
+void alg_bean_destroy(alg_bean_t *bean) {
 	if(bean != NULL){
 		if(bean->rd_pos != NULL){
-			List_destroy(bean->rd_pos);
+			float_List_destroy(bean->rd_pos);
 		}
 		if(bean->base_qual != NULL){
-			List_clear_destroy(bean->base_qual);
+			alg_bean_intrange_List_destroy(bean->base_qual);
 		}
 		if(bean->map_qual != NULL){
-			List_clear_destroy(bean->map_qual);
+			alg_bean_intrange_List_destroy(bean->map_qual);
 		}
 		if(bean->lane != NULL){
-			List_clear_destroy(bean->lane);
+			List_clear_destroy(String, bean->lane);
 		}
 		if(bean->ref_base){
-			List_destroy(bean->ref_base);
+			String_List_destroy(bean->ref_base);
 		}
 	 	if(bean->strand != NULL){
-	 		List_destroy(bean->strand);
+	 		int_List_destroy(bean->strand);
 	 	}
 	 	free(bean);
 	}
 	return;
 }
 
-alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
+alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum) {
 	assert(norm!= NULL);
 	assert(tum!= NULL);
 	struct alg_bean_t *bn = malloc(sizeof(struct alg_bean_t));
 
 	//Ref and called bases
-	List *ref_base = List_create();
-	List_push(ref_base,"A");
-	List_push(ref_base,"C");
-	List_push(ref_base,"G");
-	List_push(ref_base,"T");
+	String_List *ref_base = String_List_create();
+	String_List_push(ref_base,"A");
+	String_List_push(ref_base,"C");
+	String_List_push(ref_base,"G");
+	String_List_push(ref_base,"T");
 	bn->ref_base = ref_base;
 	bn->call_base = ref_base;
 	//Strands
 	int a=1;
 	int b=0;
-	List *strand = List_create();
-	List_push(strand,&b);
-	List_push(strand,&a);
+	int_List *strand = int_List_create();
+	int_List_push(strand,b);
+	int_List_push(strand,a);
 	bn->strand = strand;
 
 	//Base quality
 	//"0-10==11-15==16-20==21-30==31-200";
-	List *base_q_list = List_create();
-	alg_bean_intrange *range_1 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_1);
-	range_1->from = 0;
-	range_1->to = 9;
-	alg_bean_intrange *range_2 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_2);
-	range_2->from = 10;
-	range_2->to = 19;
-	alg_bean_intrange *range_3 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_3);
-	range_3->from = 20;
-	range_3->to = 24;
-	alg_bean_intrange *range_4 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_4);
-	range_4->from = 25;
-	range_4->to = 29;
-	alg_bean_intrange *range_5 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_5);
-	range_5->from = 30;
-	range_5->to = 34;
-	alg_bean_intrange *range_8 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_8);
-	range_8->from = 35;
-	range_8->to = 39;
-	alg_bean_intrange *range_9 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_9);
-	range_9->from = 40;
-	range_9->to = 200;
-	List_push(base_q_list,range_1);
-	List_push(base_q_list,range_2);
-	List_push(base_q_list,range_3);
-	List_push(base_q_list,range_4);
-	List_push(base_q_list,range_5);
-	List_push(base_q_list,range_8);
-	List_push(base_q_list,range_9);
+	alg_bean_intrange_List *base_q_list = alg_bean_intrange_List_create();
+	alg_bean_intrange range_1;
+	range_1.from = 0;
+	range_1.to = 9;
+	alg_bean_intrange range_2;
+	range_2.from = 10;
+	range_2.to = 19;
+	alg_bean_intrange range_3;
+	range_3.from = 20;
+	range_3.to = 24;
+	alg_bean_intrange range_4;
+	range_4.from = 25;
+	range_4.to = 29;
+	alg_bean_intrange range_5;
+	range_5.from = 30;
+	range_5.to = 34;
+	alg_bean_intrange range_8;
+	range_8.from = 35;
+	range_8.to = 39;
+	alg_bean_intrange range_9;
+	range_9.from = 40;
+	range_9.to = 200;
+	alg_bean_intrange_List_push(base_q_list,range_1);
+	alg_bean_intrange_List_push(base_q_list,range_2);
+	alg_bean_intrange_List_push(base_q_list,range_3);
+	alg_bean_intrange_List_push(base_q_list,range_4);
+	alg_bean_intrange_List_push(base_q_list,range_5);
+	alg_bean_intrange_List_push(base_q_list,range_8);
+	alg_bean_intrange_List_push(base_q_list,range_9);
 	bn->base_qual = base_q_list;
 
 	//Map quality
 	//0-60==255
-	List *map_q_list = List_create();
-	alg_bean_intrange *range_6 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_6);
-	range_6->from = 0;
-	range_6->to = 60;
-	alg_bean_intrange *range_7 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_7);
-	range_7->from = 255;
-	range_7->to = 255;
-	List_push(map_q_list,range_6);
-	List_push(map_q_list,range_7);
+	alg_bean_intrange_List *map_q_list = alg_bean_intrange_List_create();
+	alg_bean_intrange range_6;
+	range_6.from = 0;
+	range_6.to = 60;
+	alg_bean_intrange range_7;
+	range_7.from = 255;
+	range_7.to = 255;
+	alg_bean_intrange_List_push(map_q_list,range_6);
+	alg_bean_intrange_List_push(map_q_list,range_7);
 	bn->map_qual = map_q_list;
 
 	//Chemistries
@@ -432,43 +427,41 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	bn->read_order = strand;
 
 	//Lanes
-	List *norm_lanes = bam_access_get_lane_list_from_header(norm,"1");
-	List *tum_lanes = bam_access_get_lane_list_from_header(tum,"0");
+	String_List *norm_lanes = bam_access_get_lane_list_from_header(norm,"1");
+	String_List *tum_lanes = bam_access_get_lane_list_from_header(tum,"0");
 
-	List *joined_lanes = List_create();
+	String_List *joined_lanes = String_List_create();
 	alg_bean_hard_copy_char_list(joined_lanes,norm_lanes);
 	alg_bean_hard_copy_char_list(joined_lanes,tum_lanes);
 
 	//split the lanes into a string array.
 	bn->lane = joined_lanes;
-	List_clear_destroy(norm_lanes);
-	List_clear_destroy(tum_lanes);
+	List_clear_destroy(String, norm_lanes);
+	List_clear_destroy(String, tum_lanes);
 
 	//Read position
-	List *float_list = List_create();
-	List_push(float_list,&f1);
-	List_push(float_list,&f2);
-	List_push(float_list,&f3);
-	List_push(float_list,&f4);
-	List_push(float_list,&f5);
+	float_List *float_list = float_List_create();
+	float_List_push(float_list,f1);
+	float_List_push(float_list,f2);
+	float_List_push(float_list,f3);
+	float_List_push(float_list,f4);
+	float_List_push(float_list,f5);
 	bn->rd_pos = float_list;
 	/*alg_bean_intrange **rd_pos;
-	 int rd_pos_size; */
+	  int rd_pos_size; */
 
 	//Alg bean store file will be in the format NAMEOFCORVARIATE\trange1;range2;range3
 	//Excluding read pos which needs to be relative to read length.
 	//called base and ref base and read order and strand are not included as they're assumed to be in separate ranges anyway.
 
 	return bn;
-error:
-	return NULL;
 }
 
-List *alg_bean_hard_copy_char_list(List *new_list, List *old){
-	LIST_FOREACH(old, first, next, cur){
-		char *tmp = malloc(sizeof(char) * (strlen((char *)cur->value)+1));
-		strcpy(tmp,(char *)cur->value);
-		List_push(new_list,tmp);
+String_List *alg_bean_hard_copy_char_list(String_List *new_list, String_List *old) {
+	LIST_FOR_EACH_ELEMENT(String, old, first, next, cur) {
+		char *tmp = malloc(sizeof(char) * (strlen(cur)+1));
+		strcpy(tmp,cur);
+		String_List_push(new_list,tmp);
 	}
 	return new_list;
 }

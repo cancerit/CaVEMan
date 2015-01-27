@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
+* Copyright (c) 2015 Genome Research Ltd. 
 * 
 * Author: Cancer Genome Project cgpit@sanger.ac.uk 
 * 
@@ -19,14 +19,27 @@
 * along with this program. If not, see <http://www.gnu.org/licenses/>. 
 */
 
-#ifndef _split_access_h
-#define _split_access_h
+#ifndef _BasicLists_h
+#define _BasicLists_h
 
-#include <stdio.h>
-#include <ignore_reg_access.h>
+#define ELEMENT_TYPE int
+#define ELEMENTS_PER_NODE 16
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
 
-int split_access_print_section(FILE *output, char *chr, int start_zero_based, int stop);
-void split_access_get_section_from_index(char *file_loc, char *chr, int *start_zero_based, int *stop, int index);
-seq_region_t_List *split_access_get_all_split_sections(char *file_loc);
+#define ELEMENT_TYPE float
+#define ELEMENTS_PER_NODE 16
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
+
+typedef char* String;
+
+#define ELEMENT_TYPE String
+#define ELEMENTS_PER_NODE 8
+#include <List.h>
+#undef ELEMENT_TYPE
+#undef ELEMENTS_PER_NODE
 
 #endif
