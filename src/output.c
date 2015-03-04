@@ -358,6 +358,8 @@ int output_append_position_to_no_analysis(char *chr_name, int start_one_base, in
 	if(List_count(no_analysis_sects) > no_analysis_cache_size){
 		int chk = output_flush_no_analysis(chr_name);
 		check(chk==0,"Error writing to no analysis output file.");
+		no_analysis_sects = List_create();
+		check(no_analysis_sects!=NULL,"Error creating new list for no_analysis.");
 	}
 	return 0;
 error:
@@ -365,6 +367,7 @@ error:
 }
 
 int output_flush_no_analysis(char *chr_name){
+  assert(no_analysis_sects!=NULL);
 	//output all the no_analysis regions to file....
 	LIST_FOREACH(no_analysis_sects, first, next, cur){
 		seq_region_t *reg = (seq_region_t *) cur->value;
@@ -372,7 +375,6 @@ int output_flush_no_analysis(char *chr_name){
 		check(chk>=0,"Error writing to no analysis bed file.");
 	}
 	List_clear_destroy(no_analysis_sects);
-	no_analysis_sects = List_create();
 	return 0;
 error:
 	return -1;

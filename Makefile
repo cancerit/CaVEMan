@@ -1,4 +1,4 @@
-CAVEMAN_VERSION=1.5.0
+CAVEMAN_VERSION=1.5.3
 
 #Compiler
 CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
@@ -108,7 +108,7 @@ valgrind:
 
 clean:
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
-	rm -rf ./bin
+	rm -rf ./bin $(HTSTMP)
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^

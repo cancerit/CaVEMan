@@ -505,7 +505,6 @@ int estep_main(int argc, char *argv[]){
 		check(chk==0,"Error running estep for region %s:%d-%d.",chr_name,((seq_region_t *)cur->value)->beg,((seq_region_t *)cur->value)->end);
 		free(ref_seq);
 	}
-
 	int write_check = output_flush_no_analysis(chr_name);
 	check(write_check==0,"Error writing no analysis regions to bed file.");
 
@@ -527,7 +526,6 @@ int estep_main(int argc, char *argv[]){
 	//cleanup
 	List_clear_destroy(these_regions);
 	free(fa_file);
-	free(no_analysis_list);
 	bam_access_closebams();
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count,ignore_regs);
 	covs_access_free_prob_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),

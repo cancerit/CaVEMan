@@ -224,56 +224,103 @@ error:
 	return NULL;
 }
 
+int bam_access_parse_sq_line(char *line,char *species, char *assembly,char *name, int *length){
+  char *tag = strtok(line,"\t");
+  char *tmp = NULL;
+  while(tag != NULL){
+    int chk=0;
+    tmp = malloc(sizeof(char) * 512);
+    check_mem(tmp);
+    chk = sscanf(tag,"SN:%[^\t\n]",tmp);
+    if(chk>0){
+      strcpy(name,tmp);
+      tag = strtok(NULL,"\t");
+      continue;
+    }
+    chk = sscanf(tag,"SP:%[^\t\n]",tmp);
+    if(chk>0){
+      strcpy(species,tmp);
+      tag = strtok(NULL,"\t");
+      continue;
+    }
+    chk = sscanf(tag,"AS:%[^\t\n]",tmp);
+    if(chk>0){
+      strcpy(assembly,tmp);
+      tag = strtok(NULL,"\t");
+      continue;
+    }
+    chk = sscanf(tag,"LN:%d",length);
+    if(chk>0){
+      tag = strtok(NULL,"\t");
+      continue;
+    }
+    tag = strtok(NULL,"\t");
+  }//End of tokenising SQ line
+  free(tmp);
+  return 0;
+error:
+  if(tmp) free(tmp);
+  return 1;
+}
+
 List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species){
 	assert(bam_file != NULL);
 	char *line = NULL;
 	ref_seq_t *ref = NULL;
+	char ** ptr = NULL;
 	List *conts = List_create();
+	char *tmp_line = NULL;
 	samfile_t *bam = samopen(bam_file, "rb", 0);
 	check(bam != 0,"Failed to open bam file to read contigs: %s.",bam_file);
 	char *head_txt = bam->header->text;
-	line = strtok(head_txt,"\n");
+	ptr = malloc(sizeof(char **));
+  check_mem(ptr);
+	line = strtok_r(head_txt,"\n",ptr);
 	while(line != NULL){
 		//First check it's a sequence line
 		if(strncmp(line,"@SQ",3) == 0){
 			ref = malloc(sizeof(struct ref_seq_t));
+			check_mem(ref);
+			ref->length = 0;
+			tmp_line = malloc(sizeof(char) * (strlen(line)+1));
+			check_mem(tmp_line);
+			strcpy(tmp_line,line);
 			//If we already have species and assembly don't look for them
 			if(assembly != NULL && species != NULL){
 				//Set assembly and species
 				ref->ass = assembly;
 				ref->spp = species;
-				//Just match name and length
-				int chk = sscanf(line,"@SQ\tSN:%s\tLN:%d\t",ref->name,&ref->length);
-				if(chk!=2){
-					free(ref);
-					sentinel("Sequence name and length not found in sequence line %s.",line);
-				}
-				List_push(conts,ref);
+				char *dummy = malloc(sizeof(char) * 100);
+				check_mem(dummy);
+				bam_access_parse_sq_line(tmp_line,dummy,dummy,ref->name,&(ref->length));
 			}else{
-				//Look for species and assembly
-				char spec[1000];
-				char assem[1000];
-				int chk = sscanf(line,"@SQ\tSN:%s\tLN:%d\tAS:%[A-Za-z0-9]\tSP:%s",ref->name,&ref->length,assem,spec);
-				check(chk==4,"Sequence name, length, assembly and species not found in sequence line %s.",line);
+				//Look for species and assembly as well as name and length
 				ref->ass = malloc(sizeof(char) * 100);
 				check_mem(ref->ass);
 				ref->spp = malloc(sizeof(char) * 100);
 				check_mem(ref->spp);
-				strcpy(ref->ass,assem);
-				strcpy(ref->spp,spec);
-				List_push(conts,ref);
+        bam_access_parse_sq_line(tmp_line,ref->spp,ref->ass,ref->name,&(ref->length));
 			}
+			check(ref->name!=NULL,"Sequence name not found/set in SQ line %s",line);
+			check(ref->ass!=NULL,"Sequence assembly not found/set in SQ line %s",line);
+			check(ref->spp!=NULL,"Sequence species not found/set in SQ line %s",line);
+			check(ref->length>0,"Sequence length not found/set in SQ line %s",line);
+			List_push(conts,ref);
 		}//End of checking for sequence line
-		line = strtok(NULL,"\n");
+		line = strtok_r(NULL,"\n",ptr);
 	}//End of iterating through header lines.
 	check(List_count(conts)==bam->header->n_targets,"Wrong number of ref sequences in list.");
 	free(line);
+	free(ptr);
 	samclose(bam);
+	free(tmp_line);
 	return conts;
 error:
 	if(line) free(line);
 	if(bam) samclose(bam);
+	if(ptr) free(ptr);
 	if(ref) free(ref);
+	if(tmp_line) free(tmp_line);
 	if(conts) List_clear_destroy(conts);
 	return NULL;
 }
