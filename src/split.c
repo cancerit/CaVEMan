@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd.
+* Copyright (c) 2014-2015 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -17,6 +17,17 @@
 *
 * You should have received a copy of the GNU Affero General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
+*
+*    1. The usage of a range of years within a copyright statement contained within
+*    this distribution should be interpreted as being equivalent to a list of years
+*    including the first and last year specified and all consecutive years between
+*    them. For example, a copyright statement that reads ‘Copyright (c) 2005, 2007-
+*    2009, 2011-2012’ should be interpreted as being identical to a statement that
+*    reads ‘Copyright (c) 2005, 2007, 2008, 2009, 2011, 2012’ and a copyright
+*    statement that reads ‘Copyright (c) 2005-2012’ should be interpreted as being
+*    identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
+*    2009, 2010, 2011, 2012’."
+*
 */
 
 #include <stdio.h>
@@ -38,7 +49,7 @@ static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
 static unsigned int increment = 250000;
-static unsigned int max_read_count = 1000000;
+static unsigned int max_read_count = 500000;
 static double maxPropRdCount = 1.5;
 static char tum_bam_file[512];
 static char norm_bam_file[512];
@@ -150,9 +161,9 @@ uint32_t min(uint32_t one, uint32_t two){
 
 int split_main(int argc, char *argv[]){
 
-	samFile *sf_norm = NULL;
+	htsFile *sf_norm = NULL;
 	hts_idx_t *idx_norm = NULL;
-	samFile *sf_tum = NULL;
+	htsFile *sf_tum = NULL;
 	hts_idx_t *idx_tum = NULL;
 	hts_itr_t *iter_norm = NULL;
 	hts_itr_t *iter_tum = NULL;
@@ -216,11 +227,11 @@ int split_main(int argc, char *argv[]){
 		uint32_t stop = chr_length;
 		uint64_t rd_count = 0;
 
-		sf_norm = bam_access_populate_file(norm_bam_file);
+		sf_norm = bam_access_populate_file(norm_bam_file,ref_idx);
 		check(sf_norm!=NULL,"Error populating file norm seq file %s.",norm_bam_file);
 		idx_norm = bam_access_populate_file_index(sf_norm, norm_bam_file);
 		check(idx_norm!=NULL,"Error populating index for norm seq file %s.",norm_bam_file);
-		sf_tum = bam_access_populate_file(tum_bam_file);
+		sf_tum = bam_access_populate_file(tum_bam_file,ref_idx);
 		check(sf_tum!=NULL,"Error populating file for tum seq file %s.",tum_bam_file);
 		idx_tum = bam_access_populate_file_index(sf_tum, tum_bam_file);
 		check(idx_tum!=NULL,"Error populating index for tum seq file %s.",tum_bam_file);
@@ -300,10 +311,10 @@ int split_main(int argc, char *argv[]){
 		split_access_print_section(output,chr_name,sect_start,chr_length);
 		bam_destroy1(norm_read);
 		bam_destroy1(tum_read);
-		sam_close(sf_norm);
-		bam_index_destroy(idx_norm);
-		sam_close(sf_tum);
-		bam_index_destroy(idx_tum);
+		hts_close(sf_norm);
+		hts_idx_destroy(idx_norm);
+		hts_close(sf_tum);
+		hts_idx_destroy(idx_tum);
 		hts_itr_destroy(iter_norm);
 		hts_itr_destroy(iter_tum);
 	}//End of checking if this is a valid contig to split.
@@ -313,10 +324,10 @@ int split_main(int argc, char *argv[]){
 error:
 	if(norm_read) bam_destroy1(norm_read);
 	if(tum_read) bam_destroy1(tum_read);
-	if(sf_norm) sam_close(sf_norm);
-	if(idx) bam_index_destroy(idx_norm);
-	if(sf_tum) sam_close(sf_tum);
-	if(idx) bam_index_destroy(idx_tum);
+	if(sf_norm) hts_close(sf_norm);
+	if(idx) hts_idx_destroy(idx_norm);
+	if(sf_tum) hts_close(sf_tum);
+	if(idx) hts_idx_destroy(idx_tum);
 	if(iter_norm) hts_itr_destroy(iter_norm);
 	if(iter_tum) hts_itr_destroy(iter_tum);
 	return -1;

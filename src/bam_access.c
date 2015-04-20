@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd.
+* Copyright (c) 2014-2015 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -17,6 +17,17 @@
 *
 * You should have received a copy of the GNU Affero General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
+*
+*    1. The usage of a range of years within a copyright statement contained within
+*    this distribution should be interpreted as being equivalent to a list of years
+*    including the first and last year specified and all consecutive years between
+*    them. For example, a copyright statement that reads ‘Copyright (c) 2005, 2007-
+*    2009, 2011-2012’ should be interpreted as being identical to a statement that
+*    reads ‘Copyright (c) 2005, 2007, 2008, 2009, 2011, 2012’ and a copyright
+*    statement that reads ‘Copyright (c) 2005-2012’ should be interpreted as being
+*    identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
+*    2009, 2010, 2011, 2012’."
+*
 */
 
 #include <stdio.h>
@@ -39,8 +50,9 @@ int include_se = 0;
 int min_base_qual = 10;
 uint8_t isnorm = 0;
 char norm_char[5];
+int maxitercnt = 1000000000;
 
-int bam_access_openbams(char *norm_file, char *tum_file){
+int bam_access_openbams(char *norm_file, char *tum_file, char *ref_file){
 	assert(norm_file != NULL);
 	assert(tum_file != NULL);
 	//Assign memory for the file name etc holding structs
@@ -52,88 +64,48 @@ int bam_access_openbams(char *norm_file, char *tum_file){
 	norm->beg = 0; norm->end = 0x7fffffff;  // The max 32 bit integer.
 	tum->beg = 0; tum->end = 0x7fffffff;  // The max 32 bit integer.
 	//Open a file for read from compressed bam.
-	norm->in = samopen(norm_file, "rb", 0);
+	norm->in = hts_open(norm_file, "r");
 	check(norm->in != 0,"Normal file %s failed to open.",norm_file);
-	norm->idx = bam_index_load(norm_file);
+	norm->idx = sam_index_load(norm->in,norm_file);
 	check(norm->idx != 0,"Normal index file %s failed to open.",norm_file);
-	tum->in = samopen(tum_file, "rb", 0);
+	norm->head = sam_hdr_read(norm->in);
+	hts_set_fai_filename(norm->in, ref_file);
+	tum->in = hts_open(tum_file, "r");
 	check(tum->in != 0,"Tumour file %s failed to open.",tum_file);
-	tum->idx = bam_index_load(tum_file);
+	tum->idx = sam_index_load(tum->in,tum_file);
 	check(tum->idx != 0,"Normal index file %s failed to open.",tum_file);
+	tum->head = sam_hdr_read(tum->in);
+	hts_set_fai_filename(tum->in, ref_file);
 	return 0;
 error:
-	if(norm->in) samclose(norm->in);
-	if(tum->in) samclose(tum->in);
+	if(norm->in) hts_close(norm->in);
+	if(tum->in) hts_close(tum->in);
+	if(tum->head) bam_hdr_destroy(tum->head);
+	if(norm->head) bam_hdr_destroy(norm->head);
+	if(norm->idx) hts_idx_destroy(norm->idx);
+	if(tum->idx) hts_idx_destroy(tum->idx);
 	return -1;
 }
 
-// callback for bam_fetch()
-static int fetch_umnorm_counts_func(const bam1_t *b, void *data){
-	//check Mapping Quality and not un mapped //4 // read unmapped
-	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
-		return 0;
-	}
-	//Bad read reasons:
-	//8 // mate unmapped
-	//256 // Non primary alignment
-	//512 // fails platform/vendor checks
-	//2048 is supplementary read
-	if((b->core.flag & BAM_FSECONDARY) || (b->core.flag & BAM_FQCFAIL) || (b->core.flag & 2048)){
-		return 0;
-	}
-	//1024 is PCR/optical duplicate
-	if((b->core.flag & BAM_FDUP)){
-		return 0;
-	}
-
-	//We actually want this read
-	bam_plbuf_t *pileup = (bam_plbuf_t*) data;
-	bam_plbuf_push(b,pileup);
-  return 0;
-}
-
 // callback for bam_plbuf_init()
-static int pileup_umnorm_counts(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pl, void *data) {
-	file_holder *tmp = (file_holder*)data;
-  if ((pos+1) > tmp->beg && pos+1 <= tmp->end) {
-  	int i=0;
-   	for(i=0;i<n;i++){
-   		const bam_pileup1_t *p = pl + i;
-   		bam1_t *algn = p->b;
-			uint8_t cbase = bam1_seqi(bam1_seq(algn),p->qpos);
-			if(!(p->is_del) && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
-				int loc = (pos) - tmp->beg;
-				if(tmp->base_counts[loc] == NULL || tmp->base_counts[loc] == 0){
-					tmp->base_counts[loc] = calloc(4,sizeof(int));
-					check_mem(tmp->base_counts[loc]);
-				}
-				char called_base = toupper(bam_nt16_rev_table[cbase]);
-				int x=0;
-				for(x=0;x<4;x++){
-					if(called_base == tmp->bam_access_bases[x]){
-						tmp->base_counts[loc][x]++;
-						break;
-					}
-				}
-			}
-		}//End of iteration through each pileup read in this pos.
-	}
-	return 0;
-error:
-  return -1;
+static int pileup_blank(void *data, bam1_t *b) {
+  return 0;
 }
 
 file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint32_t start, uint32_t end){
 	//Open bam related stuff
 	assert(norm_file != NULL);
+	bam1_t *b = NULL;
+	bam_plp_t buf = NULL;
+	hts_itr_t *iter = NULL;
 	//Assign memory for the file name etc holding structs
 	norm = malloc(sizeof(file_holder));
 	check_mem(norm);
 	//Beginning and end of tmp struct for bam access
 	//Open a file for read from compressed bam.
-	norm->in = samopen(norm_file, "rb", 0);
+	norm->in = hts_open(norm_file, "r");
 	check(norm->in != 0,"Normal file %s failed to open.",norm_file);
-	norm->idx = bam_index_load(norm_file);
+	norm->idx = sam_index_load(norm->in,norm_file);
 	check(norm->idx != 0,"Normal index file %s failed to open.",norm_file);
 	norm->bam_access_bases = malloc(sizeof(char)*4);
 	check_mem(norm->bam_access_bases);
@@ -144,7 +116,7 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 	//Pileup and populate the list with position pileup_stats.
 	char *region;
 	char sta[20];
-	region = malloc(sizeof(chr)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
+	region = malloc(sizeof((strlen(chr)*sizeof(char)))+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
 	check_mem(region);
 	sprintf(region,"%s:%d-%d",chr,start,end);
 	norm->beg = start;
@@ -154,30 +126,68 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 	check_mem(norm->base_counts);
 	norm->base_counts_size = (end-start)+1;
 
-	int ref;
-	bam_plbuf_t *buf;
-	// parse the region
-	bam_parse_region(norm->in->header, region, &ref,
-						 &norm->beg, &norm->end);
-	check(ref >= 0,"Invalid tumour region: %s.",region);
-
 	// initialize pileup
-	buf = bam_plbuf_init(pileup_umnorm_counts, norm);
 
-  bam_fetch(norm->in->x.bam, norm->idx, ref, norm->beg, norm->end, buf, fetch_umnorm_counts_func);
-	bam_plbuf_push(0, buf); // finalize pileup
-  bam_plbuf_destroy(buf);
+	buf = bam_plp_init(pileup_blank, (void *)norm);
+	bam_plp_set_maxcnt(buf,maxitercnt);
+
+  iter = sam_itr_querys(norm->idx, norm->head, region);
+
+  int result;
+  while ((result = sam_itr_next(norm->in, iter, b)) >= 0) {
+    if(b->core.qual == 0
+      || (b->core.flag & BAM_FUNMAP)
+			|| (b->core.flag & BAM_FSECONDARY)
+			|| (b->core.flag & BAM_FQCFAIL)
+			|| (b->core.flag & BAM_FSUPPLEMENTARY)
+			|| (b->core.flag & BAM_FDUP) ) continue;
+    bam_plp_push(buf, b);
+  }
+	bam_plp_push(buf,0); // finalize pileup
+  sam_itr_destroy(iter);
+  int tid, pos, n_plp = -1;
+  const bam_pileup1_t *pil;
+  //Now for the pileup method
+  while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
+    if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
+    int i=0;
+   	for(i=0;i<n_plp;i++){
+      const bam_pileup1_t *p = pil + i;
+      bam1_t *algn = p->b;
+			uint8_t cbase = bam_seqi(bam_get_seq(algn),p->qpos);
+			if(!(p->is_del) && bam_get_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
+				int loc = (pos) - norm->beg;
+				if(norm->base_counts[loc] == NULL || norm->base_counts[loc] == 0){
+					norm->base_counts[loc] = calloc(4,sizeof(int));
+					check_mem(norm->base_counts[loc]);
+				}
+				char called_base = toupper(seq_nt16_str[cbase]);
+				int x=0;
+				for(x=0;x<4;x++){
+					if(called_base == norm->bam_access_bases[x]){
+						norm->base_counts[loc][x]++;
+						break;
+					}
+				}
+			}//End of checking base is ACGT & fits quality requirements
+    }//Iteration through pileups at this position
+  }//End of while we have pileup reads
+  bam_destroy1(b);
+  bam_plp_destroy(buf);
+
 	free(region);
 
 
 
 	//Close bam related stuff
-	if(norm->idx) bam_index_destroy(norm->idx);
-	if(norm->in) samclose(norm->in);
+	if(norm->idx) hts_idx_destroy(norm->idx);
+	if(norm->in) hts_close(norm->in);
 	return norm;
 error:
-	if(norm->idx) bam_index_destroy(norm->idx);
-	if(norm->in) samclose(norm->in);
+	if(norm->idx) hts_idx_destroy(norm->idx);
+	if(norm->in) hts_close(norm->in);
+	if(iter) sam_itr_destroy(iter);
+	if(b) bam_destroy1(b);
 	if(norm->base_counts){
 		int k=0;
 		for(k=0;k<norm->base_counts_size;k++){
@@ -192,9 +202,10 @@ error:
 
 char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, char *plat){
 	assert(bam_file != NULL);
-	samfile_t *bam = samopen(bam_file, "rb", 0);
+	htsFile *bam = hts_open(bam_file, "r");
 	check(bam != 0,"Failed to open bam file to read sample name: %s.",bam_file);
-	char *head_txt = bam->header->text;
+	bam_hdr_t *header = sam_hdr_read(bam);
+	char *head_txt = header->text;
 	char *line;
 	line = strtok(head_txt,"\n");
 	while(line != NULL){
@@ -217,14 +228,14 @@ char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, c
 	}
 	check(plat!= NULL,"Platform was not found in RG line for VCF output.");
 	check(sample!= NULL,"Sample name was not found in RG line for VCF output.");
-	samclose(bam);
+	hts_close(bam);
 	return "";
 error:
-	if(bam) samclose(bam);
+	if(bam) hts_close(bam);
 	return NULL;
 }
 
-int bam_access_parse_sq_line(char *line,char *species, char *assembly,char *name, int *length){
+int bam_access_parse_sq_line(char *line,char *species, char *assembly,char *name,uint32_t *length){
   char *tag = strtok(line,"\t");
   char *tmp = NULL;
   while(tag != NULL){
@@ -270,9 +281,10 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 	char ** ptr = NULL;
 	List *conts = List_create();
 	char *tmp_line = NULL;
-	samfile_t *bam = samopen(bam_file, "rb", 0);
+	htsFile *bam = hts_open(bam_file, "r");
 	check(bam != 0,"Failed to open bam file to read contigs: %s.",bam_file);
-	char *head_txt = bam->header->text;
+	bam_hdr_t *header = sam_hdr_read(bam);
+	char *head_txt = header->text;
 	ptr = malloc(sizeof(char **));
   check_mem(ptr);
 	line = strtok_r(head_txt,"\n",ptr);
@@ -309,15 +321,15 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 		}//End of checking for sequence line
 		line = strtok_r(NULL,"\n",ptr);
 	}//End of iterating through header lines.
-	check(List_count(conts)==bam->header->n_targets,"Wrong number of ref sequences in list.");
+	check(List_count(conts)==header->n_targets,"Wrong number of ref sequences in list.");
 	free(line);
 	free(ptr);
-	samclose(bam);
+	hts_close(bam);
 	free(tmp_line);
 	return conts;
 error:
 	if(line) free(line);
-	if(bam) samclose(bam);
+	if(bam) hts_close(bam);
 	if(ptr) free(ptr);
 	if(ref) free(ref);
 	if(tmp_line) free(tmp_line);
@@ -326,10 +338,12 @@ error:
 }
 
 void bam_access_closebams(){
-	if(norm->idx) bam_index_destroy(norm->idx);
-	if(norm->in) samclose(norm->in);
-	if(tum->idx) bam_index_destroy(tum->idx);
-	if(tum->in) samclose(tum->in);
+	if(norm->idx) hts_idx_destroy(norm->idx);
+	if(norm->in) hts_close(norm->in);
+	if(tum->idx) hts_idx_destroy(tum->idx);
+	if(tum->in) hts_close(tum->in);
+	if(tum->head) bam_hdr_destroy(tum->head);
+	if(norm->head) bam_hdr_destroy(norm->head);
 	if(norm) free(norm);
 	if(tum) free(tum);
 	return;
@@ -357,15 +371,20 @@ int bam_access_check_bam_flags(const bam1_t *b){
 	//256 // Non primary alignment
 	//512 // fails platform/vendor checks
 	//2048 is supplementary read
-	if((b->core.flag & BAM_FSECONDARY) || (b->core.flag & BAM_FQCFAIL) || (b->core.flag & 2048)){
+	if((b->core.flag & BAM_FSECONDARY)
+	    || (b->core.flag & BAM_FQCFAIL)
+	    || (b->core.flag & BAM_FSUPPLEMENTARY)){
 		return 0;
 	}
 	//1024 is PCR/optical duplicate
-	if((include_dup == 0 && (b->core.flag & BAM_FDUP))){
+	if((include_dup == 0
+	    && (b->core.flag & BAM_FDUP))){
 		return 0;
 	}
 	//Proper pair and mate unmapped
-	if(include_se == 0 && !((b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
+	if(include_se == 0
+	      && !((b->core.flag & BAM_FPROPER_PAIR)
+	              && !(b->core.flag & BAM_FMUNMAP))){
 		return 0;
 	}
 	//printf("XT DATA: %c\n",xt);
@@ -377,98 +396,6 @@ int bam_access_check_bam_flags(const bam1_t *b){
 		}
 	}
 	return 1;
-}
-
-/*// callback for bam_fetch()
-static int fetch_count_func(const bam1_t *b, void *data){
-  if(bam_access_check_bam_flags(b) == 1){
-		counter++;
-	}
-	return 0;
-}
-
-static int fetch_algo_func(const bam1_t *b, void *data){
-	if(bam_access_check_bam_flags(b) == 1){
-		bam_plbuf_t *pileup = (bam_plbuf_t*) data;
-		bam_plbuf_push(b,pileup);
-	}
-	return 0;
-}*/
-
-// callback for bam_fetch()
-static int fetch_count_func(const bam1_t *b, void *data){
-	//check Mapping Quality and not un mapped //4 // read unmapped
-	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
-		return 0;
-	}
-	//Bad read reasons:
-	//8 // mate unmapped
-	//256 // Non primary alignment
-	//512 // fails platform/vendor checks
-	//2048 is supplementary read
-	if((b->core.flag & BAM_FSECONDARY) || (b->core.flag & BAM_FQCFAIL) || (b->core.flag & 2048)){
-		return 0;
-	}
-	//1024 is PCR/optical duplicate
-	if((include_dup == 0 && (b->core.flag & BAM_FDUP))){
-		return 0;
-	}
-	//Proper pair and mate unmapped
-	if(!(include_se == 0 && (b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
-		return 0;
-	}
-	//printf("XT DATA: %c\n",xt);
-	//Now we check aux data for XT:M flags (the SW mapped marker from BWA)
-	if(include_sw == 0){
-		uint8_t *xt_data = bam_aux_get(b,"XT");
-	 	if(xt_data != NULL && bam_aux2A(xt_data) == 'M'){
-			return 0;
-		}
-	}
-	//checkCigar(rec)
-
-	counter++;
-   return 0;
-}
-
-static int fetch_algo_func(const bam1_t *b, void *data){
-  	bam_plbuf_t *pileup = (bam_plbuf_t*) data;
-
-  //check Mapping Quality and not un mapped //4 // read unmapped
-	if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)){
-		return 0;
-	}
-	//Bad read reasons:
-	//8 // mate unmapped
-	//256 // Non primary alignment
-	//512 // fails platform/vendor checks
-	//2048 is supplementary read
-	if((b->core.flag & BAM_FSECONDARY) || (b->core.flag & BAM_FQCFAIL) || (b->core.flag & 2048)){
-		return 0;
-	}
-	//1024 is PCR/optical duplicate
-	if((include_dup == 0 && (b->core.flag & BAM_FDUP))){
-		return 0;
-	}
-	//Proper pair and mate unmapped
-	if(!(include_se == 0 && (b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
-		return 0;
-	}
-	//printf("XT DATA: %c\n",xt);
-	//Now we check aux data for XT:M flags (the SW mapped marker from BWA)
-	if(include_sw == 0){
-		uint8_t *xt_data = bam_aux_get(b,"XT");
-	 	if(xt_data != NULL && bam_aux2A(xt_data) == 'M'){
-			return 0;
-		}
-	}
-  	bam_plbuf_push(b,pileup);
-  	return 0;
-}
-
-// callback for bam_plbuf_init()
-static int pileup_count_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pl, void *data) {
-   return 0;
 }
 
 void List_insert_sorted(List *list, void *value, List_compare cmp){
@@ -524,75 +451,72 @@ int bam_access_compare_read_pos_t(const void *in_a, const void *in_b){
 	return 0;
 }
 
-static int pileup_algo_unsorted_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pil, void *data) {
-	//Finally check the base quality is more than or equal to the min base quality and it's not an 'N'.
-   file_holder *tmp = (file_holder*)data;
-   char *nom = malloc(sizeof(char) * 350);
-   check_mem(nom);
-   if ((pos+1) > tmp->beg && pos+1 <= tmp->end) {
-   	int i=0;
-   	for(i=0;i<n;i++){
-   		const bam_pileup1_t *p = pil + i;
-   		bam1_t *algn = p->b;
-			uint8_t cbase = bam1_seqi(bam1_seq(algn),p->qpos);
-			if(!(p->is_del) && bam1_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
+List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
+	//Pileup and populate the list with valid reads.
+	char *region = NULL;
+	bam_plp_t buf = NULL;
+	bam1_t *b = NULL;
+	hts_itr_t *iter = NULL;
+
+	char sta[20];
+	region = malloc(sizeof(chr_name)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
+	sprintf(region,"%s:%lu-%lu",chr_name,(long unsigned int)start,(long unsigned int)stop);
+	bams->beg = start;
+	bams->end = stop;
+	bams->reads = List_create();
+	bams->bean = bean;
+	isnorm = normal;
+	sprintf(norm_char,"%i",(int)normal);
+  // initialize pileup
+  buf = bam_plp_init(pileup_blank,(void *)bams);
+  bam_plp_set_maxcnt(buf,maxitercnt);
+  int count = 0;
+  b = bam_init1();
+  iter = sam_itr_querys(bams->idx, bams->head, region);
+  int result;
+  while ((result = sam_itr_next(bams->in, iter, b)) >= 0) {
+    if(b->core.qual == 0
+          || (b->core.flag & BAM_FUNMAP)
+          || (b->core.flag & BAM_FSECONDARY)
+          || (b->core.flag & BAM_FQCFAIL)
+          || (b->core.flag & BAM_FSUPPLEMENTARY)){
+		    continue;
+		}
+		if((include_dup == 0 && (b->core.flag & BAM_FDUP))){
+		  continue;
+	  }
+	  if(!(include_se == 0 && (b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
+		  continue;
+	  }
+	  if(include_sw == 0){
+		  uint8_t *xt_data = bam_aux_get(b,"XT");
+	 	  if(xt_data != NULL && bam_aux2A(xt_data) == 'M'){
+			  continue;
+		  }
+	  }
+	  count++;
+    bam_plp_push(buf, b);
+  }//End of while iterator to populate pileup
+
+  sam_itr_destroy(iter);
+	bam_plp_push(buf,0); // finalize pileup
+
+  int tid, pos, n_plp = -1;
+  const bam_pileup1_t *pil;
+
+  while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
+    if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
+    char *nom = malloc(sizeof(char) * 350);
+    int i=0;
+   	for(i=0;i<n_plp;i++){
+      const bam_pileup1_t *p = pil + i;
+      int qual = bam_get_qual(p->b)[p->qpos];
+			uint8_t c = bam_seqi(bam_get_seq(p->b), p->qpos);
+  		if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
 				//Now we add a new read pos struct to the list since the read is valid.
 				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
 				check_mem(rp);
-				rp->rd_len = bam_cigar2qlen(&algn->core,bam1_cigar(algn));
-				rp->ref_pos = pos+1;
-				rp->rd_pos = p->qpos+1;
-				rp->called_base = cbase;
-				rp->map_qual = algn->core.qual;
-				rp->base_qual = bam1_qual(algn)[p->qpos];
-				//Check strandedness
-				if(algn->core.flag & BAM_FREVERSE){
-					rp->strand = 1;
-					rp->rd_pos = (rp->rd_len - rp->rd_pos) + 1;
-				}else{
-					rp->strand = 0;
-				}
-				//Check read order
-				if(algn->core.flag & BAM_FREAD1){
-					rp->read_order = 0;
-				}else if(algn->core.flag & BAM_FREAD2){
-					rp->read_order = 1;
-				}
-				nom = strcpy(nom,bam_aux2Z(bam_aux_get(algn,"RG")));
-				nom = strcat(nom,"_");
-				nom = strcat(nom,norm_char);
-				int lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
-				check(lane_i>=0,"Error calculating lane index %s.",nom);
-				rp->lane_i = lane_i;
-				rp->normal = isnorm;
-				List_push(tmp->reads,rp);
-			}
-		}//End of iteration through each pileup read in this pos.
-	}
-	free(nom);
-	return 0;
-error:
-	if(nom) free(nom);
-  return 0;
-}
-
-// callback for bam_plbuf_init()
-static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1_t *pil, void *data) {
-
-   //Finally check the base quality is more than or equal to the min base quality and it's not an 'N'.
-   file_holder *tmp = (file_holder*)data;
-   char *nom = malloc(sizeof(char) * 350);
-   if ((pos+1) > tmp->beg && (pos+1) <= tmp->end) {
-   	int i=0;
-   	for(i=0;i<n;i++){
-   		const bam_pileup1_t *p = pil + i;
-			int qual = bam1_qual(p->b)[p->qpos];
-			uint8_t c = bam1_seqi(bam1_seq(p->b), p->qpos);
-			if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
-				//Now we add a new read pos struct to the list since the read is valid.
-				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
-				check_mem(rp);
-				rp->rd_len = bam_cigar2qlen(&p->b->core,bam1_cigar(p->b));
+				rp->rd_len = bam_cigar2qlen(p->b->core.n_cigar,bam_get_cigar(p->b));
 				rp->ref_pos = pos+1;
 				rp->rd_pos = p->qpos+1;
 				rp->called_base = c;
@@ -614,52 +538,27 @@ static int pileup_algo_func(uint32_t tid, uint32_t pos, int n, const bam_pileup1
 				nom = strcpy(nom,bam_aux2Z(bam_aux_get(p->b,"RG")));
 				nom = strcat(nom,"_");
 				nom = strcat(nom,norm_char);
-				int lane_i = alg_bean_get_index_for_str_arr(tmp->bean->lane,nom);
+				int lane_i = alg_bean_get_index_for_str_arr(bams->bean->lane,nom);
 				check(lane_i>=0,"Error calculating lane index %s.",nom);
 				rp->lane_i = lane_i;
 				rp->normal = isnorm;
-				List_insert_sorted(tmp->reads, rp, (List_compare)bam_access_compare_read_pos_t);
-			}
-		}//End of iteration through each pileup read in this pos.
-		free(nom);
-	}
-	return 0;
-error:
-   return 0;
-}
-
-List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop,
-																uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
-	//Pileup and populate the list with valid reads.
-	char *region = NULL;
-	char sta[20];
-	region = malloc(sizeof(chr_name)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
-	sprintf(region,"%s:%lu-%lu",chr_name,(long unsigned int)start,(long unsigned int)stop);
-	bams->beg = start;
-	bams->end = stop;
-	bams->reads = List_create();
-	bams->bean = bean;
-	int ref;
-	bam_plbuf_t *buf;
-	isnorm = normal;
-	sprintf(norm_char,"%i",(int)normal);
-	// parse the tumour region
-	bam_parse_region(bams->in->header, region, &ref,
-						 &bams->beg, &bams->end);
-	check(ref >= 0,"Invalid tumour region: %s.",region);
-
-	// initialize pileup
-	if(sorted==1){
-		buf = bam_plbuf_init(pileup_algo_func, bams);
-	}else{
-		buf = bam_plbuf_init(pileup_algo_unsorted_func, bams);
-	}
-   bam_fetch(bams->in->x.bam, bams->idx, ref, bams->beg, bams->end, buf, fetch_algo_func);
-	bam_plbuf_push(0, buf); // finalize pileup
-   bam_plbuf_destroy(buf);
+				if(sorted==1){
+				  List_insert_sorted(bams->reads, rp, (List_compare)bam_access_compare_read_pos_t);
+				}else{
+				  List_push(bams->reads,rp);
+				}
+			}//End of if this is a useful read, ACGT, and within qual boundaries.
+    }//End iterating through pileups at this position
+    free(nom);
+  }//End of iterating through pileups
+	bam_destroy1(b);
+  bam_plp_destroy(buf);
 	free(region);
 	return bams->reads;
 error:
+  if(iter) sam_itr_destroy(iter);
+	if(b) bam_destroy1(b);
+	if(buf) bam_plp_destroy(buf);
 	if(region) free(region);
 	if(bams->reads) List_clear_destroy(bams->reads);
 	return NULL;
@@ -691,29 +590,48 @@ error:
 
 int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop, file_holder *fh){
 	counter = 0;
-	tmpstruct_t tmp;
-	tmp.beg = fh->beg; tmp.end = fh->end;
-	tmp.in = fh->in;
-	int ref;
-	bam_plbuf_t *buf = NULL;
+	bam1_t* b = NULL;
+	hts_itr_t *iter = NULL;
 	char *region;
 	char sta[20];
 	region = malloc(sizeof(chr_name)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
 	sprintf(region,"%s:%d-%d",chr_name,start,stop);
-	bam_parse_region(tmp.in->header, region, &ref,
-						 &tmp.beg, &tmp.end); // parse the region
-	check(ref >= 0,"Invalid region: %s.",region);
-	free(region);
-	buf = bam_plbuf_init(pileup_count_func, &tmp); // initialize pileup
-   bam_fetch(tmp.in->x.bam, fh->idx, ref, tmp.beg, tmp.end, buf, fetch_count_func);
-   //bam_plbuf_push(0, buf); // finalize pileup
-   //Do something with the buffer.
-   bam_plbuf_destroy(buf);
-   return counter;
-error:
-	if(region) free(region);
-	if(buf) bam_plbuf_destroy(buf);
-	return -1;
+	fprintf(stderr,"REGION: %s\n",region);
+  b = bam_init1();
+  iter = sam_itr_querys(fh->idx, fh->head, region);
+  int result;
+  while ((result = sam_itr_next(fh->in, iter, b)) >= 0){
+
+      //check Mapping Quality and not un mapped //4 // read unmapped
+    if(b->core.qual == 0 || (b->core.flag & BAM_FUNMAP)
+        || (b->core.flag & BAM_FSECONDARY)
+        || (b->core.flag & BAM_FQCFAIL)
+        || (b->core.flag & BAM_FSUPPLEMENTARY)){
+      continue;
+    }
+    //1024 is PCR/optical duplicate
+    if((include_dup == 0 && (b->core.flag & BAM_FDUP))){
+      continue;
+    }
+    //Proper pair and mate unmapped
+    if(!(include_se == 0 && (b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
+      continue;
+    }
+    //printf("XT DATA: %c\n",xt);
+    //Now we check aux data for XT:M flags (the SW mapped marker from BWA)
+    if(include_sw == 0){
+      uint8_t *xt_data = bam_aux_get(b,"XT");
+      if(xt_data != NULL && bam_aux2A(xt_data) == 'M'){
+        continue;
+      }
+    }
+    counter++;
+
+  }//End of iteration through reads in this region
+  sam_itr_destroy(iter);
+  bam_destroy1(b);
+  free(region);
+  return counter;
 }
 
 void bam_access_include_sw(int inc){
@@ -740,10 +658,11 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	assert(bam_loc != NULL);
 	char *line = NULL;
 	List *li = NULL;
-	samfile_t *bam =  NULL;
-	bam = samopen(bam_loc, "rb", 0);
+	htsFile *bam =  NULL;
+	bam = hts_open(bam_loc, "r");
 	check(bam != 0,"Bam file %s failed to open to read header.",bam_loc);
-	char *head_txt = bam->header->text;
+	bam_hdr_t *header = sam_hdr_read(bam);
+	char *head_txt = header->text;
 	li = List_create();
 	line = strtok(head_txt,"\n");
 	while(line != NULL){
@@ -777,22 +696,23 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 		line = strtok(NULL,"\n");
 	}
 	if(line) free(line);
-	samclose(bam);
+	hts_close(bam);
 	return li;
 error:
 	if(line) free(line);
-	if(bam) samclose(bam);
+	if(bam) hts_close(bam);
 	if(li) List_clear_destroy(li);
 	return NULL;
 }
 
-samFile *bam_access_populate_file(const char *bam_loc){
-	samFile *sf = NULL;
-	sf = sam_open(bam_loc);
+htsFile *bam_access_populate_file(const char *bam_loc, const char *ref_file){
+	htsFile *sf = NULL;
+	sf = hts_open(bam_loc,"r");
 	check(sf != 0,"File %s failed to open.",bam_loc);
+	hts_set_fai_filename(sf, ref_file);
 	return sf;
 error:
-	if(sf) sam_close(sf);
+	if(sf) hts_close(sf);
 	return NULL;
 }
 
@@ -802,11 +722,11 @@ hts_idx_t *bam_access_populate_file_index(samFile *sf, const char *bam_loc){
 	check(idx != NULL,"Index %s failed to open.",bam_loc);
 	return idx;
 error:
-	if(idx) bam_index_destroy(idx);
+	if(idx) hts_idx_destroy(idx);
 	return NULL;
 }
 
-hts_itr_t *bam_access_get_hts_itr(samFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to){
+hts_itr_t *bam_access_get_hts_itr(htsFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to){
 	hts_itr_t *iter = NULL;
 	bam_hdr_t *head = NULL;
 	head = sam_hdr_read(sf);

@@ -1,22 +1,33 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014-2015 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
+*
+*    1. The usage of a range of years within a copyright statement contained within
+*    this distribution should be interpreted as being equivalent to a list of years
+*    including the first and last year specified and all consecutive years between
+*    them. For example, a copyright statement that reads ‘Copyright (c) 2005, 2007-
+*    2009, 2011-2012’ should be interpreted as being identical to a statement that
+*    reads ‘Copyright (c) 2005, 2007, 2008, 2009, 2011, 2012’ and a copyright
+*    statement that reads ‘Copyright (c) 2005-2012’ should be interpreted as being
+*    identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
+*    2009, 2010, 2011, 2012’."
+*
 */
 
 #include "minunit.h"
@@ -39,7 +50,7 @@ char *test_genotype_calculate_genotypes(){
 }
 
 char *test_genotype_hard_copy_genotype_t_list(){
-	List *new_list = List_create(); 
+	List *new_list = List_create();
 	List *old = List_create();
 	genotype_t *geno = genotype_init_genotype();
 	int count = 10;
@@ -188,7 +199,7 @@ char *test_genotype_generate_genotype_list_for_cn_and_ref_base(){
 
 	genotype_destroy_genotype_store(store);
 	genotype_clear_genotype_cache();
-	
+
 	tum_cn = 3;
 	store = genotype_generate_genotype_list_for_cn_and_ref_base(norm_cn, tum_cn, ref_base);
 	mu_assert(store != NULL, "Genotype store not generated properly");
@@ -199,23 +210,23 @@ char *test_genotype_generate_genotype_list_for_cn_and_ref_base(){
 
 	genotype_destroy_genotype_store(store);
 	genotype_clear_genotype_cache();
-	
+
 	tum_cn = 4;
 	store = genotype_generate_genotype_list_for_cn_and_ref_base(norm_cn, tum_cn, ref_base);
 	mu_assert(store != NULL, "Genotype store not generated properly");
 	mu_assert(List_count(store->normal_genos)==7,"Wrong number of normal genotypes.");
 	mu_assert(List_count(store->tumour_genos)==13,"Wrong number of tumour genotypes.");
 	mu_assert(store->somatic_count==12,"Wrong number of somatic genotypes.");
-	
+
 	genotype_destroy_genotype_store(store);
 	genotype_clear_genotype_cache();
-	
+
 	return NULL;
 }
 
 char *all_tests() {
    mu_suite_start();
-   mu_run_test(test_genotype_init_genotype); 
+   mu_run_test(test_genotype_init_genotype);
    mu_run_test(test_genotype_calculate_genotypes);
    mu_run_test(test_genotype_add_base_to_count);
    mu_run_test(test_genotype_hard_copy_genotype_t_list);

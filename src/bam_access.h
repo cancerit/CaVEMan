@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd.
+* Copyright (c) 2014-2015 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -17,6 +17,17 @@
 *
 * You should have received a copy of the GNU Affero General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
+*
+*    1. The usage of a range of years within a copyright statement contained within
+*    this distribution should be interpreted as being equivalent to a list of years
+*    including the first and last year specified and all consecutive years between
+*    them. For example, a copyright statement that reads ‘Copyright (c) 2005, 2007-
+*    2009, 2011-2012’ should be interpreted as being identical to a statement that
+*    reads ‘Copyright (c) 2005, 2007, 2008, 2009, 2011, 2012’ and a copyright
+*    statement that reads ‘Copyright (c) 2005-2012’ should be interpreted as being
+*    identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
+*    2009, 2010, 2011, 2012’."
+*
 */
 
 #ifndef _bam_access_h
@@ -27,13 +38,14 @@
 #include <alg_bean.h>
 #include <List_algos.h>
 #include <stdint.h>
-#include "sam.h"
+#include "htslib/sam.h"
 
 typedef struct file_holder{
 	int beg, end;
 	int base_counts_size;
-	samfile_t *in;
-	bam_index_t *idx;
+	htsFile *in;
+	hts_idx_t *idx;
+	bam_hdr_t *head;
 	List *reads;
 	alg_bean_t *bean;
 	int **base_counts;
@@ -43,11 +55,13 @@ typedef struct file_holder{
 
 typedef struct{
 	int beg, end;
-	samfile_t *in;
+	htsFile *in;
+	bam_hdr_t *head;
+	hts_idx_t *idx;
 } tmpstruct_t;
 
 typedef struct ref_seq_t{
-	int length;
+	uint32_t length;
 	char *ass;
 	char *spp;
 	char name[100];
@@ -69,7 +83,7 @@ typedef struct read_pos_t{
 
 int bam_access_check_bam_flags(const bam1_t *b);
 
-int bam_access_openbams(char *normFile, char *tumFile);
+int bam_access_openbams(char *normFile, char *tumFile, char *ref_file);
 
 int bam_access_get_count_for_region(char *chr_name, uint32_t start, uint32_t stop);
 
@@ -97,10 +111,10 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 
 file_holder *bam_access_get_by_position_counts(char *normFile, char *chr, uint32_t start, uint32_t end);
 
-hts_idx_t *bam_access_populate_file_index(samFile *sf, const char *bam_loc);
+hts_idx_t *bam_access_populate_file_index(htsFile *sf, const char *bam_loc);
 
-samFile *bam_access_populate_file(const char *bam_loc);
+htsFile *bam_access_populate_file(const char *bam_loc, const char *ref_file);
 
-hts_itr_t *bam_access_get_hts_itr(samFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to);
+hts_itr_t *bam_access_get_hts_itr(htsFile *sf, hts_idx_t *idx, const char *chr, uint32_t from, uint32_t to);
 
 #endif

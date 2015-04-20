@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd.
+* Copyright (c) 2014-2015 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -17,6 +17,17 @@
 *
 * You should have received a copy of the GNU Affero General Public License
 * along with this program. If not, see <http://www.gnu.org/licenses/>.
+*
+*    1. The usage of a range of years within a copyright statement contained within
+*    this distribution should be interpreted as being equivalent to a list of years
+*    including the first and last year specified and all consecutive years between
+*    them. For example, a copyright statement that reads ‘Copyright (c) 2005, 2007-
+*    2009, 2011-2012’ should be interpreted as being identical to a statement that
+*    reads ‘Copyright (c) 2005, 2007, 2008, 2009, 2011, 2012’ and a copyright
+*    statement that reads ‘Copyright (c) 2005-2012’ should be interpreted as being
+*    identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
+*    2009, 2010, 2011, 2012’."
+*
 */
 
 #include <assert.h>
@@ -177,7 +188,7 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 					free(ref_b);
 					cbase = malloc(sizeof(char)*2) ;
 					check_mem(cbase);
-					sprintf(cbase,"%c",toupper(bam_nt16_rev_table[pos_t->called_base]));
+					sprintf(cbase,"%c",toupper(seq_nt16_str[pos_t->called_base]));
 					int callbase_i = alg_bean_get_index_for_char_arr(alg->call_base,cbase);
 					check(callbase_i>=0,"Error calculating called base '%s' index.",cbase);
 					free(cbase);
@@ -539,7 +550,7 @@ inline int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, i
 	char *cbase = malloc(sizeof(char)*2) ;
 	//Build a list of probabilities for each possible ref base at this position.
 	check_mem(cbase);
-	sprintf(cbase,"%c",toupper(bam_nt16_rev_table[pos_t->called_base]));
+	sprintf(cbase,"%c",toupper(seq_nt16_str[pos_t->called_base]));
 	*callbase_i = alg_bean_get_index_for_char_arr(alg->call_base,cbase);
 	free(cbase);
 	check(*callbase_i>=0,"Error calculating called base index.");
@@ -700,16 +711,16 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 					//Adding to the counts at this position.
 					if(pos_t->normal == 1){
 						if(pos_t->strand == 1){
-							genotype_add_base_to_count(pos->norm_rev_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->norm_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}else{
-							genotype_add_base_to_count(pos->norm_fwd_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->norm_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}
 						pos->total_cvg_norm++;
 					}else if(pos_t->normal == 0){
 						if(pos_t->strand == 1){
-							genotype_add_base_to_count(pos->tum_rev_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->tum_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}else{
-							genotype_add_base_to_count(pos->tum_fwd_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->tum_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}
 						pos->total_cvg_tum++;
 					}

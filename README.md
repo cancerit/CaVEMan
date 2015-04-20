@@ -1,7 +1,7 @@
 LICENCE
 =======
 
-Copyright (c) 2014 Genome Research Ltd.
+Copyright (c) 2014-2015 Genome Research Ltd.
 
 Author: Cancer Genome Project <cgpit@sanger.ac.uk>
 
@@ -47,6 +47,7 @@ See INSTALL.TXT
 
 ##Prerequisites
 
+* As of version 2.0 CaVEMan supports cram files (with index).
 * BWA Mapped, indexed, duplicate marked/removed bam files, for both a normal and tumour sample
 * Reference.fasta and index
 * A one based bed style format file of regions to ignore during analysis (see specified format).

@@ -1,0 +1,15 @@
+--- cram/cram_index.c	2015-04-13 11:15:46.860374000 +0100
++++ cram/cram_index.c	2015-03-30 11:38:31.450903000 +0100
+@@ -370,9 +370,9 @@
+ 	i--;
+
+     /* Special case for matching a start pos */
+-    if (i+1 < from->nslice &&
+-	from->e[i+1].start == pos &&
+-	from->e[i+1].refid == refid)
++    while (i+1 < from->nslice &&
++	   (from->e[i].refid < refid ||
++	    from->e[i].end < pos))
+ 	i++;
+
+     e = &from->e[i];
