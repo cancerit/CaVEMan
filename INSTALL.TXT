@@ -3,28 +3,44 @@ System Requirements
 
 caveman is designed to run in a compute farm/clustre environment.
 caveman depends on:
-  samtools-1.0
-  htslib
-both can be found here <https://github.com/samtools>
+  htslib 1.2.1 <https://github.com/samtools/htslib/archive/1.2.1.tar.gz>
+    With the following patch applied manually:
+
+    diff --git a/cram/cram_index.c b/cram/cram_index.c
+    index bf7c410..701fa70 100644
+    --- a/cram/cram_index.c
+    +++ b/cram/cram_index.c
+    @@ -382,10 +382,10 @@ cram_index *cram_index_query(cram_fd *fd, int refid, int pos,
+        while (i > 0 && from->e[i-1].end >= pos)
+           i--;
+
+    -    /* We may be one bin before the optimum, so check */
+    -    while (i+1 < from->nslice &&
+    -          (from->e[i].refid < refid ||
+    -           from->e[i].end < pos))
+    +    /* Special case for matching a start pos */
+    +    if (i+1 < from->nslice &&
+    +       from->e[i+1].start == pos &&
+    +       from->e[i+1].refid == refid)
+           i++;
+
+        e = &from->e[i];
+
+  OR install the dev branch (until 1.3 is released).
 
 
 Compilation
 ===========
 
-Type 'make' if you have the following environmental variables $SAMTOOLS $HTSLIB set 
+Type 'make' if you have the following environmental variables $HTSLIB set
 to be the directory of your local install of each.
 
 Otherwise the command below will hopefully help you.
 
-make LFLAGS="-L/<your path to samtools>/samtools-1.0/ -L-/<your path to htslib>/htslib/" OPTINC="-I/<your path to samtools>/samtools-1.0/ -I/<your path to htslib>/htslib/ -I/<your path to htslib>/htslib/htslib"
-
-LFLAGS=-L$SAMTOOLS/lib OPTINC=-I$SAMTOOLS/include/' to compile caveman 
-where $SAMTOOLS is the path to your local install of samtools. 
-SAMTOOLS)/ -I$(HTSLIB)/ -I$(HTSLIB
+make HTSLOC="/full/path/to/htslib" TEST_REF="/path/to/GRCh37/genome.fa.fai"
 
 Installation
 ============
 
-Copy 'bin/caveman', and other executables in bin/ to a location you want 
-(e.g. a directory in your $PATH). You may also copy 'docs/caveman.1' to a directory in your $MANPATH such
-that the `man' command may find the manual.
+Copy 'bin/caveman', and other executables in bin/ to a location you want
+(e.g. a directory in your $PATH).

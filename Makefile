@@ -1,8 +1,9 @@
 CAVEMAN_VERSION=1.5.3
 
 #Compiler
-CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
+CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"'
 
+#debug compiler
 #CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
 
 #compiler flags
@@ -10,24 +11,25 @@ CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
 # -Wall turns on most warnings from compiler
 CFLAGS = -Wall
 
+HTSADD="https://github.com/samtools/htslib/archive/1.2.1.tar.gz"
+HTSPATCH=./patches/htslib/cram_idx.patch
 HTSLOC?=$(HTSLIB)
-SAMTOOLSLOC?=$(SAMTOOLS)
 
 HTSTMP?=./caveman_tmp
 
 #Define locations of header files
-OPTINC?= -I$(SAMTOOLSLOC)/ -I$(HTSLOC)/ -I$(HTSLOC)/htslib
+OPTINC?=-I$(HTSLOC)/
 INCLUDES= -Isrc $(OPTINC) -rdynamic
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS?= -L$(SAMTOOLSLOC) -L$(HTSTMP)
+LFLAGS?=-L$(HTSTMP)
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS =-lhts -lbam -lpthread -lz -lm
+LIBS =-lhts -lpthread -lz -lm
 
 # define the C source files
 SRCS = ./src/file_tests.c ./src/List.c ./src/List_algos.c ./src/bam_access.c ./src/config_file_access.c ./src/fai_access.c ./src/ignore_reg_access.c ./src/alg_bean.c ./src/split_access.c ./src/covs_access.c ./src/cn_access.c ./src/genotype.c ./src/algos.c ./src/output.c ./src/setup.c ./src/split.c ./src/mstep.c ./src/merge.c ./src/estep.c

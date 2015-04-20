@@ -177,7 +177,7 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 					free(ref_b);
 					cbase = malloc(sizeof(char)*2) ;
 					check_mem(cbase);
-					sprintf(cbase,"%c",toupper(bam_nt16_rev_table[pos_t->called_base]));
+					sprintf(cbase,"%c",toupper(seq_nt16_str[pos_t->called_base]));
 					int callbase_i = alg_bean_get_index_for_char_arr(alg->call_base,cbase);
 					check(callbase_i>=0,"Error calculating called base '%s' index.",cbase);
 					free(cbase);
@@ -539,7 +539,7 @@ inline int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, i
 	char *cbase = malloc(sizeof(char)*2) ;
 	//Build a list of probabilities for each possible ref base at this position.
 	check_mem(cbase);
-	sprintf(cbase,"%c",toupper(bam_nt16_rev_table[pos_t->called_base]));
+	sprintf(cbase,"%c",toupper(seq_nt16_str[pos_t->called_base]));
 	*callbase_i = alg_bean_get_index_for_char_arr(alg->call_base,cbase);
 	free(cbase);
 	check(*callbase_i>=0,"Error calculating called base index.");
@@ -700,16 +700,16 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 					//Adding to the counts at this position.
 					if(pos_t->normal == 1){
 						if(pos_t->strand == 1){
-							genotype_add_base_to_count(pos->norm_rev_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->norm_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}else{
-							genotype_add_base_to_count(pos->norm_fwd_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->norm_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}
 						pos->total_cvg_norm++;
 					}else if(pos_t->normal == 0){
 						if(pos_t->strand == 1){
-							genotype_add_base_to_count(pos->tum_rev_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->tum_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}else{
-							genotype_add_base_to_count(pos->tum_fwd_cvg,toupper(bam_nt16_rev_table[pos_t->called_base]));
+							genotype_add_base_to_count(pos->tum_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}
 						pos->total_cvg_tum++;
 					}

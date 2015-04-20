@@ -1,22 +1,22 @@
 /**   LICENSE
-* Copyright (c) 2014 Genome Research Ltd. 
-* 
-* Author: Cancer Genome Project cgpit@sanger.ac.uk 
-* 
-* This file is part of CaVEMan. 
-* 
-* CaVEMan is free software: you can redistribute it and/or modify it under 
-* the terms of the GNU Affero General Public License as published by the Free 
-* Software Foundation; either version 3 of the License, or (at your option) any 
-* later version. 
-* 
-* This program is distributed in the hope that it will be useful, but WITHOUT 
-* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS 
-* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more 
-* details. 
-* 
-* You should have received a copy of the GNU Affero General Public License 
-* along with this program. If not, see <http://www.gnu.org/licenses/>. 
+* Copyright (c) 2014 Genome Research Ltd.
+*
+* Author: Cancer Genome Project cgpit@sanger.ac.uk
+*
+* This file is part of CaVEMan.
+*
+* CaVEMan is free software: you can redistribute it and/or modify it under
+* the terms of the GNU Affero General Public License as published by the Free
+* Software Foundation; either version 3 of the License, or (at your option) any
+* later version.
+*
+* This program is distributed in the hope that it will be useful, but WITHOUT
+* ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+* FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+* details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef _alg_bean_h
@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <List.h>
-#include "sam.h"
 
 typedef struct alg_bean_intrange{
 	int from;
@@ -38,7 +37,7 @@ typedef struct alg_bean_t{
 	 int base_qual_size;
 	 List *map_qual;
 	 int map_qual_size;
-	 List *lane;	
+	 List *lane;
 	 int lane_size;
 	 List *read_order;
 	 int read_order_size;
@@ -46,7 +45,7 @@ typedef struct alg_bean_t{
 	 int ref_base_size;
 	 List *call_base;
 	 int call_base_size;
-	 List *strand; 
+	 List *strand;
 	 int strand_size;
 } alg_bean_t;
 
