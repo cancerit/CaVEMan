@@ -198,7 +198,7 @@ int mstep_main(int argc, char *argv[]){
 	bam_access_min_base_qual(min_bq);
 
 	//Open the bam files.
-	bam_access_openbams(norm_bam_file,tum_bam_file);
+	bam_access_openbams(norm_bam_file,tum_bam_file,ref_idx);
 
 	printf("Looking at section %s:%d-%d for mstep\n",chr_name,start_zero_based+1,stop);
 

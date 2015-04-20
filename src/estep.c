@@ -366,7 +366,7 @@ int estep_main(int argc, char *argv[]){
 	bam_access_min_base_qual(min_bq);
 
 	//Open the bam files.
-	bam_access_openbams(norm_bam_file,tum_bam_file);
+	bam_access_openbams(norm_bam_file,tum_bam_file,ref_idx);
 
 	//Estep algorithm modifiers.
 	set_min_mut_prob(min_mut_prob);

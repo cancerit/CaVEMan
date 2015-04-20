@@ -26,16 +26,24 @@
 #include <alg_bean.h>
 #include <output.h>
 #include <genotype.h>
+#include <unistd.h>
 #include <dbg.h>
 #include <math.h>
 
 char *norm = "testData/wt.bam";
 char *tum = "testData/mt.bam";
+char *norm_cram = "testData/wt.cram";
+char *tum_cram = "testData/mt.cram";
 char *mut_norm = "testData/testing_wt.bam";
 char *mut_tum = "testData/testing_mt.bam";
+char *mut_norm_cram = "testData/testing_wt.cram";
+char *mut_tum_cram = "testData/testing_mt.cram";
 char *mstep_mut = "testData/mstep_test_mt.bam";
 char *mstep_norm = "testData/mstep_test_wt.bam";
+char *mstep_mut_cram = "testData/mstep_test_mt.cram";
+char *mstep_norm_cram = "testData/mstep_test_wt.cram";
 char *mut_probs = "testData/test_mut_probs_array";
+char *test_fai_out = TEST_REF;
 char *mut_alg = "testData/test_mut_alg";
 char *mut_mt_cn = "testData/mc.cave.cn";
 char *mut_wt_cn = "testData/wc.cave.cn";
@@ -47,7 +55,27 @@ char *test_no_anal_out = "testData/no_analysis.bed";
 char *test_algos_mstep_read_position(){
 	//algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, int from, int to, char *ref_base);
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(norm,tum);
-	mu_assert(bam_access_openbams(norm, tum)==0,"Bams not opened.\n");
+	mu_assert(bam_access_openbams(norm, tum,test_fai_out)==0,"Bams not opened.\n");
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+	mu_assert(arr != NULL,"Array not properly created.\n");
+	char *chr = "22";
+	int from = 17619559;
+	int to = 17619559;
+	char *ref_base = "A";
+	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
+	//check we have a count of 2 in the expected place...
+	mu_assert(arr[0][1][1][4][1][4][0][3] == 1, "Incorrect data returned.\n");
+	covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),arr);
+	alg_bean_destroy(alg);
+	return NULL;
+}
+
+char *test_algos_mstep_read_position_cram(){
+	//algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, int from, int to, char *ref_base);
+	alg_bean_t *alg = alg_bean_generate_default_alg_bean(norm_cram,tum_cram);
+	mu_assert(bam_access_openbams(norm_cram, tum_cram,test_fai_out)==0,"Bams not opened.\n");
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	mu_assert(arr != NULL,"Array not properly created.\n");
@@ -69,7 +97,46 @@ char *test_algos_mstep_read_position_two(){
 	//char *mstep_mut = "tests/mstep_test_mt.bam";
 	//char *mstep_norm = "tests/mstep_test_wt.bam";
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(mstep_norm,mstep_mut);
-	mu_assert(bam_access_openbams(mstep_norm,mstep_mut)==0,"Bams not opened.\n");
+	mu_assert(bam_access_openbams(mstep_norm,mstep_mut,test_fai_out)==0,"Bams not opened.\n");
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+	mu_assert(arr != NULL,"Array not properly created.\n");
+	char *chr = "2";
+	int from = 38000243;
+	int to = 38000243;
+	char *ref_base = "G";
+	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
+
+	int sum=0;
+	int i,j,k,m,n,p,r,s;
+	for(i=0;i<List_count(alg->read_order);i++){
+		for(j=0;j<List_count(alg->strand);j++){
+			for(k=0;k<List_count(alg->lane);k++){
+				for(m=0;m<List_count(alg->rd_pos);m++){
+					for(n=0;n<List_count(alg->map_qual);n++){
+						for(p=0;p<List_count(alg->base_qual);p++){
+							for(r=0;r<List_count(alg->ref_base);r++){
+								for(s=0;s<List_count(alg->call_base);s++){
+									sum+=arr[i][j][k][m][n][p][r][s];
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	mu_assert(sum==178,"Incorrect total count in cov array.");
+	covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),arr);
+	alg_bean_destroy(alg);
+	return NULL;
+}
+
+char *test_algos_mstep_read_position_two_cram(){
+	//2	38000243	.	G	A	.	.	DP=178;MP=1.7e-84;GP=1.0e+00;TG=AG/AAGG;TP=1.0e+00;SG=AG/AGGG;SP=1.9e-03	GT:AF:CF:GF:TF:AR:CR:GR:TR:PM	0|1:17:0:28:0:19:0:17:0:4.4e-01	0|1:25:0:30:0:18:0:24:0:4.4e-01
+	//char *mstep_mut = "tests/mstep_test_mt.bam";
+	//char *mstep_norm = "tests/mstep_test_wt.bam";
+	alg_bean_t *alg = alg_bean_generate_default_alg_bean(mstep_norm_cram,mstep_mut_cram);
+	mu_assert(bam_access_openbams(mstep_norm_cram,mstep_mut_cram,test_fai_out)==0,"Bams not opened.\n");
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	mu_assert(arr != NULL,"Array not properly created.\n");
 	char *chr = "2";
@@ -105,7 +172,59 @@ char *test_algos_mstep_read_position_two(){
 
 int estep_no_analysis(){
 	FILE *alg_file = fopen(mut_alg,"r");
-	check(bam_access_openbams(mut_norm, mut_tum)==0,"Bams not opened.");
+	check(bam_access_openbams(mut_norm, mut_tum,test_fai_out)==0,"Bams not opened.");
+	alg_bean_t *alg = alg_bean_read_file(alg_file);
+	char *ref_base = malloc(sizeof(char)*51);
+	memset(ref_base,'C',51*sizeof(char));
+	fclose(alg_file);
+	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+	FILE *snp_out = fopen(test_snp_out,"w");
+	check(snp_out!=NULL,"Error opening file.");
+	FILE *mut_out = fopen(test_mut_out,"w");
+	check(mut_out!=NULL,"Error opening file.");
+	FILE *dbg_out = fopen(test_dbg_out,"w");
+	check(dbg_out!=NULL,"Error opening file.");
+	FILE *no_anal_out = fopen(test_no_anal_out,"w");
+	check(no_anal_out!=NULL,"Error opening file.");
+	output_set_no_analysis_file(no_anal_out);
+	output_set_no_analysis_section_list(List_create());
+	int estep = algos_estep_read_position(alg, probs,"1", 192462250, 192462300, ref_base, mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
+	output_flush_no_analysis("1");
+	check(estep==0,"Error running estep.");
+	fclose(snp_out);
+	fclose(mut_out);
+	fclose(dbg_out);
+	fclose(no_anal_out);
+
+	bam_access_closebams();
+	covs_access_free_prob_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),probs);
+				alg_bean_destroy(alg);
+
+
+	no_anal_out = fopen(test_no_anal_out,"r");
+	char line[5000];
+	int count = 0;
+	while ( fgets(line,sizeof(line),no_anal_out) != NULL ){
+		check(strncmp("1\t192462249\t192462263\n",line,(sizeof(char) * 22))==0,"Incorrect no analysis output in file.");
+		count++;
+	}
+	check(count==1,"Wrong number of lines found in no analysis file.");
+	fclose(no_anal_out);
+	free(ref_base);
+	unlink(test_snp_out);
+	unlink(test_mut_out);
+	unlink(test_dbg_out);
+	unlink(test_no_anal_out);
+	return 0;
+error:
+	return -1;
+}
+
+int estep_no_analysis_cram(){
+	FILE *alg_file = fopen(mut_alg,"r");
+	check(bam_access_openbams(mut_norm_cram, mut_tum_cram,test_fai_out)==0,"Bams not opened.");
 	alg_bean_t *alg = alg_bean_read_file(alg_file);
 	char *ref_base = malloc(sizeof(char)*51);
 	memset(ref_base,'C',51*sizeof(char));
@@ -157,15 +276,59 @@ error:
 
 char *test_algos_estep_read_position_real_data_no_analysis(){
 	mu_assert(estep_no_analysis()==0,"Error testing no analysis estep.");
+	mu_assert(estep_no_analysis_cram()==0,"Error testing no analysis cram estep.");
 	return NULL;
 }
 
-//1	192462357				.	C	A	.		.	DP=77;MP=1.0e+00;GP=1.3e-06;TG=CC/AAA;TP=1.0e+00;SG=CC/AAC;SP=8.3e-05	GT:AF:CF:GF:TF:AR:CR:GR:TR:PM	0|0:0:21:0:0:0:4:0:0:0.0e+00	1|1:14:7:0:0:23:8:0:0:7.1e-01
-//1	192462357	958902214	C	A	.	PASS	DP=77;MP=1.0e+00;GP=2.2e-06;TG=CC/AAC;TP=5.9e-01;SG=CC/AAA;SP=4.1e-01;VT=Sub	GT:AA:CA:GA:TA:PM	0/0:0:25:0:0:0.0e+00	0/1:37:15:0:0:7.1e-01
-
 char *test_algos_estep_read_position(){
 	FILE *alg_file = fopen(mut_alg,"r");
-	mu_assert(bam_access_openbams(mut_norm, mut_tum)==0,"Bams not opened.\n");
+	mu_assert(bam_access_openbams(mut_norm, mut_tum,test_fai_out)==0,"Bams not opened.\n");
+	alg_bean_t *alg = alg_bean_read_file(alg_file);
+	fclose(alg_file);
+	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
+	FILE *snp_out = fopen(test_snp_out,"w");
+	FILE *mut_out = fopen(test_mut_out,"w");
+	FILE *dbg_out = fopen(test_dbg_out,"w");
+	FILE *no_anal_out = fopen(test_no_anal_out,"w");
+	output_set_no_analysis_file(no_anal_out);
+	output_set_no_analysis_section_list(List_create());
+	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
+	mu_assert(estep==0,"Error running estep.");
+	fclose(snp_out);
+	fclose(mut_out);
+	fclose(dbg_out);
+	fclose(no_anal_out);
+
+	bam_access_closebams();
+	covs_access_free_prob_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),probs);
+				alg_bean_destroy(alg);
+
+	mut_out = fopen(test_mut_out,"r");
+	char line[5000];
+	int count = 0;
+	while ( fgets(line,sizeof(line),mut_out) != NULL ){
+		mu_assert(strncmp("1\t192462357",line,(sizeof(char) * 11))==0,"Incorrect mutation output in file.");
+		//printf("%s",line);
+		//mu_assert(strcmp(
+			//"1\t192462357\t.\tC\tA\t.\t.\tDP=77;MP=1.0e+00;GP=2.2e-06;TG=CC/AAC;TP=5.9e-01;SG=CC/AAA;SP=4.1e-01\tGT:AF:CF:GF:TF:AR:CR:GR:TR:PM\t0|0:0:21:0:0:0:4:0:0:0.0e+00\t0|1:14:7:0:0:23:8:0:0:7.1e-01\n",
+			//line)==0,"Incorrect mutation line in file.");
+		//printf("%s\n",line);
+		count++;
+	}
+	mu_assert(count==1,"Wrong number of mutations output in the mutant file.");
+	fclose(mut_out);
+	unlink(test_snp_out);
+	unlink(test_mut_out);
+	unlink(test_dbg_out);
+	unlink(test_no_anal_out);
+	return NULL;
+}
+
+char *test_algos_estep_read_position_cram(){
+	FILE *alg_file = fopen(mut_alg,"r");
+	mu_assert(bam_access_openbams(mut_norm_cram, mut_tum_cram,test_fai_out)==0,"Bams not opened.\n");
 	alg_bean_t *alg = alg_bean_read_file(alg_file);
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
@@ -480,11 +643,11 @@ int test_per_read_estep(){
 	norm_read->ref_base_probs[1] = &ldone;
 	norm_read->ref_base_probs[2] = &ldtwo;
 	norm_read->ref_base_probs[3] = &ldone;
-	norm_read->called_base = bam_nt16_table[cbase];
+	norm_read->called_base = seq_nt16_int[cbase];
 	norm_read->normal = 1;
 	check_mem(norm_read);
 	read_pos_t *tum_read = malloc(sizeof(read_pos_t));
-	tum_read->called_base = bam_nt16_table[cbase];
+	tum_read->called_base = seq_nt16_int[cbase];
 	tum_read->normal = 0;
 	tum_read->ref_base_probs[0] = &ldone;
 	tum_read->ref_base_probs[1] = &ldone;
@@ -690,10 +853,10 @@ int test_estep_pos(){
 	norm_read->ref_base_probs[1] = &ldone;
 	norm_read->ref_base_probs[2] = &ldtwo;
 	norm_read->ref_base_probs[3] = &ldone;
-	norm_read->called_base = bam_nt16_table[cbase];
+	norm_read->called_base = seq_nt16_int[cbase];
 	norm_read->normal = 1;
 
-	tum_read->called_base = bam_nt16_table[cbase];
+	tum_read->called_base = seq_nt16_int[cbase];
 	tum_read->normal = 0;
 	tum_read->ref_base_probs[0] = &ldone;
 	tum_read->ref_base_probs[1] = &ldone;
@@ -1031,13 +1194,16 @@ error:
 char *all_tests() {
    mu_suite_start();
    mu_run_test(test_algos_mstep_read_position);
+   mu_run_test(test_algos_mstep_read_position_cram);
    mu_run_test(test_algos_mstep_read_position_two);
+   mu_run_test(test_algos_mstep_read_position_two_cram);
    mu_run_test(test_finalise_probabilities_and_find_top_prob);
    mu_run_test(test_algos_calculate_per_base_normal_contamination);
    mu_run_test(test_algos_run_per_read_estep_maths);
    mu_run_test(test_algos_run_per_position_estep_maths);
    mu_run_test(test_algos_estep_read_position_real_data_no_analysis);
    mu_run_test(test_algos_estep_read_position);
+   mu_run_test(test_algos_estep_read_position_cram);
    mu_run_test(test_algos_check_var_position_alleles);
    return NULL;
 }

@@ -27,13 +27,25 @@
 #include <ctype.h>
 
 char *bam_file = "testData/mt.bam";
+char *cram_file = "testData/mt.cram";
 char *test_wt_bam = "testData/test_wt.bam";
 char *test_mt_bam = "testData/test_mt.bam";
+char *test_wt_cram = "testData/test_wt.cram";
+char *test_mt_cram = "testData/test_mt.cram";
 char *mut_wt_bam = "testData/testing_wt.bam";
 char *mut_mt_bam = "testData/testing_mt.bam";
+char *mut_wt_cram="testData/testing_wt.cram";
+char *mut_mt_cram = "testData/testing_mt.cram";
+char *test_fai_out = TEST_REF;
 
 char *test_bam_access_openbams_close_bams(){
-	bam_access_openbams(bam_file,bam_file);
+	bam_access_openbams(bam_file,bam_file,test_fai_out);
+	bam_access_closebams();
+	return NULL;
+}
+
+char *test_bam_access_openbams_close_bams_cram(){
+	bam_access_openbams(cram_file,cram_file,test_fai_out);
 	bam_access_closebams();
 	return NULL;
 }
@@ -91,7 +103,7 @@ char *test_list_algos_List_insert_sorted(){
 }
 
 char *test_bam_access_get_count_for_region(){
-	bam_access_openbams(bam_file,bam_file);
+	bam_access_openbams(bam_file,bam_file,NULL);
 	char *chr_name = "22";
 	int start = 17619559;
 	int stop = 17619559;
@@ -104,7 +116,28 @@ char *test_bam_access_get_count_for_region(){
 	start = 124945;
 	stop = 124945;
 	count_got = 0;
-	bam_access_openbams(test_wt_bam,test_mt_bam);
+	bam_access_openbams(test_wt_bam,test_mt_bam,test_fai_out);
+	count_got = bam_access_get_count_for_region(chr_name,start,stop);
+	mu_assert(count_got==86,"Incorrect number of reads returned in second lookup.");
+	bam_access_closebams();
+	return NULL;
+}
+
+char *test_bam_access_get_count_for_region_cram(){
+	bam_access_openbams(cram_file,cram_file,NULL);
+	char *chr_name = "22";
+	int start = 17619559;
+	int stop = 17619559;
+	int count_got = bam_access_get_count_for_region(chr_name,start,stop);
+	mu_assert(count_got==2,"Incorrect number of reads returned.");
+	bam_access_closebams();
+
+	//Now try with more reads expected...
+	chr_name = "1";
+	start = 124945;
+	stop = 124945;
+	count_got = 0;
+	bam_access_openbams(test_wt_cram,test_mt_cram,test_fai_out);
 	count_got = bam_access_get_count_for_region(chr_name,start,stop);
 	mu_assert(count_got==86,"Incorrect number of reads returned in second lookup.");
 	bam_access_closebams();
@@ -112,7 +145,7 @@ char *test_bam_access_get_count_for_region(){
 }
 
 char *test_bam_access_get_reads_at_this_pos(){
-	bam_access_openbams(bam_file,bam_file);
+	bam_access_openbams(bam_file,bam_file,test_fai_out);
 	char *chr_name = "22";
 	int start = 17619559;
 	int stop = 17619559;
@@ -125,7 +158,7 @@ char *test_bam_access_get_reads_at_this_pos(){
 	chr_name = "1";
 	start = 124945;
 	stop = 124945;
-	bam_access_openbams(test_wt_bam,test_mt_bam);
+	bam_access_openbams(test_wt_bam,test_mt_bam,test_fai_out);
 	test_bean = alg_bean_generate_default_alg_bean(test_wt_bam,test_mt_bam);
 	got = bam_access_get_reads_at_this_pos(chr_name, start, stop,1,test_bean);
 	mu_assert(List_count(got)==72,"Wrong number of reads fetched from bam file.");
@@ -134,7 +167,7 @@ char *test_bam_access_get_reads_at_this_pos(){
 	alg_bean_destroy(test_bean);
 
 	//1	192462357	958902214	C	A	.	PASS	DP=77;MP=1.0e+00;GP=2.2e-06;TG=CC/AAC;TP=5.9e-01;SG=CC/AAA;SP=4.1e-01;VT=Sub	GT:AA:CA:GA:TA:PM	0/0:0:25:0:0:0.0e+00	0/1:37:15:0:0:7.1e-01
-	bam_access_openbams(mut_wt_bam,mut_mt_bam);
+	bam_access_openbams(mut_wt_bam,mut_mt_bam,test_fai_out);
 	test_bean = alg_bean_generate_default_alg_bean(mut_wt_bam,mut_mt_bam);
 	got = bam_access_get_reads_at_this_pos("1", 192462357, 192462357,1,test_bean);
 	mu_assert(List_count(got)==77,"Wrong number of reads fetched from know mutant bam files.");
@@ -143,10 +176,61 @@ char *test_bam_access_get_reads_at_this_pos(){
 	LIST_FOREACH(got, first, next, cur){
 		read_pos_t *rp = (read_pos_t *)cur->value;
 		if(rp->normal==1){
-			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C',"Wrong called base in normal.");
+			mu_assert(toupper(seq_nt16_str[rp->called_base])=='C',"Wrong called base in normal.");
 			norm_count++;
 		}else{
-			mu_assert(toupper(bam_nt16_rev_table[rp->called_base])=='C'||toupper(bam_nt16_rev_table[rp->called_base])=='A',"Wrong tumour called base.");
+			mu_assert(toupper(seq_nt16_str[rp->called_base])=='C'||toupper(seq_nt16_str[rp->called_base])=='A',"Wrong tumour called base.");
+			tum_count++;
+		}
+	}
+	mu_assert(norm_count==25,"Incorrect numer of normal reads fetched.");
+	mu_assert(tum_count==52,"Incorrect numer of tumour reads fetched.");
+	alg_bean_destroy(test_bean);
+	return NULL;
+}
+
+char *test_bam_access_get_reads_at_this_pos_cram(){
+	bam_access_openbams(cram_file,cram_file,test_fai_out);
+	char *chr_name = "22";
+	int start = 17619559;
+	int stop = 17619559;
+	fprintf(stderr,"generate alg_bean cram_file\n");
+	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(cram_file,cram_file);
+	fprintf(stderr,"generate alg_bean get reads\n");
+	List *got = bam_access_get_reads_at_this_pos(chr_name, start, stop,1,test_bean);
+	fprintf(stderr,"generate alg_bean got reads\n");
+	mu_assert(List_count(got)==2,"Wrong number of reads fetched from bam file.");
+	bam_access_closebams();
+
+	alg_bean_destroy(test_bean);
+	chr_name = "1";
+	start = 124945;
+	stop = 124945;
+	bam_access_openbams(test_wt_cram,test_mt_cram,test_fai_out);
+	fprintf(stderr,"generate alg_bean test_mt_cram\n");
+	test_bean = alg_bean_generate_default_alg_bean(test_wt_cram,test_mt_cram);
+	fprintf(stderr,"generate alg_bean get reads\n");
+	got = bam_access_get_reads_at_this_pos(chr_name, start, stop,1,test_bean);
+	fprintf(stderr,"generate alg_bean got reads\n");
+	mu_assert(List_count(got)==72,"Wrong number of reads fetched from bam file.");
+	bam_access_closebams();
+
+	alg_bean_destroy(test_bean);
+
+	//1	192462357	958902214	C	A	.	PASS	DP=77;MP=1.0e+00;GP=2.2e-06;TG=CC/AAC;TP=5.9e-01;SG=CC/AAA;SP=4.1e-01;VT=Sub	GT:AA:CA:GA:TA:PM	0/0:0:25:0:0:0.0e+00	0/1:37:15:0:0:7.1e-01
+	bam_access_openbams(mut_wt_cram,mut_mt_cram,test_fai_out);
+	test_bean = alg_bean_generate_default_alg_bean(mut_wt_cram,mut_mt_cram);
+	got = bam_access_get_reads_at_this_pos("1", 192462357, 192462357,1,test_bean);
+	mu_assert(List_count(got)==77,"Wrong number of reads fetched from know mutant bam files.");
+	int norm_count = 0;
+	int tum_count = 0;
+	LIST_FOREACH(got, first, next, cur){
+		read_pos_t *rp = (read_pos_t *)cur->value;
+		if(rp->normal==1){
+			mu_assert(toupper(seq_nt16_str[rp->called_base])=='C',"Wrong called base in normal.");
+			norm_count++;
+		}else{
+			mu_assert(toupper(seq_nt16_str[rp->called_base])=='C'||toupper(seq_nt16_str[rp->called_base])=='A',"Wrong tumour called base.");
 			tum_count++;
 		}
 	}
@@ -159,6 +243,12 @@ char *test_bam_access_get_reads_at_this_pos(){
 char *test_bam_access_get_lane_list_from_header(){
 	List *lanes = bam_access_get_lane_list_from_header(bam_file,"0");
 	mu_assert(List_count(lanes)==2,"Wrong number of lanes fetched from bam file.");
+	return NULL;
+}
+
+char *test_bam_access_get_lane_list_from_header_cram(){
+	List *lanes = bam_access_get_lane_list_from_header(cram_file,"0");
+	mu_assert(List_count(lanes)==2,"Wrong number of lanes fetched from cram file.");
 	return NULL;
 }
 
@@ -177,14 +267,41 @@ char *test_bam_access_sample_name_platform_from_header(){
 	return NULL;
 }
 
+char *test_bam_access_sample_name_platform_from_header_cram(){
+	//char *bam_file,char *sample, char *plat);
+	char *sample = malloc(sizeof(char) * 250);
+	char *plat = malloc(sizeof(char) * 250);
+	strcpy(plat,".");
+	char *exp_sampl = "TUMOURa";
+	char *exp_plat = "HiSeq";
+	//@RG	ID:1288335	PL:HiSeq	PU:9413_2	LB:TUMOURa 6766555_28085	PI:453	MI:603	DS:short	PG:1288335	SM:TUMOURa	CN:SANGER
+	char *res = bam_access_sample_name_platform_from_header(test_mt_cram,sample,plat);
+	mu_assert(res!=NULL,"Error trying to fetch sample/platform from cram header.");
+	mu_assert(strcmp(exp_sampl,sample)==0,"Samples don't match from fetch.");
+	mu_assert(strcmp(exp_plat,plat)==0,"Platforms don't match from fetch.");
+	return NULL;
+}
+
 char *test_bam_access_get_contigs_from_bam(){
 	List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, NULL, NULL);
 	mu_assert(List_count(contigs)==25,"Wrong number of contigs fetched from header.");
 	return NULL;
 }
 
+char *test_bam_access_get_contigs_from_bam_cram(){
+	List *contigs = bam_access_get_contigs_from_bam(test_mt_cram, NULL, NULL);
+	mu_assert(List_count(contigs)==25,"Wrong number of contigs fetched from header.");
+	return NULL;
+}
+
 char *test_bam_access_get_contigs_from_bam_no_spp(){
 	List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, "ASSEMBLY", "SPP");
+	mu_assert(List_count(contigs)==25,"Wrong number of contigs fetched from header.");
+	return NULL;
+}
+
+char *test_bam_access_get_contigs_from_bam_no_spp_cram(){
+	List *contigs = bam_access_get_contigs_from_bam(test_mt_cram, "ASSEMBLY", "SPP");
 	mu_assert(List_count(contigs)==25,"Wrong number of contigs fetched from header.");
 	return NULL;
 }
@@ -237,31 +354,63 @@ char *test_bam_access_check_bam_flags(){
 char *test_bam_access_populate_file_index(){
 	samFile *sf = NULL;
 	hts_idx_t *idx = NULL;
-	sf = bam_access_populate_file(test_mt_bam );
-	mu_assert(sf != NULL,"samFile was NULL");
+	sf = bam_access_populate_file(test_mt_bam, test_fai_out );
+	mu_assert(sf != NULL,"htsFile bam was NULL");
 	idx = bam_access_populate_file_index(sf,test_mt_bam );
-	mu_assert(idx != NULL,"samFile index was NULL");
+	mu_assert(idx != NULL,"htsFile index bam was NULL");
 	sam_close(sf);
-	bam_index_destroy(idx);
+	hts_idx_destroy(idx);
+
+	return NULL;
+}
+
+char *test_bam_access_populate_file_index_cram(){
+	samFile *sf = NULL;
+	hts_idx_t *idx = NULL;
+	sf = bam_access_populate_file(test_mt_cram , test_fai_out );
+	mu_assert(sf != NULL,"htsFile cram was NULL");
+	idx = bam_access_populate_file_index(sf,test_mt_cram );
+	mu_assert(idx != NULL,"htsFile index cram was NULL");
+	sam_close(sf);
+	hts_idx_destroy(idx);
 
 	return NULL;
 }
 
 char *test_bam_access_get_hts_itr(){
-	samFile *sf = NULL;
+	htsFile *sf = NULL;
 	hts_idx_t *idx = NULL;
 	hts_itr_t *itr = NULL;
 	char *chr = "22";
 	uint32_t from = 17619559;
 	uint32_t to = 17619559;
-	sf = bam_access_populate_file(test_mt_bam );
+	sf = bam_access_populate_file(test_mt_bam, test_fai_out  );
 	mu_assert(sf != NULL,"samFile was NULL");
 	idx = bam_access_populate_file_index(sf,test_mt_bam );
 	mu_assert(idx != NULL,"samFile index was NULL");
 	itr = bam_access_get_hts_itr(sf, idx, chr, from, to);
 	mu_assert(itr!=NULL,"Error fetching iterator");
-	sam_close(sf);
-	bam_index_destroy(idx);
+	hts_close(sf);
+	hts_idx_destroy(idx);
+	hts_itr_destroy(itr);
+	return NULL;
+}
+
+char *test_bam_access_get_hts_itr_cram(){
+	htsFile *sf = NULL;
+	hts_idx_t *idx = NULL;
+	hts_itr_t *itr = NULL;
+	char *chr = "22";
+	uint32_t from = 17619559;
+	uint32_t to = 17619559;
+	sf = bam_access_populate_file(cram_file, test_fai_out  );
+	mu_assert(sf != NULL,"samFile was NULL");
+	idx = bam_access_populate_file_index(sf,cram_file );
+	mu_assert(idx != NULL,"samFile index was NULL");
+	itr = bam_access_get_hts_itr(sf, idx, chr, from, to);
+	mu_assert(itr!=NULL,"Error fetching iterator");
+	hts_close(sf);
+	hts_idx_destroy(idx);
 	hts_itr_destroy(itr);
 	return NULL;
 }
@@ -269,16 +418,25 @@ char *test_bam_access_get_hts_itr(){
 char *all_tests() {
    mu_suite_start();
    mu_run_test(test_bam_access_openbams_close_bams);
+   mu_run_test(test_bam_access_openbams_close_bams_cram);
    mu_run_test(test_bam_access_get_reads_at_this_pos);
+   mu_run_test(test_bam_access_get_reads_at_this_pos_cram);
    mu_run_test(test_bam_access_get_count_for_region);
+   mu_run_test(test_bam_access_get_count_for_region_cram);
    mu_run_test(test_bam_access_get_lane_list_from_header);
+   mu_run_test(test_bam_access_get_lane_list_from_header_cram);
    mu_run_test(test_list_algos_List_insert_sorted);
    mu_run_test(test_bam_access_sample_name_platform_from_header);
+   mu_run_test(test_bam_access_sample_name_platform_from_header_cram);
    mu_run_test(test_bam_access_get_contigs_from_bam);
+   mu_run_test(test_bam_access_get_contigs_from_bam_cram);
    mu_run_test(test_bam_access_get_contigs_from_bam_no_spp);
+   mu_run_test(test_bam_access_get_contigs_from_bam_no_spp_cram);
    mu_run_test(test_bam_access_check_bam_flags);
    mu_run_test(test_bam_access_populate_file_index);
+   mu_run_test(test_bam_access_populate_file_index_cram);
    mu_run_test(test_bam_access_get_hts_itr);
+   mu_run_test(test_bam_access_get_hts_itr_cram);
    return NULL;
 }
 

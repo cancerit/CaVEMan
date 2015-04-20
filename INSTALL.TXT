@@ -26,11 +26,13 @@ caveman depends on:
 
         e = &from->e[i];
 
-  OR install the dev branch (until 1.3 is released).
+  OR install the htslib dev branch (until 1.3 is released).
 
 
 Compilation
 ===========
+
+If you have manually patched htslib:
 
 Type 'make' if you have the following environmental variables $HTSLIB set
 to be the directory of your local install of each.
@@ -38,6 +40,11 @@ to be the directory of your local install of each.
 Otherwise the command below will hopefully help you.
 
 make HTSLOC="/full/path/to/htslib" TEST_REF="/path/to/GRCh37/genome.fa.fai"
+
+If you wish to temporarily install and patch htslib purely for building caveman
+
+Type './setup.sh <install_directory>' within the CaVEMan directory. Caveman executables
+will be installed to 'install_directory/bin/'.
 
 Installation
 ============
