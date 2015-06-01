@@ -194,7 +194,7 @@ List *alg_bean_parse_str_list(char *txt){
 	char *ftchar;
 	ftchar = strtok(txt,";");
 	while(ftchar != NULL){
-		char *tmp = malloc(sizeof(char) *50);
+		char *tmp = malloc(sizeof(char) * (strlen(ftchar)+1));
 		strcpy(tmp,ftchar);
 		List_push(li,tmp);
 		ftchar = strtok(NULL,";");
