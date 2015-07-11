@@ -138,6 +138,9 @@ void gen_panel_setup_options(int argc, char *argv[]){
 				bam_file_locs = optarg;
 				break;
 
+			case 'q':
+			  min_base_qual =  atoi(optarg);
+
 			case 'i':
 				idx = atoi(optarg);
 				break;
