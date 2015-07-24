@@ -430,17 +430,17 @@ alg_bean_t *alg_bean_generate_default_alg_bean(char *norm, char *tum){
 	check_mem(range_6);
 	range_6->from = 0;
 	range_6->to = 60;
-	alg_bean_intrange *range_8 = malloc(sizeof(struct alg_bean_intrange));
-	check_mem(range_8);
-	range_8->from = 61;
-	range_8->to = 254;
+	alg_bean_intrange *range_10 = malloc(sizeof(struct alg_bean_intrange));
+	check_mem(range_10);
+	range_10->from = 61;
+	range_10->to = 254;
 	alg_bean_intrange *range_7 = malloc(sizeof(struct alg_bean_intrange));
 	check_mem(range_7);
 	range_7->from = 255;
 	range_7->to = 255;
 	List_push(map_q_list,range_6);
-	List_push(map_q_list,range_8);
 	List_push(map_q_list,range_7);
+	List_push(map_q_list,range_10);
 	bn->map_qual = map_q_list;
 
 	//Chemistries
