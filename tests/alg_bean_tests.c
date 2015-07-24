@@ -106,9 +106,12 @@ int check_map_quality(List *li){
 		if(i==0){
 			check(((alg_bean_intrange *)cur->value)->from == 0,"Incorrect default map qual from for entry 1.\n");
 			check(((alg_bean_intrange *)cur->value)->to == 60,"Incorrect default map qual to for entry 1.\n");
+		}else if(i==2){
+			check(((alg_bean_intrange *)cur->value)->from == 61,"Incorrect default map qual from for entry 2.\n");
+			check(((alg_bean_intrange *)cur->value)->to == 254,"Incorrect default map qual to for entry 2.\n");
 		}else if(i==1){
-			check(((alg_bean_intrange *)cur->value)->from == 255,"Incorrect default map qual from for entry 2.\n");
-			check(((alg_bean_intrange *)cur->value)->to == 255,"Incorrect default map qual to for entry 2.\n");
+			check(((alg_bean_intrange *)cur->value)->from == 255,"Incorrect default map qual from for entry 3.\n");
+			check(((alg_bean_intrange *)cur->value)->to == 255,"Incorrect default map qual to for entry 3.\n");
 		}else{
 			sentinel("Too many entries in map qual List: %d\n",i+1);
 		}
@@ -172,7 +175,8 @@ int check_alg_bean_defaults(alg_bean_t *test_bean){
 	check(check_base_quality(test_bean->base_qual),"Error in base_quality default checks.\n");
 
 	check(test_bean->map_qual != NULL,"map_qual list unset.\n");
-	check(List_count(test_bean->map_qual) == 2,"Incorrect map_quality array size.\n");
+	fprintf(stderr,"***********%d\n",List_count(test_bean->map_qual));
+	check(List_count(test_bean->map_qual) == 3,"Incorrect map_quality array size.\n");
 	check(check_map_quality(test_bean->map_qual),"Error in map_quality default checks.\n");
 
 	check(test_bean->read_order != NULL,"read_order list unset.\n");
