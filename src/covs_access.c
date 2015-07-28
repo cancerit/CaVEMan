@@ -164,7 +164,6 @@ uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim
 	assert(file_loc != NULL);
 	//Use a real array rather than pointers for reading...
   FILE *file = fopen(file_loc,"rb");
-  check(errno==0,"Error opening file to read cov array: %s.",strerror(errno));
   check(file!=NULL,"Error opening file to read cov array: %s.",file_loc);
 	//Actual return array
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8);
