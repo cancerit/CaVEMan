@@ -127,7 +127,7 @@ error:
 }
 
 int8_t cn_access_get_copy_number_for_location(char *file_loc,char *chr,uint32_t pos, uint8_t is_normal){
-	if(file_loc != NULL){
+	if(file_loc != NULL && strcmp(file_loc,"") != 0){
 		int pop_cn_chk = cn_access_populate_cn(file_loc,is_normal);
 		check(pop_cn_chk==1,"Error populating copy number from file %s.",file_loc);
 	}else{
