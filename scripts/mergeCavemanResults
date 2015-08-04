@@ -38,7 +38,13 @@ use warnings FATAL=>'all';
 
 use Getopt::Long;
 use Pod::Usage qw(pod2usage);
+use File::Find;
+use File::Spec;
+use Data::Dumper;
 use Carp;
+
+my @files;
+my $pattern;
 
 {
 	my $options = setup();
@@ -102,7 +108,7 @@ use Carp;
 			#open file
 
 			#Get the start and stop from the filename and check off in the sections list.
-		  if($filename =~ m/\/([^\/]+)\/(\d+)_(\d+)\./){
+		  if($filename =~ m/\/([^\/]+)\/(\d+)_(\d+)(\.)+/){
         my $key = $2."_".$3;
         $sects->{$1}->{$key} = 0;
 		  }else{
@@ -172,18 +178,60 @@ sub setup{
 	my %opts;
   	GetOptions( 'h|help' => \$opts{'h'},
 					'o|output=s' => \$opts{'o'},
-					's|splitlist=a' => \$opts{'s'},
+					's|splitlist=s' => \$opts{'s'},
+					'f|file_match=s' => \$opts{'f'},
   	) or pod2usage(2);
 
 	if($opts{'h'}){
   		pod2usage(0);
 	}
 
-	pod2usage(-msg  => "\nERROR: Incorrect parameters.\n", -verbose => 2, -output => \*STDERR ) unless($opts{'o'} && $opts{'s'});
+	pod2usage(-msg  => "\nERROR: Incorrect parameters.\n", -verbose => 1, -output => \*STDERR ) unless($opts{'o'} && $opts{'s'} && $opts{'f'});
 
-	$opts{'files'} = \@ARGV;
+  my (@dirs) = getDirsAndPattern($opts{'f'});
+  find(\&wanted, @dirs);
+
+  @{$opts{'files'}} = @files;
 
 	return \%opts;
+}
+
+sub getDirsAndPattern{
+  my ($filepath) = @_;
+
+  my $dir;
+  my $files;
+  if($filepath =~ m/^(.+\/%)+\/(%.+){1}$/){
+    $dir = $1;
+    $files = $2;
+  }else{
+    croak("Option -f $filepath doesn't match the required pattern.");
+  }
+
+  my $parent_dir = $dir;
+  $parent_dir =~ s/\/%$//g;
+
+  $pattern = $files;
+  $pattern =~ s/\./\\./g;
+  $pattern =~ s/%/.*/g;
+
+  my $DIR;
+  opendir($DIR, $parent_dir) or croak("Error opeining directory $parent_dir: $!");
+    my @dirs = grep {-d "$parent_dir/$_" && ! /^\.{1,2}$/} readdir($DIR);
+  closedir($DIR);
+
+  my @filedirs;
+
+  foreach my $dr(@dirs){
+    push (@filedirs,"$parent_dir/$dr/");
+  }
+
+  return @filedirs
+
+}
+
+sub wanted{
+  push (@files, $File::Find::name) if ($_ =~ m/^$pattern$/);
 }
 
 __END__
@@ -200,8 +248,8 @@ mergeCavemanResults [options] [file(s)...]
 
 Required parameters:
     --output       -o   File to output result to.
-    --splitlist    -s   File containing list of split sections
-
+    --splitlist    -s   File containing list of split section
+    --file-match   -f   ls style pattern match of files to be merged. e.g. results/*/*.muts/vcf
 Other:
     --help         -h   Brief help message.
 
