@@ -38,10 +38,22 @@ use warnings FATAL=>'all';
 
 use Getopt::Long;
 use Pod::Usage qw(pod2usage);
+use File::Find;
+use File::Spec;
+use Data::Dumper;
 use Carp;
+
+my @files;
+my $pattern;
 
 {
 	my $options = setup();
+
+	my ($splitSectcounts,$sects) = get_line_count_from_splitlist($options->{'s'});
+
+	if($splitSectcounts != scalar(@{$options->{'files'}})){
+	  croak("Expected $splitSectcounts files but got ".scalar(@{$options->{'files'}}).".");
+	}
 
 	my $OUT;
 	open($OUT,'>',$options->{'o'}.".tmp") or die("Error opening output file $options->{o}.tmp for write: $!\n");
@@ -94,6 +106,15 @@ use Carp;
 		#Load in lines from files.
 		foreach my $filename(@{$options->{'files'}}){
 			#open file
+
+			#Get the start and stop from the filename and check off in the sections list.
+		  if($filename =~ m/\/([^\/]+)\/(\d+)_(\d+)(\.)+/){
+        my $key = $2."_".$3;
+        $sects->{$1}->{$key} = 0;
+		  }else{
+		    croak("Error detecting start and stop from CaVEMan output file $filename.");
+		  }
+
 			my $IN;
 			open($IN, '<', $filename) or die("Error trying to open $filename for read: $!\n");
 				while(<$IN>){
@@ -105,6 +126,20 @@ use Carp;
 			close($IN);
 		}
 	close ($OUT);
+
+	my @missed_files = ();
+	foreach my $chr(keys %$sects){
+	  foreach my $section(keys %{$sects->{$chr}}){
+      if($sects->{$chr}->{$section}){
+        my $out = "$chr:$section";
+        push @missed_files, $out;
+      }
+	  }
+	}
+
+	if(scalar(@missed_files)){
+	  croak("Sections ".join( " ", @missed_files)." weren't merged. Something has gone wrong.");
+	}
 
 	# We've written a tmp file with all results, now take the header,
 	# and sort the remaining entries into the proper output file.
@@ -121,21 +156,82 @@ use Carp;
 	unlink($options->{'o'}.".tmp") or die("ERROR: Couldn't delete temporary output file ".$options->{'o'}.".tmp".":$!");
 }
 
+sub get_line_count_from_splitlist{
+  my ($file) = @_;
+  my $FH;
+  my $line = 0;
+  my $splits;
+  open($FH, '<', $file) or croak("Error trying to open splitlist $file: $!");
+    while(<$FH>){
+      $line++;
+      my $line = $_;
+      chomp($line);
+      my ($chr,$start,$stop) = split(/\s+/,$line);
+      my $key = "".($start+1)."_$stop";
+      $splits->{$chr}->{$key} = 1;
+    }
+  close($FH) or croak("Error trying to close splitlist $file: $!");
+  return ($line,$splits);
+}
+
 sub setup{
 	my %opts;
   	GetOptions( 'h|help' => \$opts{'h'},
 					'o|output=s' => \$opts{'o'},
+					's|splitlist=s' => \$opts{'s'},
+					'f|file_match=s' => \$opts{'f'},
   	) or pod2usage(2);
 
 	if($opts{'h'}){
   		pod2usage(0);
 	}
 
-	pod2usage(-msg  => "\nERROR: Incorrect parameters.\n", -verbose => 2, -output => \*STDERR ) unless($opts{'o'});
+	pod2usage(-msg  => "\nERROR: Incorrect parameters.\n", -verbose => 1, -output => \*STDERR ) unless($opts{'o'} && $opts{'s'} && $opts{'f'});
 
-	$opts{'files'} = \@ARGV;
+  my (@dirs) = getDirsAndPattern($opts{'f'});
+  find(\&wanted, @dirs);
+
+  @{$opts{'files'}} = @files;
 
 	return \%opts;
+}
+
+sub getDirsAndPattern{
+  my ($filepath) = @_;
+
+  my $dir;
+  my $files;
+  if($filepath =~ m/^(.+\/%)+\/(%.+){1}$/){
+    $dir = $1;
+    $files = $2;
+  }else{
+    croak("Option -f $filepath doesn't match the required pattern.");
+  }
+
+  my $parent_dir = $dir;
+  $parent_dir =~ s/\/%$//g;
+
+  $pattern = $files;
+  $pattern =~ s/\./\\./g;
+  $pattern =~ s/%/.*/g;
+
+  my $DIR;
+  opendir($DIR, $parent_dir) or croak("Error opeining directory $parent_dir: $!");
+    my @dirs = grep {-d "$parent_dir/$_" && ! /^\.{1,2}$/} readdir($DIR);
+  closedir($DIR);
+
+  my @filedirs;
+
+  foreach my $dr(@dirs){
+    push (@filedirs,"$parent_dir/$dr/");
+  }
+
+  return @filedirs
+
+}
+
+sub wanted{
+  push (@files, $File::Find::name) if ($_ =~ m/^$pattern$/);
 }
 
 __END__
@@ -144,7 +240,7 @@ __END__
 
 mergeCavemanResults - Perl script to merge VCF or BED format results files output by CaVEMan split jobs
                       into a single results file.
-                      For example mergeCavemanResults -o muts.vcf results/*/*.muts.vcf
+                      For example mergeCavemanResults -o muts.vcf -s splitList.txt results/*/*.muts.vcf
 
 =head1 SYNOPSIS
 
@@ -152,7 +248,8 @@ mergeCavemanResults [options] [file(s)...]
 
 Required parameters:
     --output       -o   File to output result to.
-
+    --splitlist    -s   File containing list of split section
+    --file-match   -f   ls style pattern match of files to be merged. e.g. results/*/*.muts/vcf
 Other:
     --help         -h   Brief help message.
 
