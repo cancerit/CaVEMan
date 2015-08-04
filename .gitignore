@@ -3,3 +3,4 @@
 /tests/*_tests
 /samtools/
 /tests/tests_log
+setup.log
