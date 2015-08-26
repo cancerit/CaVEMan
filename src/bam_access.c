@@ -105,6 +105,7 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 	//Open a file for read from compressed bam.
 	norm->in = hts_open(norm_file, "r");
 	check(norm->in != 0,"Normal file %s failed to open.",norm_file);
+	norm->head = sam_hdr_read(norm->in);
 	norm->idx = sam_index_load(norm->in,norm_file);
 	check(norm->idx != 0,"Normal index file %s failed to open.",norm_file);
 	norm->bam_access_bases = malloc(sizeof(char)*4);
