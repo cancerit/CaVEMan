@@ -51,6 +51,7 @@ static int includeDups = 0;
 static unsigned int increment = 250000;
 static unsigned int max_read_count = 500000;
 static double maxPropRdCount = 1.5;
+static unsigned int read_length_base = 100;
 static char tum_bam_file[512];
 static char norm_bam_file[512];
 static char *config_file = "caveman.cfg.ini";
@@ -235,6 +236,15 @@ int split_main(int argc, char *argv[]){
 		check(sf_tum!=NULL,"Error populating file for tum seq file %s.",tum_bam_file);
 		idx_tum = bam_access_populate_file_index(sf_tum, tum_bam_file);
 		check(idx_tum!=NULL,"Error populating index for tum seq file %s.",tum_bam_file);
+
+		//read the first 100 reads and get an idea of average read length.
+	  int avg_read_len_norm = bam_access_get_avg_readlength_from_bam(sf_norm);
+    int avg_read_len_tum = bam_access_get_avg_readlength_from_bam(sf_tum);
+    //Use a comparison of average read length to read_length_base in order to calculate a useful split size.
+    int avg_read_len = (avg_read_len_norm + avg_read_len_tum) / 2;
+    //Adjust max read count according to difference between avg_read_len and read_length_base
+    float proportion_rd_length =  read_length_base / avg_read_len;
+    max_read_count *= proportion_rd_length;
 
 		iter_norm = bam_access_get_hts_itr(sf_norm, idx_norm, chr_name, start, stop);
 		check(iter_norm!=NULL,"Error fetching normal iterator or section %s:%d-%d.",chr_name,start,stop);

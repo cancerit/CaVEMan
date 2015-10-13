@@ -87,6 +87,8 @@ int bam_access_openbams(char *normFile, char *tumFile, char *ref_file);
 
 int bam_access_get_count_for_region(char *chr_name, uint32_t start, uint32_t stop);
 
+int bam_access_get_avg_readlength_from_bam(htsFile *sf);
+
 void bam_access_closebams();
 
 int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop, file_holder *fh);
