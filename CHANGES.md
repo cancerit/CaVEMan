@@ -1,3 +1,9 @@
+### 1.7.2
+* RG lane id search no longer requires ID to be at the beginning of the RG line.
+
+### 1.7.1
+* Added header read to bam_access_get_by_position_counts method. Fixes #41
+
 ### 1.7.0
 * Updated merge script to check number of files against splitList.
 
