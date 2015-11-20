@@ -659,6 +659,8 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	assert(bam_loc != NULL);
 	char *line = NULL;
 	List *li = NULL;
+	char ** ptr = NULL;
+	char *tmp_line = NULL;
 	htsFile *bam =  NULL;
 	bam = hts_open(bam_loc, "r");
 	check(bam != 0,"Bam file %s failed to open to read header.",bam_loc);
@@ -668,10 +670,39 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	line = strtok(head_txt,"\n");
 	while(line != NULL){
 		//Check for a read group line
-		if(strncmp(line,"@RG",3)==0){
+		if(strncmp(line,"@RG",3)==0){	
+			ptr = malloc(sizeof(char **));
+			check_mem(ptr);
 			char *id = malloc(sizeof(char) * 100);
 			char *lane = malloc(sizeof(char) * 150);
-			int chk = sscanf(line,"@RG\tID:%s",id);
+			tmp_line = strtok_r(line,"\t",ptr);
+			while(tmp_line != NULL){
+				int chk = sscanf(tmp_line,"ID:%s",id);
+				if(chk==1){
+					lane = strcpy(lane,id);
+					lane = strcat(lane,"_");
+					lane = strcat(lane,isnorm);
+					
+					int found = 0;
+					LIST_FOREACH(li, first, next, cur){
+						if(strcmp((char *)cur->value,lane)==0){
+							found = 1;
+						}
+					}
+					if(found==0){
+						List_push(li,lane);
+					}else{
+						free(lane);
+						free(id);
+					}
+					
+				}// If this is a match for RG				
+				tmp_line = strtok_r(NULL,"\t",ptr);
+			}	
+		}//End of if this is an RG line
+		
+			/*
+			int chk = sscanf(line,"ID:%s",id);
 			if(chk==1){
 				lane = strcpy(lane,id);
 				lane = strcat(lane,"_");
@@ -691,9 +722,9 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 			}else{
 				free(id);
 				free(lane);
-				sentinel("ID and SM not found in RG line %s.",line);
+				sentinel("ID not found in RG line %s.",line);
 			}
-		}
+		}*/
 		line = strtok(NULL,"\n");
 	}
 	if(line) free(line);
