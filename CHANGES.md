@@ -1,3 +1,7 @@
+### 1.7.3
+* Fixed generateCavemanUMNormVCF - command line help has errors #28
+* Fixed check BAM headers in setup for readgroups #34
+
 ### 1.7.2
 * RG lane id search no longer requires ID to be at the beginning of the RG line.
 
