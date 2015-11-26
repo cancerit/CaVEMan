@@ -308,7 +308,7 @@ void estep_setup_options(int argc, char *argv[]){
 
    //Do some checking to ensure required arguments were passed
    if(idx == 0){
-   	estep_print_usage(1);
+   	estep_print_usage(1); 
    }
 
    //Do some checking to ensure required arguments were passed and are accessible files
