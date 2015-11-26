@@ -49,8 +49,8 @@ static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
 static unsigned int increment = 250000;
-static unsigned int max_read_count = 500000;
-static double maxPropRdCount = 1.5;
+static unsigned int max_read_count = 350000;
+static double maxPropRdCount = 1.25;
 static unsigned int read_length_base = 100;
 static char tum_bam_file[512];
 static char norm_bam_file[512];
@@ -241,10 +241,24 @@ int split_main(int argc, char *argv[]){
 	  int avg_read_len_norm = bam_access_get_avg_readlength_from_bam(sf_norm);
     int avg_read_len_tum = bam_access_get_avg_readlength_from_bam(sf_tum);
     //Use a comparison of average read length to read_length_base in order to calculate a useful split size.
-    int avg_read_len = (avg_read_len_norm + avg_read_len_tum) / 2;
+    float avg_read_len = ((float)avg_read_len_norm + (float)avg_read_len_tum) / (float)2;
     //Adjust max read count according to difference between avg_read_len and read_length_base
-    float proportion_rd_length =  read_length_base / avg_read_len;
-    max_read_count *= proportion_rd_length;
+    float proportion_rd_length =  (float)read_length_base / avg_read_len;
+    max_read_count = (int)((float)max_read_count * proportion_rd_length);
+			
+		hts_close(sf_norm);
+		hts_idx_destroy(idx_norm);
+		hts_close(sf_tum);
+		hts_idx_destroy(idx_tum);
+		
+		sf_norm = bam_access_populate_file(norm_bam_file,ref_idx);
+		check(sf_norm!=NULL,"Error populating file norm seq file %s.",norm_bam_file);
+		idx_norm = bam_access_populate_file_index(sf_norm, norm_bam_file);
+		check(idx_norm!=NULL,"Error populating index for norm seq file %s.",norm_bam_file);
+		sf_tum = bam_access_populate_file(tum_bam_file,ref_idx);
+		check(sf_tum!=NULL,"Error populating file for tum seq file %s.",tum_bam_file);
+		idx_tum = bam_access_populate_file_index(sf_tum, tum_bam_file);
+		check(idx_tum!=NULL,"Error populating index for tum seq file %s.",tum_bam_file);
 
 		iter_norm = bam_access_get_hts_itr(sf_norm, idx_norm, chr_name, start, stop);
 		check(iter_norm!=NULL,"Error fetching normal iterator or section %s:%d-%d.",chr_name,start,stop);
