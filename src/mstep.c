@@ -105,16 +105,22 @@ void mstep_setup_options(int argc, char *argv[]){
       		break;
 
       	case 'i':
-      		idx = atoi(optarg);
+      		if(sscanf(optarg, "%i", &idx) != 1){
+      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
+      		}
       		break;
 
       	case 'm':
-      		min_bq = atoi(optarg);
+      		if(sscanf(optarg, "%i", &min_bq) != 1){
+      			sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg);
+      		}
       		break;
 
       	case 'a':
-				split_size = atoi(optarg);
-				break;
+      		if(sscanf(optarg, "%i", &split_size) != 1){
+      			sentinel("Error parsing -a argument '%s'. Should be an integer > 0",optarg);
+      		}
+					break;
 
 			case '?':
             mstep_print_usage (1);
@@ -139,6 +145,10 @@ void mstep_setup_options(int argc, char *argv[]){
    }
 
    return;
+   
+error:
+	mstep_print_usage (1);
+	return;
 }
 
 int mstep_main(int argc, char *argv[]){
