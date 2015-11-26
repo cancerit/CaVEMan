@@ -679,6 +679,7 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	char ** ptr = NULL;
 	char *tmp_line = NULL;
 	htsFile *bam =  NULL;
+	int rg_found = 0;
 	bam = hts_open(bam_loc, "r");
 	check(bam != 0,"Bam file %s failed to open to read header.",bam_loc);
 	bam_hdr_t *header = sam_hdr_read(bam);
@@ -696,6 +697,7 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 			while(tmp_line != NULL){
 				int chk = sscanf(tmp_line,"ID:%s",id);
 				if(chk==1){
+					rg_found = 1;
 					lane = strcpy(lane,id);
 					lane = strcat(lane,"_");
 					lane = strcat(lane,isnorm);
@@ -717,33 +719,11 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 				tmp_line = strtok_r(NULL,"\t",ptr);
 			}	
 		}//End of if this is an RG line
-		
-			/*
-			int chk = sscanf(line,"ID:%s",id);
-			if(chk==1){
-				lane = strcpy(lane,id);
-				lane = strcat(lane,"_");
-				lane = strcat(lane,isnorm);
-				int found = 0;
-				LIST_FOREACH(li, first, next, cur){
-					if(strcmp((char *)cur->value,lane)==0){
-						found = 1;
-					}
-				}
-				if(found==0){
-					List_push(li,lane);
-				}else{
-					free(lane);
-					free(id);
-				}
-			}else{
-				free(id);
-				free(lane);
-				sentinel("ID not found in RG line %s.",line);
-			}
-		}*/
 		line = strtok(NULL,"\n");
 	}
+	
+	check(rg_found==1,"No RG lines with IDs found in header of bam file %s.",bam_loc);
+	
 	if(line) free(line);
 	hts_close(bam);
 	return li;

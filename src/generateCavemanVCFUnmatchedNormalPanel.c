@@ -85,8 +85,9 @@ typedef struct sample_bam{
 }sample_bam;
 
 void gen_panel_print_usage (int exit_code){
-	printf("Usage: generateCavemanVCFUnmatchedNormalPanel -i jobindex [-f path] [-c int] [-m int] [-e int] \n\n");
-  printf("-i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)\n\n");
+	printf("Usage: generateCavemanUMNormVCF -i jobindex [-b csv of bam file paths] [-o path] [-r ref.fa filepath] [-l path]\n");
+	printf("\t\t\t\t\t\t\t[-s string] [-v string] [-n csv string of sample names] [-p string] [-t string]\n\n");
+  printf("-i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)\n");
   printf("-b  --bam-files [file]            Path to the bam files to be analysed (comma separated list, in the same order as sample-names).\n");
   printf("-o  --out-file [file]             Filename to write results to.\n");
   printf("-r  --reference [file]            Path to reference file (genome.fa).\n");
@@ -100,7 +101,6 @@ void gen_panel_print_usage (int exit_code){
 	printf("Optional\n");
 
 	printf("-q  --min-base-qual [int]         Minimum base quality [default:%d]\n",min_base_qual);
-	//printf("-m  --man [int]                   Full documentation.\n");
 	printf("-h	help                          Display this usage information.\n");
   exit(exit_code);
 }
