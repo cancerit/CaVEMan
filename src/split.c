@@ -105,19 +105,27 @@ void split_setup_options(int argc, char *argv[]){
       		break;
 
       	case 'i':
-      		idx = atoi(optarg);
+      		if(sscanf(optarg, "%i", &idx) != 1){
+      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
+      		}
       		break;
 
       	case 'm':
-      		maxPropRdCount = atof(optarg);
+      		if(sscanf(optarg, "%lf", &maxPropRdCount) != 1){
+      			sentinel("Error parsing -m argument '%s'. Should be a double > 0.0.",optarg);
+      		}
       		break;
 
       	case 'c':
-      		increment = atoi(optarg);
+      		if(sscanf(optarg, "%i", &increment) != 1){
+      			sentinel("Error parsing -c argument '%s'. Should be an integer > 0",optarg);
+      		}
       		break;
 
       	case 'e':
-      		max_read_count = atoi(optarg);
+      		if(sscanf(optarg, "%i", &max_read_count) != 1){
+      			sentinel("Error parsing -e argument '%s'. Should be an integer > 0",optarg);
+      		}	
       		break;
 
 			case '?':
@@ -142,6 +150,10 @@ void split_setup_options(int argc, char *argv[]){
    }
 
    return;
+   
+error:
+	split_print_usage(1);
+	return;
 }
 
 int round_divide_integer(int dividend, int divisor){

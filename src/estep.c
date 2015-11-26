@@ -79,6 +79,7 @@ static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
 static int min_bq = 11;
+static int cn = 0;
 static int idx;
 static int split_size = 50000;
 static int debug=0;
@@ -198,7 +199,10 @@ void estep_setup_options(int argc, char *argv[]){
         break;
 
       case 'M':
-        cn_access_set_max_cn(atoi(optarg));
+      	if(sscanf(optarg, "%i", &cn) != 1){
+      		sentinel("Error parsing -M argument '%s'. Should be an integer > 0",optarg);
+      	}
+        cn_access_set_max_cn(cn);
         break;
 
       case 'P':
@@ -210,55 +214,81 @@ void estep_setup_options(int argc, char *argv[]){
         break;
 
       case 'n':
-        normal_copy_number = atoi(optarg);
+      	if(sscanf(optarg, "%i", &normal_copy_number) != 1){
+      		sentinel("Error parsing -n argument '%s'. Should be an integer > 0",optarg);
+      	}
         break;
 
       case 't':
-        tumour_copy_number = atoi(optarg);
+      	if(sscanf(optarg, "%i", &tumour_copy_number) != 1){
+      		sentinel("Error parsing -t argument '%s'. Should be an integer > 0",optarg);
+      	}
         break;
 
       case 'i':
-        idx = atoi(optarg);
+      	if(sscanf(optarg, "%i", &idx) != 1){
+      		sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
+      	}
         break;
 
       case 'm':
-        min_bq = atoi(optarg);
+      	if(sscanf(optarg, "%i", &min_bq) != 1){
+      		sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg);
+      	}
         break;
 
 			case 'k':
-				norm_contam = atof(optarg);
+				if(sscanf(optarg, "%f", &norm_contam) != 1){
+      		sentinel("Error parsing -k argument '%s'. Should be a float >= 0.0.",optarg);
+      	}
 				break;
 
 			case 'd':
-				prior_snp_prob = atof(optarg);
+				if(sscanf(optarg, "%f", &prior_snp_prob) != 1){
+      		sentinel("Error parsing -d argument '%s'. Should be a float > 0.0.",optarg);
+      	}
 				break;
 
 			case 'c':
-				prior_mut_prob = atof(optarg);
+				if(sscanf(optarg, "%f", &prior_mut_prob) != 1){
+      		sentinel("Error parsing -c argument '%s'. Should be a float > 0.0.",optarg);
+      	}
 				break;
 
 			case 'b':
-				ref_bias = atof(optarg);
+				if(sscanf(optarg, "%f", &ref_bias) != 1){
+      		sentinel("Error parsing -b argument '%s'. Should be a float >= 0.0.",optarg);
+      	}
 				break;
 
 			case 'p':
-				min_mut_prob = atof(optarg);
+				if(sscanf(optarg, "%f", &min_mut_prob) != 1){
+      		sentinel("Error parsing -p argument '%s'. Should be a float >= 0.0.",optarg);
+      	}
 				break;
 
 			case 'q':
-				min_snp_prob = atof(optarg);
+				if(sscanf(optarg, "%f", &min_snp_prob) != 1){
+      		sentinel("Error parsing -q argument '%s'. Should be a float >= 0.0.",optarg);
+      	}
 				break;
 
 			case 'x':
-				min_tum_cvg = atoi(optarg);
+				if(sscanf(optarg, "%i", &min_tum_cvg) != 1){
+      		sentinel("Error parsing -x argument '%s'. Should be an integer > 0",optarg);
+      	}
 				break;
 
 			case 'y':
-				min_norm_cvg = atoi(optarg);
+				if(sscanf(optarg, "%i", &min_norm_cvg) != 1){
+      		sentinel("Error parsing -y argument '%s'. Should be an integer > 0",optarg);
+      	}
 				break;
 
 			case 'a':
-				split_size = atoi(optarg);
+				if(sscanf(optarg, "%i", &split_size) != 1){
+      		sentinel("Error parsing -a argument '%s'. Should be an integer >= 0",optarg);
+      	}
 				break;
 
 			case 'S':
@@ -312,6 +342,10 @@ void estep_setup_options(int argc, char *argv[]){
    set_max_tum_cvg(estep_max_tumour_coverage);
 
    return;
+   
+error:
+	estep_print_usage (1);
+	return;
 }
 
 int estep_main(int argc, char *argv[]){
