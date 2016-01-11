@@ -1,4 +1,4 @@
-### FUTURE
+### 1.8.0
 * Commmandline params checked
 * Readlength taken into account in split sections
 * setup.sh installs perl scripts
