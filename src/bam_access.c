@@ -92,6 +92,23 @@ static int pileup_blank(void *data, bam1_t *b) {
   return 0;
 }
 
+int bam_access_get_avg_readlength_from_bam(htsFile *sf){
+  assert(sf != NULL);
+  int read_count = 0;
+  int32_t read_length_sum = 0;
+  //Read first 100 lines of file and calculate average read length.
+  bam_hdr_t *head = NULL;
+	head = sam_hdr_read(sf);
+  bam1_t *b = bam_init1();
+  int ret;
+  while ((ret = sam_read1(sf, head, b)) >= 0 && read_count < 100) {
+    read_count++;
+    read_length_sum += b->core.l_qseq;
+  }
+  bam_destroy1(b);
+  return (int)(read_length_sum/read_count);
+}
+
 file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint32_t start, uint32_t end){
 	//Open bam related stuff
 	assert(norm_file != NULL);

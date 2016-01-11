@@ -1,3 +1,8 @@
+### 1.8.0
+* Commmandline params checked
+* Readlength taken into account in split sections
+* setup.sh installs perl scripts
+
 ### 1.7.3
 * Fixed generateCavemanUMNormVCF - command line help has errors #28
 * Fixed check BAM headers in setup for readgroups #34
