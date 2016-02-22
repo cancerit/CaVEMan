@@ -133,37 +133,21 @@ else
   cd $INIT_DIR
   (
     set -xe
-    mkdir -p $INIT_DIR/c/bin
-    make -j$CPU
-    cp $INIT_DIR/bin/caveman $INST_PATH/bin/.
-    make clean
+    mkdir -p $INIT_DIR/c/bin &&
+    make clean &&
+    make -j$CPU &&
+    cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
+    cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
     touch $SETUP_DIR/caveman.success
   )>>$INIT_DIR/setup.log 2>&1
 fi
 done_message "" "Failed to build CaVEMan."
 
-#Code to install scripts to */bin directory.
-echo -n "Installing CaVEMan scripts..."
-(
-  cd $INIT_DIR/scripts
-  perl Makefile.PL INSTALL_BASE=$INST_PATH
-  make
-  #make test
-  make install
-  
-  cp *Caveman $INST_PATH/bin/
-  cp *CavemanResults $INST_PATH/bin/
-  
-) >>$INIT_DIR/setup.log 2>&1
-done_message "" "CaVEMan scripts install failed."
-
 cd $INIT_DIR
-
-#add bin path for install tests
-export PATH="$INST_PATH/bin:$PATH"
 
 # cleanup all junk
 rm -rf $SETUP_DIR
 
 echo
-echo
+echo "Please add the following to beginning of path:"
+echo "  $INST_PATH/bin"

@@ -94,8 +94,8 @@ remove_htslib_tmp:
 	rm -rf $(HTSTMP)
 
 copyscript:
-	rsync -uE ./scripts/* ./bin/
-	chmod u+x ./bin/setupCaveman ./bin/splitCaveman ./bin/mstepCaveman ./bin/mergeCaveman ./bin/estepCaveman ./bin/mergeCavemanResults
+	rsync -uE ./scripts/mergeCavemanResults ./bin/
+	chmod u+x ./bin/mergeCavemanResults
 
 valgrind:
 	VALGRIND="valgrind --log-file=/tmp/valgrind-%p.log" $(MAKE)
