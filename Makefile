@@ -1,4 +1,4 @@
-CAVEMAN_VERSION=1.9.0
+CAVEMAN_VERSION=1.9.1
 TEST_REF?=""
 #Compiler
 CC = gcc -O3 -g -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
@@ -94,8 +94,8 @@ remove_htslib_tmp:
 	rm -rf $(HTSTMP)
 
 copyscript:
-	rsync -uE ./scripts/mergeCavemanResults ./bin/
-	chmod u+x ./bin/mergeCavemanResults
+	cp ./scripts/mergeCavemanResults ./bin/
+	chmod 755 ./bin/*
 
 valgrind:
 	VALGRIND="valgrind --log-file=/tmp/valgrind-%p.log" $(MAKE)
