@@ -21,7 +21,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
 
-SOURCE_HTSLIB="https://github.com/samtools/htslib/archive/1.2.tar.gz"
+SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.3/htslib-1.3.tar.bz2"
 
 done_message () {
     if [ $? -eq 0 ]; then
@@ -117,7 +117,6 @@ else
   if [ ! -e htslib ]; then
     get_distro "htslib" $SOURCE_HTSLIB
   fi
-  patch htslib/cram/cram_index.c < $INIT_DIR/patches/htslibcramindex.diff
   make -C htslib -j$CPU
   touch $SETUP_DIR/htslib.success
   )>>$INIT_DIR/setup.log 2>&1
