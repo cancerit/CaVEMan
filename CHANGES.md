@@ -1,3 +1,12 @@
+### 1.9.2
+* Resolves #45 - New [samtools/htslib 1.3](https://github.com/samtools/htslib/releases/tag/1.3) to remove need for patch.
+
+### 1.9.1
+* Removed unnecessary dependancy on `rsync` when `cp` will do.
+
+### 1.9.0
+* Corrections to install methods to ensure all relevant files were installed.
+
 ### 1.8.0
 * Commmandline params checked
 * Readlength taken into account in split sections
