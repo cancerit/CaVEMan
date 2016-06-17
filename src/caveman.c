@@ -48,7 +48,7 @@ void print_usage (int exit_code){
   	exit(exit_code);
 }
 
-void setup_options(int argc, char *argv[]){
+int setup_options(int argc, char *argv[]){
 	const struct option long_opts[] =
 	{
              	/*{"setup", no_argument, 0, 's'},
@@ -70,24 +70,19 @@ void setup_options(int argc, char *argv[]){
    	char *option = argv[1];
 		if(strcmp(option,"setup")==0){
 			argv[1]= "";
-			setup_main(argc,argv);
-			return;
+			return setup_main(argc,argv);
 		}else if(strcmp(option,"split")==0){
 			argv[1]= "";
-			split_main(argc,argv);
-			return;
+			return split_main(argc,argv);
 		}else if(strcmp(option,"mstep")==0){
 			argv[1]= "";
-			mstep_main(argc,argv);
-			return;
+			return mstep_main(argc,argv);
 		}else if(strcmp(option,"merge")==0){
 			argv[1]= "";
-			merge_main(argc,argv);
-			return;
+			return merge_main(argc,argv);
 		}else if(strcmp(option,"estep")==0){
 			argv[1]= "";
-			estep_main(argc,argv);
-			return;
+			return estep_main(argc,argv);
 		}
    }
 
@@ -100,7 +95,7 @@ void setup_options(int argc, char *argv[]){
 
 			case 'v':
 				printf ("%s\n",CAVEMAN_VERSION);
-				return;
+				return 0;
 
 			case '?':
 				print_usage(1);
@@ -112,10 +107,9 @@ void setup_options(int argc, char *argv[]){
    	}; // End of args switch statement
 
    }//End of iteration through options
-   return;
+   return 0;
 }
 
 int main(int argc, char *argv[]){
-	setup_options(argc,argv);
-   return 0;
+	return setup_options(argc,argv);
 }
