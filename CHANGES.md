@@ -1,3 +1,6 @@
+### 1.9.4
+* Correct main method to ensure failure is passed through from running the by section main methods.
+
 ### 1.9.3
 * Fix bug in ignore regions file reading where bed file resulted in incorrect coords
 
