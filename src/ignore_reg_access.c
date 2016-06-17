@@ -86,12 +86,18 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
 	assert(chr != NULL);
 	assert(entry_count >= 0);
 	assert(sizeof(regions)>0);
-
+	int is_bed = 0;
 	if(entry_count == 0){
 		return 0;
 	}
 	//assign the right size to the array
 	//then reread so we can parse the actual lines.
+	//Check for bed extension
+	const char *ext = strrchr(ign_file, '.');
+	if(ext && ext != ign_file && strcmp(ext+1,"bed")==0){
+		is_bed = 1;
+	}
+
 	FILE *file = fopen(ign_file,"r");
 	check(file != NULL,"Couldn't open ignored region file: %s.",ign_file);
 	int found_count = 0;
@@ -107,7 +113,7 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
 			if(strcmp(chr_nom,chr) == 0){
 				regions[found_count] = malloc(sizeof(struct seq_region_t));
 				check_mem(regions[found_count]);
-				regions[found_count]->beg = beg;
+				regions[found_count]->beg = beg + is_bed;
 				regions[found_count]->end = end;
 				found_count++;
 			}
