@@ -1,3 +1,6 @@
+### 1.9.3
+* Fix bug in ignore regions file reading where bed file resulted in incorrect coords
+
 ### 1.9.2
 * Resolves #45 - New [samtools/htslib 1.3](https://github.com/samtools/htslib/releases/tag/1.3) to remove need for patch.
 
