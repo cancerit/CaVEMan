@@ -125,7 +125,7 @@ void split_setup_options(int argc, char *argv[]){
       	case 'e':
       		if(sscanf(optarg, "%i", &max_read_count) != 1){
       			sentinel("Error parsing -e argument '%s'. Should be an integer > 0",optarg);
-      		}	
+      		}
       		break;
 
 			case '?':
@@ -150,7 +150,7 @@ void split_setup_options(int argc, char *argv[]){
    }
 
    return;
-   
+
 error:
 	split_print_usage(1);
 	return;
@@ -257,12 +257,12 @@ int split_main(int argc, char *argv[]){
     //Adjust max read count according to difference between avg_read_len and read_length_base
     float proportion_rd_length =  (float)read_length_base / avg_read_len;
     max_read_count = (int)((float)max_read_count * proportion_rd_length);
-			
+
 		hts_close(sf_norm);
 		hts_idx_destroy(idx_norm);
 		hts_close(sf_tum);
 		hts_idx_destroy(idx_tum);
-		
+
 		sf_norm = bam_access_populate_file(norm_bam_file,ref_idx);
 		check(sf_norm!=NULL,"Error populating file norm seq file %s.",norm_bam_file);
 		idx_norm = bam_access_populate_file_index(sf_norm, norm_bam_file);
