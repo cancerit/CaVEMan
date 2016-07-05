@@ -113,6 +113,8 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 
 file_holder *bam_access_get_by_position_counts(char *normFile, char *chr, uint32_t start, uint32_t end);
 
+file_holder *bam_access_get_by_position_counts_with_strand(char *normFile, char *chr, uint32_t start, uint32_t end);
+
 hts_idx_t *bam_access_populate_file_index(htsFile *sf, const char *bam_loc);
 
 htsFile *bam_access_populate_file(const char *bam_loc, const char *ref_file);
