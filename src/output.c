@@ -117,15 +117,8 @@ int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
 	char *sec_ref = NULL;
 	char *sec_tum = NULL;
 
-	//if(pos->top_geno->tum_geno->var_base != pos->ref_base[0]){
-	//	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
-	//	check(write>0,"Error writing initial vcf variant line, top mutant genotype.");
-	//}//else{
-	//	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->sec_geno->tum_geno->var_base);
-	//	check(write>0,"Error writing initial vcf variant line, second mutant genotype.");
-	//}
 	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
-	//	check(write>0,"Error writing initial vcf variant line, top mutant genotype.");
+	check(write>0,"Error writing initial vcf variant line, top mutant genotype.");
 	//total depth seen by CaVEMan
 	write = fprintf(out,"DP=%d;",(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
 								+genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg)));
