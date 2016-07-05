@@ -367,6 +367,21 @@ void gen_panel_clear_pileups(List *samples){
 	return;
 }
 
+int check_is_only_normal(char ref_base,file_holder * fholder, int loc){
+  int x=0;
+  for(x=0;x<4;x++){
+    if(ref_base != fholder->bam_access_bases[x]){
+      if(fholder->base_counts[loc][x] > 0){
+        return 0;
+      }
+      if(strand_counts == 1 && fholder->base_counts[loc][x+4] > 0){
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+
 int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, int start, int end, List *samples, FILE *vcf_out){
 	char *ref_seq = fai_access_get_ref_seqeuence_for_pos(ref_file_loc,chr_name,start,end);
 	check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,start,end);
@@ -388,16 +403,12 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 		char ref_base = toupper(ref_seq[i]);
 		if(!(ref_base == 'A' || ref_base == 'C' || ref_base == 'G' || ref_base == 'T')) continue;
 		int sum = 0;
-		int write = fprintf(vcf_out,VCF_VAR_LINE_START,
-										chr_name,
-										start+i,
-										ref_base);
-		check(write>0,"Error writing VCF beginning of variant line for position %d.",start+i);
 		char *last_of_line = NULL;
 		int sizeoflist = List_count(samples);
 		last_of_line = malloc(sizeof(char) * ((50*sizeoflist)+1));
 		check_mem(last_of_line);
 		strcpy(last_of_line,"");
+		int normal_only_count = 0;
 		LIST_FOREACH(samples, first, next, this){
 			if(((sample_bam *)this->value)->holder->base_counts[i] != 0){
 				sum += (((sample_bam *)this->value)->holder->base_counts[i][0]+
@@ -412,7 +423,7 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 				}
 				char tmp[128];
 				int chk = 0;
-
+        normal_only_count += check_is_only_normal(ref_base,((sample_bam *)this->value)->holder,i);
 				if(strand_counts==1){
 				  chk = sprintf(	tmp,VCF_VAR_LINE_STRAND,
 																						((sample_bam *)this->value)->holder->base_counts[i][0],
@@ -435,24 +446,35 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 				strcat(last_of_line,tmp);
 			}else{
 				strcat(last_of_line,"-");
+				normal_only_count++;
 			}
 			if(this->next!=NULL){
 				strcat(last_of_line,"\t");
 			}
 		}
-		strcat(last_of_line,"\n");
-		write = 0;
 
-		if(strand_counts==1){
-		  write = fprintf(vcf_out,VCF_VAR_LINE_MID_STRAND,sum);
-		}else{
-		  write = fprintf(vcf_out,VCF_VAR_LINE_MID,sum);
+    if(normal_only_count < List_count(samples)){ // Only output a line where at least one sample is not 'all reference'
+
+      int write = fprintf(vcf_out,VCF_VAR_LINE_START,
+                      chr_name,
+                      start+i,
+                      ref_base);
+      check(write>0,"Error writing VCF beginning of variant line for position %d.",start+i);
+
+      strcat(last_of_line,"\n");
+      write = 0;
+
+      if(strand_counts==1){
+        write = fprintf(vcf_out,VCF_VAR_LINE_MID_STRAND,sum);
+      }else{
+        write = fprintf(vcf_out,VCF_VAR_LINE_MID,sum);
+      }
+      check(write>0,"Error writing VCF middle of variant line for position %d.",start+i);
+
+      write = 0;
+      write = fprintf(vcf_out,"%s",last_of_line);
+      check(write>0,"Error writing VCF end of variant line for position %d.",start+i);
 		}
-		check(write>0,"Error writing VCF middle of variant line for position %d.",start+i);
-
-		write = 0;
-		write = fprintf(vcf_out,"%s",last_of_line);
-		check(write>0,"Error writing VCF end of variant line for position %d.",start+i);
 		free(last_of_line);
 	}
 
