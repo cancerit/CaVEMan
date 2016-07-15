@@ -81,6 +81,7 @@ static const char *VCF_INFO_TOP_GENO_PROB = "ID=TP,Number=1,Type=Float,Descripti
 static const char *VCF_INFO_SEC_GENO = "ID=SG,Number=1,Type=String,Description=\"2nd most probable genotype as called by CaVEMan\"";
 static const char *VCF_INFO_SEC_GENO_PROB = "ID=SP,Number=1,Type=Float,Description=\"Probability of 2nd most probable genotype as called by CaVEMan\"";
 static const char *VCF_INFO_DBNSP_ID = "ID=DS,Number=.,Type=String,Description=\"DBSnp ID of known SNP\"";
+static const char *VCF_VAR_OUTPUT_FORMAT = "%s\t%d\t.\t%s\t%c\t.\t.\tDP=%d;MP=%5.1Le;GP=%5.1Le;TG=%s/%s;TP=%5.1Le;SG=%s/%s;SP=%5.1Le\t%s\t%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\t%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\n";
 
 FILE *no_analysis = NULL;
 int no_analysis_cache_size = 500;
@@ -116,34 +117,73 @@ int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
 	char *top_tum = NULL;
 	char *sec_ref = NULL;
 	char *sec_tum = NULL;
-
-	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
-	check(write>0,"Error writing initial vcf variant line, top mutant genotype.");
-	//total depth seen by CaVEMan
-	write = fprintf(out,"DP=%d;",(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
-								+genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg)));
-	check(write>0,"Error writing info line.");
-	//Total somatic prob
-	write = fprintf(out,"MP=%5.1Le;",pos->total_mut_prob);
-	check(write>0,"Error writing info line, mut_prob.");
-	//total germline prob
-	write = fprintf(out,"GP=%5.1Le;",pos->total_snp_prob);
-	check(write>0,"Error writing info line snp_prob.");
-	//Top genotype and second genotype info
+  //char *var_output_format =  "%s\t%d\t.\t%s\t%c\t.\t.\tDP=%d;MP=%5.1Le;GP=%5.1Le;TG=%s/%s;TP=%5.1Le;SG=%s/%s;SP=%5.1Le\t%s\t%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\t%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\n";
+  int dp = genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
+								+genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg);
 	top_ref = genotype_get_genotype_t_as_string(pos->top_geno->norm_geno);
 	top_tum = genotype_get_genotype_t_as_string(pos->top_geno->tum_geno);
 	sec_ref = genotype_get_genotype_t_as_string(pos->sec_geno->norm_geno);
 	sec_tum = genotype_get_genotype_t_as_string(pos->sec_geno->tum_geno);
-	write = fprintf(out,"TG=%s/%s;TP=%5.1Le;SG=%s/%s;SP=%5.1Le\t",
-						top_ref,top_tum,pos->top_geno->prob,
-						sec_ref,sec_tum,pos->sec_geno->prob);
 
-	check(write>0,"Error writing info line extra probs.");
+	int norm_norm_geno_rep = 0;
+	int norm_tum_geno_rep = 0;
+	int norm_mut_count = genotype_get_base_count(pos->norm_fwd_cvg,pos->top_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->top_geno->tum_geno->var_base);
+	double norm_mut_prop = 0.0;
+	if(norm_mut_count > 0){
+		norm_mut_prop = (double) norm_mut_count / (double)(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg));
+	}
+	output_set_genotype_representations_for_genotype_t(pos->top_geno->norm_geno,pos->ref_base[0], &norm_norm_geno_rep, &norm_tum_geno_rep);
+
+	int tum_norm_geno_rep = 0;
+	int tum_tum_geno_rep = 0;
+	int tum_mut_count = 0;
+	tum_mut_count = genotype_get_base_count(pos->tum_fwd_cvg,pos->top_geno->tum_geno->var_base)+genotype_get_base_count(pos->tum_rev_cvg,pos->top_geno->tum_geno->var_base);
+	double tum_mut_prop = 0.0;
+	if(tum_mut_count > 0){
+		tum_mut_prop = (double) tum_mut_count / (double)(genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg));
+	}
+	output_set_genotype_representations_for_genotype_t(pos->top_geno->tum_geno,pos->ref_base[0], &tum_norm_geno_rep, &tum_tum_geno_rep);
+
+  int write = fprintf(out,VCF_VAR_OUTPUT_FORMAT,
+                          chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base, //Initial section
+                          dp,pos->total_mut_prob,pos->total_snp_prob,top_ref,top_tum, //INFO SECTION PART 1
+                          pos->top_geno->prob,sec_ref,sec_tum,pos->sec_geno->prob, //INFO SECTION PART 2
+                          VCF_VAR_FORMAT_LINE, //FORMAT DESC
+                          norm_norm_geno_rep,norm_tum_geno_rep, //NORMAL FORMAT
+                          pos->norm_fwd_cvg->a_count,pos->norm_fwd_cvg->c_count,pos->norm_fwd_cvg->g_count,pos->norm_fwd_cvg->t_count,//NORMAL FORMAT
+                          pos->norm_rev_cvg->a_count,pos->norm_rev_cvg->c_count,pos->norm_rev_cvg->g_count,pos->norm_rev_cvg->t_count,norm_mut_prop,//NORMAL FORMAT
+                          tum_norm_geno_rep,tum_tum_geno_rep,//TUMOUR FORMAT
+                          pos->tum_fwd_cvg->a_count,pos->tum_fwd_cvg->c_count,pos->tum_fwd_cvg->g_count,pos->tum_fwd_cvg->t_count,//TUMOUR FORMAT
+                          pos->tum_rev_cvg->a_count,pos->tum_rev_cvg->c_count,pos->tum_rev_cvg->g_count,pos->tum_rev_cvg->t_count,tum_mut_prop//TUMOUR FORMAT
+
+            );
+	//int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
+	check(write>0,"Error writing vcf variant line.");
+	//total depth seen by CaVEMan
+	//write = fprintf(out,"DP=%d;",(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
+	//							+genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg)));
+	//check(write>0,"Error writing info line.");
+	//Total somatic prob
+	//write = fprintf(out,"MP=%5.1Le;",pos->total_mut_prob);
+	//check(write>0,"Error writing info line, mut_prob.");
+	//total germline prob
+	//write = fprintf(out,"GP=%5.1Le;",pos->total_snp_prob);
+	//check(write>0,"Error writing info line snp_prob.");
+	//Top genotype and second genotype info
+	//top_ref = genotype_get_genotype_t_as_string(pos->top_geno->norm_geno);
+	//top_tum = genotype_get_genotype_t_as_string(pos->top_geno->tum_geno);
+	//sec_ref = genotype_get_genotype_t_as_string(pos->sec_geno->norm_geno);
+	//sec_tum = genotype_get_genotype_t_as_string(pos->sec_geno->tum_geno);
+	//write = fprintf(out,"TG=%s/%s;TP=%5.1Le;SG=%s/%s;SP=%5.1Le\t",
+	//					top_ref,top_tum,pos->top_geno->prob,
+	//					sec_ref,sec_tum,pos->sec_geno->prob);
+
+	//check(write>0,"Error writing info line extra probs.");
 	//FORMAT line
-	write = fprintf(out,"%s\t",VCF_VAR_FORMAT_LINE);
-	check(write>0,"Error writing vcf variant format line.");
+	//write = fprintf(out,"%s\t",VCF_VAR_FORMAT_LINE);
+	//check(write>0,"Error writing vcf variant format line.");
 	//NORMAL FORMAT
-	int norm_geno_rep = 0;
+	/*int norm_geno_rep = 0;
 	int tum_geno_rep = 0;
 	int mut_count = genotype_get_base_count(pos->norm_fwd_cvg,pos->top_geno->tum_geno->var_base)+genotype_get_base_count(pos->norm_rev_cvg,pos->top_geno->tum_geno->var_base);
 	double mut_prop = 0.0;
@@ -172,7 +212,7 @@ int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
 						pos->tum_fwd_cvg->a_count,pos->tum_fwd_cvg->c_count,pos->tum_fwd_cvg->g_count,pos->tum_fwd_cvg->t_count,
 						pos->tum_rev_cvg->a_count,pos->tum_rev_cvg->c_count,pos->tum_rev_cvg->g_count,pos->tum_rev_cvg->t_count,
 						mut_prop);
-	check(write>0,"Error writing tumour format for VCF variant line.");
+	check(write>0,"Error writing tumour format for VCF variant line.");*/
 	free(top_ref);
 	free(top_tum);
 	free(sec_ref);
