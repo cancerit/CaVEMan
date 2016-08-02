@@ -12,6 +12,5 @@ install: true
 compiler:
   - gcc
 
-script: make
-
-
+script:
+  - ./setup.sh ~/wtsi-opt
