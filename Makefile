@@ -2,7 +2,7 @@ CAVEMAN_VERSION=1.9.5
 TEST_REF?=""
 #Compiler
 CC?=gcc
-RUNCC=$(CC) -O3 -g -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
+CC+= -O3 -g -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
 
 #debug compiler
 #CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
@@ -68,10 +68,10 @@ all: clean make_bin make_htslib_tmp $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscrip
 	@echo  Binaries have been compiled.
 
 $(UMNORM_TARGET): $(OBJS)
-	$(RUNCC) $(CFLAGS) $(INCLUDES) -o $(UMNORM_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/generateCavemanVCFUnmatchedNormalPanel.c
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(UMNORM_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/generateCavemanVCFUnmatchedNormalPanel.c
 
 $(CAVEMAN_TARGET): $(OBJS)
-	$(RUNCC) $(CFLAGS) $(INCLUDES) -o $(CAVEMAN_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/caveman.c
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(CAVEMAN_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/caveman.c
 
 #Unit Tests
 test: $(CAVEMAN_TARGET)
@@ -107,7 +107,7 @@ valgrind:
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file)
 # (see the gnu make manual section about automatic variables)
 .c.o:
-	$(RUNCC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
