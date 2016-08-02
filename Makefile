@@ -107,7 +107,7 @@ valgrind:
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file)
 # (see the gnu make manual section about automatic variables)
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+	$(RUNCC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
 
 clean:
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
