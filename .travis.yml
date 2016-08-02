@@ -1,0 +1,14 @@
+notifications:
+  slack: wtsi-cgpit:ptUMR1tkNyZJYd9TpGoss8WR
+  email: false
+
+sudo: required
+dist: trusty
+
+language: c
+
+compiler:
+  - clang
+  - gcc
+
+
