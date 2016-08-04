@@ -83,7 +83,6 @@ INIT_DIR=`pwd`
 echo > $INIT_DIR/setup.log
 
 # log information about this system
-(
     echo '============== System information ===='
     set -x
     lsb_release -a
@@ -93,8 +92,6 @@ echo > $INIT_DIR/setup.log
     grep MemTotal /proc/meminfo
     set +x
     echo; echo
-) >>$INIT_DIR/setup.log 2>&1
-
 # cleanup inst_path
 mkdir -p $INST_PATH/bin
 cd $INST_PATH
@@ -112,14 +109,12 @@ if [ -e $SETUP_DIR/htslib.success ]; then
   echo -n " previously installed ...";
 else
   cd $SETUP_DIR
-  (
   set -xe
   if [ ! -e htslib ]; then
     get_distro "htslib" $SOURCE_HTSLIB
   fi
   make -C htslib -j$CPU
   touch $SETUP_DIR/htslib.success
-  )>>$INIT_DIR/setup.log 2>&1
 fi
 done_message "" "Failed to build htslib."
 
@@ -130,7 +125,6 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
-  (
     set -xe
     mkdir -p $INIT_DIR/c/bin &&
     make clean &&
@@ -138,7 +132,6 @@ else
     cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
     cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
     touch $SETUP_DIR/caveman.success
-  )>>$INIT_DIR/setup.log 2>&1
 fi
 done_message "" "Failed to build CaVEMan."
 
