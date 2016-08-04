@@ -10,7 +10,6 @@ install: true
 
 compiler:
   - gcc
-  - clang
 
 script:
   - ./setup.sh ~/wtsi-opt
