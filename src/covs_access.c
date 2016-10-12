@@ -144,7 +144,7 @@ int covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
                 int chk = fwrite(arr[i][j][k][m][n][p][r],sizeof(arr[i][j][k][m][n][p][r][0]),dim8,file);
-	              check(chk==dim8,"Error writing cov array to file.");
+	              check(chk==dim8,"Error writing cov array to file '%s'.",file_loc);
 							}
 						}
 					}
@@ -152,8 +152,8 @@ int covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,
 			}
 		}
 	}
-	fflush(file);
-	fclose(file);
+	check(fflush(file)==0,"Error flushing output to cov array file '%s'.",file_loc);
+	check(fclose(file)==0,"Error closing cov array file after writing '%s'.",file_loc);
 	return 0;
 error:
 	if(file) fclose(file);
@@ -185,7 +185,7 @@ uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim
 			}
 		}
 	}
-	fclose(file);
+	check(fclose(file)==0,"Error closing cov array file after reading '%s'.",file_loc);
 	return arr;
 error:
 	if(file) fclose(file);
@@ -441,8 +441,8 @@ int covs_access_write_probs_to_file(char *file_loc,long double ********arr,int d
 			}
 		}
 	}
-	fflush(file);
-	fclose(file);
+	check(fflush(file)==0,"Error flushing while writing to probs file '%s'.",file_loc);
+	check(fclose(file)==0,"Error closing after writing to probs file '%s'.",file_loc);
 	return 0;
 error:
 	if(file) fclose(file);
