@@ -196,6 +196,7 @@ file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *c
   const bam_pileup1_t *pil;
   while ((result = sam_itr_next(norm->in, iter, b)) >= 0) {
     if(b->core.qual == 0
+      || (b->core.flag & BAM_FPROPER_PAIR) != BAM_FPROPER_PAIR
       || (b->core.flag & BAM_FUNMAP)
 			|| (b->core.flag & BAM_FSECONDARY)
 			|| (b->core.flag & BAM_FQCFAIL)
