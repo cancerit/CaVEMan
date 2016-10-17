@@ -249,7 +249,7 @@ void destroy_position(estep_position_t *pos_arr){
 	return;
 }
 
-inline long double algos_calculate_per_base_normal_contamination(uint8_t norm_copy_no, uint8_t tum_copy_no){
+long double algos_calculate_per_base_normal_contamination(uint8_t norm_copy_no, uint8_t tum_copy_no){
 	long double per_base_norm = ((long double)norm_cont * (long double)norm_copy_no) /
 								(
 									(
@@ -368,7 +368,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 	return 0;
 }
 
-inline long double calculateLogSumExpNormFactor(estep_position_t *pos,long double norm_factor_max){
+long double calculateLogSumExpNormFactor(estep_position_t *pos,long double norm_factor_max){
 	long double sum_tot = 0.0;
    //Reference
    sum_tot += expl(pos->genos->ref_genotype->prob - norm_factor_max);
@@ -396,7 +396,7 @@ inline long double calculateLogSumExpNormFactor(estep_position_t *pos,long doubl
   	return norm_factor;
 }
 
-inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor_max){
+void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor_max){
 
 	combined_genotype_t *top_geno = NULL;
 	combined_genotype_t *sec_geno = NULL;
@@ -473,7 +473,7 @@ inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long 
 	return;
 }
 
-inline long double calculate_ref_prob(const long double norm, const long double tum){
+long double calculate_ref_prob(const long double norm, const long double tum){
 	long double ref_prob;
 	ref_prob = logl(((long double)1 - (long double)prior_s_prob) - (long double)prior_m_prob)
 							+ norm + tum;
@@ -539,7 +539,7 @@ void algos_run_per_position_estep_maths(estep_position_t *pos){
 
 }
 
-inline int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, int *rpos_i, int *mq_i, int *bq_i, int *callbase_i){
+int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, int *rpos_i, int *mq_i, int *bq_i, int *callbase_i){
 
 	*rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->rd_pos,pos_t->rd_pos,pos_t->rd_len);
 	check(*rpos_i>=0,"Error calculating read position index.");

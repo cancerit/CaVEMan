@@ -57,12 +57,10 @@ int fai_access_get_name_from_index(int idx, char *index_file_name, char *chr_nam
 	}
 	check(chr_name != NULL,"No line found in fai file for index %d\n", idx);
 	//close file
-	fclose(fai);
+	check(fclose(fai)==0,"Error closing fai file.");
 	return 0;
 error:
-	if(fai){
-		fclose(fai);
-	}
+	if(fai)	fclose(fai);
 	return -1;
 }
 
