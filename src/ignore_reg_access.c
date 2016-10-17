@@ -59,7 +59,7 @@ int ignore_reg_access_get_ign_reg_count_for_chr(char *ign_file, char *chr){
 		}
 		free(chr_nom);
 	}
-	fclose(file);
+	check(fclose(file)==0,"Error closing ignored region file '%s'.",ign_file);
 	return entry_count;
 error:
 	if(file) fclose(file);
@@ -132,7 +132,7 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
 		free(chr_nom);
 	}
 	check(entry_count == found_count,"Wrong number of lines found %d for chr: %s. Expected %d.",found_count,chr,entry_count);
-	fclose(file);
+	check(fclose(file)==0,"Error closing ignored region file '%s'.",ign_file);
 	return 0;
 
 error:
