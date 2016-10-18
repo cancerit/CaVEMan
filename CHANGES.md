@@ -1,3 +1,9 @@
+### 1.10.0
+* Added checks to all fflush and fclose calls
+
+### 1.9.5
+* Removed dependency on ENA during compilation
+
 ### 1.9.4
 * Correct main method to ensure failure is passed through from running the by section main methods.
 
