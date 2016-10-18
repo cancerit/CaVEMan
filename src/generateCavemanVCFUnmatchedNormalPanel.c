@@ -54,6 +54,7 @@ static char *species_vers;// = NULL;
 static char *sample_names;// = NULL;
 static char *platform = "Illumina";
 static char *protocol = "WGS";
+static int strand_counts = 0;
 static int idx = 0;
 static const char WHOLE_GENOME_PROTOCOL[] = "WGS";
 static const char EXOME_PROTOCOL[] = "WGS";
@@ -72,11 +73,23 @@ static const char *VCF_A_ALL = "##FORMAT=<ID=AZ,Number=1,Type=Integer,Descriptio
 static const char *VCF_C_ALL = "##FORMAT=<ID=CZ,Number=1,Type=Integer,Description=\"Count of C alleles at this position\">\n";
 static const char *VCF_G_ALL = "##FORMAT=<ID=GZ,Number=1,Type=Integer,Description=\"Count of G alleles at this position\">\n";
 static const char *VCF_T_ALL = "##FORMAT=<ID=TZ,Number=1,Type=Integer,Description=\"Count of T alleles at this position\">\n";
+static const char *VCF_A_ALL_FWD = "##FORMAT=<ID=FAZ,Number=1,Type=Integer,Description=\"Count of A alleles at this position mapping to the fwd strand\">\n";
+static const char *VCF_C_ALL_FWD = "##FORMAT=<ID=FCZ,Number=1,Type=Integer,Description=\"Count of C alleles at this position mapping to the fwd strand\">\n";
+static const char *VCF_G_ALL_FWD = "##FORMAT=<ID=FGZ,Number=1,Type=Integer,Description=\"Count of G alleles at this position mapping to the fwd strand\">\n";
+static const char *VCF_T_ALL_FWD = "##FORMAT=<ID=FTZ,Number=1,Type=Integer,Description=\"Count of T alleles at this position mapping to the fwd strand\">\n";
+static const char *VCF_A_ALL_REV = "##FORMAT=<ID=RAZ,Number=1,Type=Integer,Description=\"Count of A alleles at this position mapping to the rev strand\">\n";
+static const char *VCF_C_ALL_REV = "##FORMAT=<ID=RCZ,Number=1,Type=Integer,Description=\"Count of C alleles at this position mapping to the rev strand\">\n";
+static const char *VCF_G_ALL_REV = "##FORMAT=<ID=RGZ,Number=1,Type=Integer,Description=\"Count of G alleles at this position mapping to the rev strand\">\n";
+static const char *VCF_T_ALL_REV = "##FORMAT=<ID=RTZ,Number=1,Type=Integer,Description=\"Count of T alleles at this position mapping to the rev strand\">\n";
 static const char *VCF_SAMPLE = "##SAMPLE=<ID=%s,Description=\"UnmatchedNormal\",Platform=%s,Protocol=%s>\n";
 static const char *VCF_HEADER = "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\n";
 static const char *VCF_VAR_LINE_START = "%s\t%d\t.\t%c\t.\t.\t.\t";
 static const char *VCF_VAR_LINE_MID = "DP=%d\tGT:AZ:CZ:GZ:TZ\t";
 static const char *VCF_VAR_LINE = "0|0:%d:%d:%d:%d";
+static const char *VCF_VAR_LINE_MID_STRAND = "DP=%d\tGT:FAZ:FCZ:FGZ:FTZ:RAZ:RCZ:RGZ:RTZ\t";
+static const char *VCF_VAR_LINE_STRAND = "0|0:%d:%d:%d:%d:%d:%d:%d:%d";
+
+
 
 typedef struct sample_bam{
 	char *sample_name;
@@ -101,6 +114,7 @@ void gen_panel_print_usage (int exit_code){
 	printf("Optional\n");
 
 	printf("-q  --min-base-qual [int]         Minimum base quality [default:%d]\n",min_base_qual);
+	printf("-a  --strand-counts               Include strand counts [default:%d]\n",strand_counts);
 	printf("-h	help                          Display this usage information.\n");
   exit(exit_code);
 }
@@ -119,6 +133,7 @@ void gen_panel_setup_options(int argc, char *argv[]){
              	{"platform", required_argument, 0, 'p'},
              	{"protocol", required_argument, 0, 't'},
              	{"min-base-qual", required_argument, 0, 'q'},
+             	{"strand-counts", no_argument, 0, 'a'},
              	{"help", no_argument, 0, 'h'},
              	{ NULL, 0, NULL, 0}
    }; //End of declaring opts
@@ -127,11 +142,15 @@ void gen_panel_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "i:b:o:r:l:s:v:n:p:t:q:h",
+   while((iarg = getopt_long(argc, argv, "i:b:o:r:l:s:v:n:p:t:q:ha",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'h':
       	gen_panel_print_usage(0);
+        break;
+
+      case 'a':
+      	strand_counts = 1;
         break;
 
 			case 'b':
@@ -253,10 +272,21 @@ int gen_panel_write_VCF_header(List *samples,FILE *vcf_out){
 	check(fprintf(vcf_out,"%s",contigs)>0,"Error writing contig lines to VCF");
 	check(fprintf(vcf_out,"%s",VCF_INFO)>0,"Error writing info line to VCF");
 	check(fprintf(vcf_out,"%s",VCF_FORMAT_GENO)>0,"Error writing format line to VCF");
-	check(fprintf(vcf_out,"%s",VCF_A_ALL)>0,"Error writing A allele format line to VCF");
-	check(fprintf(vcf_out,"%s",VCF_C_ALL)>0,"Error writing C allele format line to VCF");
-	check(fprintf(vcf_out,"%s",VCF_G_ALL)>0,"Error writing G allele format line to VCF");
-	check(fprintf(vcf_out,"%s",VCF_T_ALL)>0,"Error writing T allele format line to VCF");
+	if(strand_counts == 1){
+    check(fprintf(vcf_out,"%s",VCF_A_ALL_FWD)>0,"Error writing AF allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_C_ALL_FWD)>0,"Error writing CF allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_G_ALL_FWD)>0,"Error writing GF allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_T_ALL_FWD)>0,"Error writing TF allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_A_ALL_REV)>0,"Error writing AR allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_C_ALL_REV)>0,"Error writing CR allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_G_ALL_REV)>0,"Error writing GR allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_T_ALL_REV)>0,"Error writing TR allele format line to VCF");
+	}else{
+	  check(fprintf(vcf_out,"%s",VCF_A_ALL)>0,"Error writing A allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_C_ALL)>0,"Error writing C allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_G_ALL)>0,"Error writing G allele format line to VCF");
+    check(fprintf(vcf_out,"%s",VCF_T_ALL)>0,"Error writing T allele format line to VCF");
+	}
 	check(gen_panel_write_sample_lines(samples,vcf_out)==0,"Error writing sample lines to VCF");
 	check(fprintf(vcf_out,VCF_HEADER,sample_names)>0,"Error writing file format line to VCF");
 	free(contigs);
@@ -337,6 +367,21 @@ void gen_panel_clear_pileups(List *samples){
 	return;
 }
 
+int check_is_only_normal(char ref_base,file_holder * fholder, int loc){
+  int x=0;
+  for(x=0;x<4;x++){
+    if(ref_base != fholder->bam_access_bases[x]){
+      if(fholder->base_counts[loc][x] > 0){
+        return 0;
+      }
+      if(strand_counts == 1 && fholder->base_counts[loc][x+4] > 0){
+        return 0;
+      }
+    }
+  }
+  return 1;
+}
+
 int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, int start, int end, List *samples, FILE *vcf_out){
 	char *ref_seq = fai_access_get_ref_seqeuence_for_pos(ref_file_loc,chr_name,start,end);
 	check(ref_seq != NULL,"Error retrieving reference sequence for section %s:%d-%d.",chr_name,start,end);
@@ -344,7 +389,11 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 	//Pileup and counts.
 	//Iterate through each sample for these locations and write that sample to output line.
 	LIST_FOREACH(samples, first, next, cur){
-		((sample_bam *)cur->value)->holder = bam_access_get_by_position_counts(((sample_bam *)cur->value)->bam_file, chr_name, start, end);
+	  if(strand_counts == 1 ){
+	    ((sample_bam *)cur->value)->holder = bam_access_get_by_position_counts_with_strand(((sample_bam *)cur->value)->bam_file, chr_name, start, end);
+	  }else{
+	    ((sample_bam *)cur->value)->holder = bam_access_get_by_position_counts(((sample_bam *)cur->value)->bam_file, chr_name, start, end);
+	  }
 		check(((sample_bam *)cur->value)->holder != NULL,"Error accessing by position counts for sample %s.",((sample_bam *)cur->value)->sample_name);
 	}
 
@@ -354,45 +403,78 @@ int gen_panel_generate_pileups_for_segment(char *ref_file_loc, char *chr_name, i
 		char ref_base = toupper(ref_seq[i]);
 		if(!(ref_base == 'A' || ref_base == 'C' || ref_base == 'G' || ref_base == 'T')) continue;
 		int sum = 0;
-		int write = fprintf(vcf_out,VCF_VAR_LINE_START,
-										chr_name,
-										start+i,
-										ref_base);
-		check(write>0,"Error writing VCF beginning of variant line for position %d.",start+i);
 		char *last_of_line = NULL;
 		int sizeoflist = List_count(samples);
 		last_of_line = malloc(sizeof(char) * ((50*sizeoflist)+1));
 		check_mem(last_of_line);
 		strcpy(last_of_line,"");
+		int normal_only_count = 0;
 		LIST_FOREACH(samples, first, next, this){
 			if(((sample_bam *)this->value)->holder->base_counts[i] != 0){
 				sum += (((sample_bam *)this->value)->holder->base_counts[i][0]+
 								((sample_bam *)this->value)->holder->base_counts[i][1]+
 								((sample_bam *)this->value)->holder->base_counts[i][2]+
 								((sample_bam *)this->value)->holder->base_counts[i][3]);
+				if(strand_counts==1){
+				  sum += (((sample_bam *)this->value)->holder->base_counts[i][4]+
+								((sample_bam *)this->value)->holder->base_counts[i][5]+
+								((sample_bam *)this->value)->holder->base_counts[i][6]+
+								((sample_bam *)this->value)->holder->base_counts[i][7]);
+				}
 				char tmp[128];
 				int chk = 0;
-				chk = sprintf(	tmp,VCF_VAR_LINE,
+        normal_only_count += check_is_only_normal(ref_base,((sample_bam *)this->value)->holder,i);
+				if(strand_counts==1){
+				  chk = sprintf(	tmp,VCF_VAR_LINE_STRAND,
+																						((sample_bam *)this->value)->holder->base_counts[i][0],
+																						((sample_bam *)this->value)->holder->base_counts[i][1],
+																						((sample_bam *)this->value)->holder->base_counts[i][2],
+																						((sample_bam *)this->value)->holder->base_counts[i][3],
+																						((sample_bam *)this->value)->holder->base_counts[i][4],
+																						((sample_bam *)this->value)->holder->base_counts[i][5],
+																						((sample_bam *)this->value)->holder->base_counts[i][6],
+																						((sample_bam *)this->value)->holder->base_counts[i][7]);
+				}else{
+				  chk = sprintf(	tmp,VCF_VAR_LINE,
 																						((sample_bam *)this->value)->holder->base_counts[i][0],
 																						((sample_bam *)this->value)->holder->base_counts[i][1],
 																						((sample_bam *)this->value)->holder->base_counts[i][2],
 																						((sample_bam *)this->value)->holder->base_counts[i][3]);
+				}
+
 				check(chk>0,"Error copying allele counts string.");
 				strcat(last_of_line,tmp);
 			}else{
 				strcat(last_of_line,"-");
+				normal_only_count++;
 			}
 			if(this->next!=NULL){
 				strcat(last_of_line,"\t");
 			}
 		}
-		strcat(last_of_line,"\n");
-		write = 0;
-		write = fprintf(vcf_out,VCF_VAR_LINE_MID,sum);
-		check(write>0,"Error writing VCF middle of variant line for position %d.",start+i);
-		write = 0;
-		write = fprintf(vcf_out,"%s",last_of_line);
-		check(write>0,"Error writing VCF end of variant line for position %d.",start+i);
+
+    if(normal_only_count < List_count(samples)){ // Only output a line where at least one sample is not 'all reference'
+
+      int write = fprintf(vcf_out,VCF_VAR_LINE_START,
+                      chr_name,
+                      start+i,
+                      ref_base);
+      check(write>0,"Error writing VCF beginning of variant line for position %d.",start+i);
+
+      strcat(last_of_line,"\n");
+      write = 0;
+
+      if(strand_counts==1){
+        write = fprintf(vcf_out,VCF_VAR_LINE_MID_STRAND,sum);
+      }else{
+        write = fprintf(vcf_out,VCF_VAR_LINE_MID,sum);
+      }
+      check(write>0,"Error writing VCF middle of variant line for position %d.",start+i);
+
+      write = 0;
+      write = fprintf(vcf_out,"%s",last_of_line);
+      check(write>0,"Error writing VCF end of variant line for position %d.",start+i);
+		}
 		free(last_of_line);
 	}
 
@@ -454,7 +536,7 @@ int main(int argc, char *argv[]){
 		if(end > stop) end = stop;
 	}
 	//Close VCF output file.
-	fclose(vcf_out);
+	check(fclose(vcf_out)==0,"Error closing vcf output file '%s'.",out_file_loc);
 	gen_panel_destroy_sample_list(samples);
 	return 0;
 error:

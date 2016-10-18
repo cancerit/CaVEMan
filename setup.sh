@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ##########LICENCE##########
-# Copyright (c) 2014-2015 Genome Research Ltd.
+# Copyright (c) 2014-2016 Genome Research Ltd.
 #
 # Author: CancerIT <cgpit@sanger.ac.uk>
 #
@@ -22,19 +22,6 @@
 ##########LICENCE##########
 
 SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.3/htslib-1.3.tar.bz2"
-
-done_message () {
-    if [ $? -eq 0 ]; then
-        echo " done."
-        if [ "x$1" != "x" ]; then
-            echo $1
-        fi
-    else
-        echo " failed.  See setup.log file for error messages." $2
-        echo "    Please check INSTALL file for items that should be installed by a package manager"
-        exit 1
-    fi
-}
 
 get_distro () {
   EXT=""
@@ -79,11 +66,7 @@ echo "Max compilation CPUs set to $CPU"
 # get current directory
 INIT_DIR=`pwd`
 
-# re-initialise log file
-echo > $INIT_DIR/setup.log
-
 # log information about this system
-(
     echo '============== System information ===='
     set -x
     lsb_release -a
@@ -93,7 +76,8 @@ echo > $INIT_DIR/setup.log
     grep MemTotal /proc/meminfo
     set +x
     echo; echo
-) >>$INIT_DIR/setup.log 2>&1
+
+set -ue
 
 # cleanup inst_path
 mkdir -p $INST_PATH/bin
@@ -112,16 +96,12 @@ if [ -e $SETUP_DIR/htslib.success ]; then
   echo -n " previously installed ...";
 else
   cd $SETUP_DIR
-  (
-  set -xe
   if [ ! -e htslib ]; then
     get_distro "htslib" $SOURCE_HTSLIB
   fi
   make -C htslib -j$CPU
   touch $SETUP_DIR/htslib.success
-  )>>$INIT_DIR/setup.log 2>&1
 fi
-done_message "" "Failed to build htslib."
 
 export HTSLIB="$SETUP_DIR/htslib"
 
@@ -130,17 +110,13 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
-  (
-    set -xe
-    mkdir -p $INIT_DIR/c/bin &&
-    make clean &&
-    make -j$CPU &&
-    cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
-    cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
-    touch $SETUP_DIR/caveman.success
-  )>>$INIT_DIR/setup.log 2>&1
+  mkdir -p $INIT_DIR/c/bin &&
+  make clean &&
+  make -j$CPU &&
+  cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
+  cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
+  touch $SETUP_DIR/caveman.success
 fi
-done_message "" "Failed to build CaVEMan."
 
 cd $INIT_DIR
 

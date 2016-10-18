@@ -109,8 +109,8 @@ int bam_access_get_avg_readlength_from_bam(htsFile *sf){
   return (int)(read_length_sum/read_count);
 }
 
-file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint32_t start, uint32_t end){
-	//Open bam related stuff
+file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *chr, uint32_t start, uint32_t end, int strand){
+  //Open bam related stuff
 	assert(norm_file != NULL);
 	bam1_t *b = NULL;
 	bam_plp_t buf = NULL;
@@ -134,7 +134,7 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 	//Pileup and populate the list with position pileup_stats.
 	char *region;
 	char sta[20];
-	region = malloc(sizeof((strlen(chr)*sizeof(char)))+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
+	region = malloc((sizeof((strlen(chr)+1)*sizeof(char)))+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
 	check_mem(region);
 	sprintf(region,"%s:%d-%d",chr,start,end);
 	norm->beg = start;
@@ -151,6 +151,8 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 
   iter = sam_itr_querys(norm->idx, norm->head, region);
 
+  b = bam_init1();
+
   int result;
   while ((result = sam_itr_next(norm->in, iter, b)) >= 0) {
     if(b->core.qual == 0
@@ -160,6 +162,9 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 			|| (b->core.flag & BAM_FSUPPLEMENTARY)
 			|| (b->core.flag & BAM_FDUP) ) continue;
     bam_plp_push(buf, b);
+  }
+  if(result != -1){
+    fprintf(stderr,"SAMTOOLS ERROR %d\n",result);
   }
 	bam_plp_push(buf,0); // finalize pileup
   sam_itr_destroy(iter);
@@ -174,16 +179,25 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
       bam1_t *algn = p->b;
 			uint8_t cbase = bam_seqi(bam_get_seq(algn),p->qpos);
 			if(!(p->is_del) && bam_get_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
-				int loc = (pos) - norm->beg;
+				int loc = (pos + 1) - norm->beg;
 				if(norm->base_counts[loc] == NULL || norm->base_counts[loc] == 0){
-					norm->base_counts[loc] = calloc(4,sizeof(int));
+					if(strand == 1 ){
+					  norm->base_counts[loc] = calloc(8,sizeof(int));
+					}else{
+					  norm->base_counts[loc] = calloc(4,sizeof(int));
+					}
 					check_mem(norm->base_counts[loc]);
 				}
+				int is_rev = bam_is_rev(algn);
 				char called_base = toupper(seq_nt16_str[cbase]);
 				int x=0;
 				for(x=0;x<4;x++){
 					if(called_base == norm->bam_access_bases[x]){
-						norm->base_counts[loc][x]++;
+					  if(strand == 1 && is_rev == 1){
+					    norm->base_counts[loc][x+4]++; //Bump this to the reverse strand counts when we are using strand
+					  }else{
+						  norm->base_counts[loc][x]++;
+						}
 						break;
 					}
 				}
@@ -194,8 +208,6 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
   bam_plp_destroy(buf);
 
 	free(region);
-
-
 
 	//Close bam related stuff
 	if(norm->idx) hts_idx_destroy(norm->idx);
@@ -216,6 +228,14 @@ error:
 	if(norm) free(norm);
 
 	return NULL;
+}
+
+file_holder *bam_access_get_by_position_counts_with_strand(char *normFile, char *chr, uint32_t start, uint32_t end){
+  return bam_access_get_by_position_counts_stranded(normFile, chr, start, end, 1);
+}
+
+file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint32_t start, uint32_t end){
+	return bam_access_get_by_position_counts_stranded(norm_file, chr, start, end, 0);
 }
 
 char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, char *plat){
@@ -688,7 +708,7 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	line = strtok(head_txt,"\n");
 	while(line != NULL){
 		//Check for a read group line
-		if(strncmp(line,"@RG",3)==0){	
+		if(strncmp(line,"@RG",3)==0){
 			ptr = malloc(sizeof(char **));
 			check_mem(ptr);
 			char *id = malloc(sizeof(char) * 100);
@@ -701,7 +721,7 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 					lane = strcpy(lane,id);
 					lane = strcat(lane,"_");
 					lane = strcat(lane,isnorm);
-					
+
 					int found = 0;
 					LIST_FOREACH(li, first, next, cur){
 						if(strcmp((char *)cur->value,lane)==0){
@@ -714,16 +734,16 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 						free(lane);
 						free(id);
 					}
-					
-				}// If this is a match for RG				
+
+				}// If this is a match for RG
 				tmp_line = strtok_r(NULL,"\t",ptr);
-			}	
+			}
 		}//End of if this is an RG line
 		line = strtok(NULL,"\n");
 	}
-	
+
 	check(rg_found==1,"No RG lines with IDs found in header of bam file %s.",bam_loc);
-	
+
 	if(line) free(line);
 	hts_close(bam);
 	return li;

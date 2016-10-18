@@ -1,0 +1,15 @@
+notifications:
+  slack: wtsi-cgpit:ptUMR1tkNyZJYd9TpGoss8WR
+  email: false
+
+dist: trusty
+
+language: c
+
+install: true
+
+compiler:
+  - gcc
+
+script:
+  - ./setup.sh ~/wtsi-opt
