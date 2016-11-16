@@ -1,3 +1,6 @@
+### 1.10.1
+* Correction to fclose checking in estep.c
+
 ### 1.10.0
 * Added checks to all fflush and fclose calls
 
