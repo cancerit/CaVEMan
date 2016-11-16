@@ -558,8 +558,8 @@ int estep_main(int argc, char *argv[]){
 	check(fcheck==0,"Error flushing snp_file.");
 	fcheck = fflush(mut_file);
 	check(fcheck==0,"Error flushing mut_file.");
-	check(fclose(snp_file),"Error closing snp file '%s'.",snp_out);
-	check(fclose(mut_file),"Error closing mut file '%s'.",mut_out);
+	check(fclose(snp_file)==0,"Error closing snp file '%s'.",snp_out);
+	check(fclose(mut_file)==0,"Error closing mut file '%s'.",mut_out);
 	if(debug_file){
 		fcheck = fflush(debug_file);
 		check(fcheck==0,"Error flushing debug_file.");
