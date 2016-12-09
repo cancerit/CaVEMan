@@ -1,3 +1,6 @@
+### 1.11.0
+* Rearrangement to htslib pileup code gives large speed increases
+
 ### 1.10.1
 * Correction to fclose checking in estep.c
 
