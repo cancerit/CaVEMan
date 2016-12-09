@@ -145,7 +145,7 @@ void mstep_setup_options(int argc, char *argv[]){
    }
 
    return;
-   
+
 error:
 	mstep_print_usage (1);
 	return;
@@ -183,7 +183,7 @@ int mstep_main(int argc, char *argv[]){
 	check(alg_bean_file != 0 ,"Error trying to open alg_bean file: %s.",alg_bean);
 	alg = alg_bean_read_file(alg_bean_file);
 	check(alg != NULL,"Error reading alg_bean from file.");
-	fclose(alg_bean_file);
+	check(fclose(alg_bean_file)==0,"Error closing alg bean file.");
 
 	//Get split section from file given the index.
 	char chr_name[50];

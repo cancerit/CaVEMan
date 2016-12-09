@@ -536,7 +536,7 @@ int main(int argc, char *argv[]){
 		if(end > stop) end = stop;
 	}
 	//Close VCF output file.
-	fclose(vcf_out);
+	check(fclose(vcf_out)==0,"Error closing vcf output file '%s'.",out_file_loc);
 	gen_panel_destroy_sample_list(samples);
 	return 0;
 error:

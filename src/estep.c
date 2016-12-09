@@ -308,7 +308,7 @@ void estep_setup_options(int argc, char *argv[]){
 
    //Do some checking to ensure required arguments were passed
    if(idx == 0){
-   	estep_print_usage(1); 
+   	estep_print_usage(1);
    }
 
    //Do some checking to ensure required arguments were passed and are accessible files
@@ -342,7 +342,7 @@ void estep_setup_options(int argc, char *argv[]){
    set_max_tum_cvg(estep_max_tumour_coverage);
 
    return;
-   
+
 error:
 	estep_print_usage (1);
 	return;
@@ -398,7 +398,7 @@ int estep_main(int argc, char *argv[]){
 	check(alg_bean_file != 0 ,"Error trying to open alg_bean file: %s.",alg_bean_loc);
 	alg = alg_bean_read_file(alg_bean_file);
 	check(alg != NULL,"Error reading alg_bean from file.");
-	fclose(alg_bean_file);
+	check(fclose(alg_bean_file)==0,"Error closing alg_bean_file.");
 
 	//Load in probability array
 	prob_arr = covs_access_read_probs_from_file(probs_file,
@@ -558,16 +558,16 @@ int estep_main(int argc, char *argv[]){
 	check(fcheck==0,"Error flushing snp_file.");
 	fcheck = fflush(mut_file);
 	check(fcheck==0,"Error flushing mut_file.");
-	fclose(snp_file);
-	fclose(mut_file);
+	check(fclose(snp_file)==0,"Error closing snp file '%s'.",snp_out);
+	check(fclose(mut_file)==0,"Error closing mut file '%s'.",mut_out);
 	if(debug_file){
 		fcheck = fflush(debug_file);
 		check(fcheck==0,"Error flushing debug_file.");
-	 	fclose(debug_file);
+	 	check(fclose(debug_file)==0,"Error closing debug file.");
 	}
 	fcheck = fflush(no_analysis_file);
 	check(fcheck==0,"Error flushing no_analysis_file.");
-	fclose(no_analysis_file);
+	check(fclose(no_analysis_file)==0,"Error closing no analysis file.");
 	//cleanup
 	List_clear_destroy(these_regions);
 	free(fa_file);

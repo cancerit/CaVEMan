@@ -135,7 +135,7 @@ int covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,
 	assert(arr != NULL);
 	FILE *file = fopen(file_loc,"wb");
 	check(file,"Error opening file to write cov array: %s.",file_loc);
-	int i,j,k,m,n,p,r,s;
+	int i,j,k,m,n,p,r;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
@@ -168,7 +168,7 @@ uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim
 	//Actual return array
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8);
 	//copy values to array pointers.
-	int i,j,k,m,n,p,r,s;
+	int i,j,k,m,n,p,r;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
@@ -424,7 +424,7 @@ int covs_access_write_probs_to_file(char *file_loc,long double ********arr,int d
 	assert(arr != NULL);
 	FILE *file = fopen(file_loc,"wb");
 	check(file,"Error opening file to write cov array: %s.",file_loc);
-	int i,j,k,m,n,p,r,s;
+	int i,j,k,m,n,p,r;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
@@ -499,7 +499,7 @@ long double  ********covs_access_read_probs_from_file(char *file_loc,int dim1,in
 	//Actual return array
 	//long double ********arr = covs_access_generate_prob_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8);
 	//copy values to array pointers.
-	int i,j,k,m,n,p,r,s;
+	int i,j,k,m,n,p,r;
 	for(i=0;i<dim1;i++){
 		for(j=0;j<dim2;j++){
 			for(k=0;k<dim3;k++){
@@ -516,7 +516,7 @@ long double  ********covs_access_read_probs_from_file(char *file_loc,int dim1,in
 			}
 		}
 	}
-	fclose(file);
+	check(fclose(file)==0,"Error closing probs file after reading '%s'.",file_loc);
 	return true_arr;
 error:
 	if(file) fclose(file);

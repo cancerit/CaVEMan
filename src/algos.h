@@ -63,10 +63,10 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 												char *norm_cn, char *tum_cn, FILE *snp_out, FILE *tum_out, FILE *dbg, int split_size);
 
 int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char *type, uint8_t warnings);
-inline long double algos_calculate_per_base_normal_contamination(uint8_t norm_copy_no,uint8_t tum_copy_no);
-inline void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor);
-inline int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int8_t ref_base_idx, long double base_norm_contam);
-inline void algos_run_per_position_estep_maths(estep_position_t *pos);
+long double algos_calculate_per_base_normal_contamination(uint8_t norm_copy_no,uint8_t tum_copy_no);
+void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double norm_factor);
+int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int8_t ref_base_idx, long double base_norm_contam);
+void algos_run_per_position_estep_maths(estep_position_t *pos);
 
 void set_snp_warnings();
 void set_min_mut_prob(float f);

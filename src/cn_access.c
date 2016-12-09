@@ -77,7 +77,7 @@ int cn_access_populate_cn(char *file_loc,uint8_t is_normal){
 		List_push(li,reg);
 	}
 	cns[is_normal] = li;
-	fclose(cn_file);
+	check(fclose(cn_file)==0,"Error closing cn file '%s'.",file_loc);
 	return 1;
 error:
 	if(cn_file) fclose(cn_file);

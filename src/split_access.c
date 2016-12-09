@@ -54,7 +54,7 @@ void split_access_get_section_from_index(char *file_loc, char *chr, int *start_z
 		if(index == i){
 			int chk = sscanf(line,"%s\t%d\t%d",chr,start_zero_based,stop);
 			check(chk==3,"Error parsing split file line number %d: %s.",i,line);
-			fclose(file);
+			check(fclose(file)==0,"Error closing split file.");
 			return;
 		}
 		i++;
