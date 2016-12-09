@@ -30,7 +30,7 @@ LFLAGS?=-L$(HTSTMP)
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS =-lhts -lpthread -lz -lm
+LIBS =-ldl -lhts -lpthread -lz -lm
 
 # define the C source files
 SRCS = ./src/file_tests.c ./src/List.c ./src/List_algos.c ./src/bam_access.c ./src/config_file_access.c ./src/fai_access.c ./src/ignore_reg_access.c ./src/alg_bean.c ./src/split_access.c ./src/covs_access.c ./src/cn_access.c ./src/genotype.c ./src/algos.c ./src/output.c ./src/setup.c ./src/split.c ./src/mstep.c ./src/merge.c ./src/estep.c
@@ -107,7 +107,7 @@ valgrind:
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file)
 # (see the gnu make manual section about automatic variables)
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) -c $<  -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -c $<  -o $@
 
 clean:
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno

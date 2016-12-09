@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2015 Genome Research Ltd.
+* Copyright (c) 2014-2016 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -109,6 +109,44 @@ int bam_access_get_avg_readlength_from_bam(htsFile *sf){
   return (int)(read_length_sum/read_count);
 }
 
+int pos_counts_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int strand){
+  file_holder *norm  = (file_holder *) data;
+  int i=0;
+  for(i=0;i<n_plp;i++){
+    const bam_pileup1_t *p = pil + i;
+    bam1_t *algn = p->b;
+    uint8_t cbase = bam_seqi(bam_get_seq(algn),p->qpos);
+    if(!(p->is_del) && bam_get_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
+      int loc = (pos + 1) - norm->beg;
+      if(norm->base_counts[loc] == NULL || norm->base_counts[loc] == 0){
+        if(strand == 1 ){
+          norm->base_counts[loc] = calloc(8,sizeof(int));
+        }else{
+          norm->base_counts[loc] = calloc(4,sizeof(int));
+        }
+        check_mem(norm->base_counts[loc]);
+      }
+      int is_rev = bam_is_rev(algn);
+      char called_base = toupper(seq_nt16_str[cbase]);
+      int x=0;
+      for(x=0;x<4;x++){
+        if(called_base == norm->bam_access_bases[x]){
+          if(strand == 1 && is_rev == 1){
+            norm->base_counts[loc][x+4]++; //Bump this to the reverse strand counts when we are using strand
+          }else{
+            norm->base_counts[loc][x]++;
+          }
+          break;
+        }
+      }
+    }//End of checking base is ACGT & fits quality requirements
+  }//Iteration through pileups at this position
+
+  return 0;
+error:
+  return 1;
+}
+
 file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *chr, uint32_t start, uint32_t end, int strand){
   //Open bam related stuff
 	assert(norm_file != NULL);
@@ -154,55 +192,33 @@ file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *c
   b = bam_init1();
 
   int result;
+  int tid, pos, n_plp = -1;
+  const bam_pileup1_t *pil;
   while ((result = sam_itr_next(norm->in, iter, b)) >= 0) {
     if(b->core.qual == 0
+      || (b->core.flag & BAM_FPROPER_PAIR) != BAM_FPROPER_PAIR
       || (b->core.flag & BAM_FUNMAP)
 			|| (b->core.flag & BAM_FSECONDARY)
 			|| (b->core.flag & BAM_FQCFAIL)
 			|| (b->core.flag & BAM_FSUPPLEMENTARY)
 			|| (b->core.flag & BAM_FDUP) ) continue;
     bam_plp_push(buf, b);
+    while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
+      if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
+      int res = pos_counts_callback(tid, pos, n_plp, pil, norm, strand);
+      check(res==0,"Error running pileup callback");
+    }//End of while we have pileup reads
   }
   if(result != -1){
     fprintf(stderr,"SAMTOOLS ERROR %d\n",result);
   }
 	bam_plp_push(buf,0); // finalize pileup
   sam_itr_destroy(iter);
-  int tid, pos, n_plp = -1;
-  const bam_pileup1_t *pil;
   //Now for the pileup method
   while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
     if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
-    int i=0;
-   	for(i=0;i<n_plp;i++){
-      const bam_pileup1_t *p = pil + i;
-      bam1_t *algn = p->b;
-			uint8_t cbase = bam_seqi(bam_get_seq(algn),p->qpos);
-			if(!(p->is_del) && bam_get_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
-				int loc = (pos + 1) - norm->beg;
-				if(norm->base_counts[loc] == NULL || norm->base_counts[loc] == 0){
-					if(strand == 1 ){
-					  norm->base_counts[loc] = calloc(8,sizeof(int));
-					}else{
-					  norm->base_counts[loc] = calloc(4,sizeof(int));
-					}
-					check_mem(norm->base_counts[loc]);
-				}
-				int is_rev = bam_is_rev(algn);
-				char called_base = toupper(seq_nt16_str[cbase]);
-				int x=0;
-				for(x=0;x<4;x++){
-					if(called_base == norm->bam_access_bases[x]){
-					  if(strand == 1 && is_rev == 1){
-					    norm->base_counts[loc][x+4]++; //Bump this to the reverse strand counts when we are using strand
-					  }else{
-						  norm->base_counts[loc][x]++;
-						}
-						break;
-					}
-				}
-			}//End of checking base is ACGT & fits quality requirements
-    }//Iteration through pileups at this position
+    int res = pos_counts_callback(tid, pos, n_plp, pil, norm, strand);
+    check(res==0,"Error running pileup callback");
   }//End of while we have pileup reads
   bam_destroy1(b);
   bam_plp_destroy(buf);
@@ -489,6 +505,58 @@ int bam_access_compare_read_pos_t(const void *in_a, const void *in_b){
 	return 0;
 }
 
+int reads_at_pos_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int sorted, int isnorm){
+  file_holder* bams = (file_holder* )data;
+  char *nom = malloc(sizeof(char) * 350);
+  int i=0;
+  for(i=0;i<n_plp;i++){
+    const bam_pileup1_t *p = pil + i;
+    int qual = bam_get_qual(p->b)[p->qpos];
+    uint8_t c = bam_seqi(bam_get_seq(p->b), p->qpos);
+    if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
+      //Now we add a new read pos struct to the list since the read is valid.
+      read_pos_t *rp = malloc(sizeof(struct read_pos_t));
+      check_mem(rp);
+      rp->rd_len = bam_cigar2qlen(p->b->core.n_cigar,bam_get_cigar(p->b));
+      rp->ref_pos = pos+1;
+      rp->rd_pos = p->qpos+1;
+      rp->called_base = c;
+      rp->map_qual = p->b->core.qual;
+      rp->base_qual = qual;
+      //Check strandedness
+      if(p->b->core.flag & BAM_FREVERSE){
+        rp->rd_pos = (rp->rd_len - rp->rd_pos) + 1;
+        rp->strand = 1;
+      }else{
+        rp->strand = 0;
+      }
+      //Check read order
+      if(p->b->core.flag & BAM_FREAD1){
+        rp->read_order = 0;
+      }else if(p->b->core.flag & BAM_FREAD2){
+        rp->read_order = 1;
+      }
+      nom = strcpy(nom,bam_aux2Z(bam_aux_get(p->b,"RG")));
+      nom = strcat(nom,"_");
+      nom = strcat(nom,norm_char);
+      int lane_i = alg_bean_get_index_for_str_arr(bams->bean->lane,nom);
+      check(lane_i>=0,"Error calculating lane index %s.",nom);
+      rp->lane_i = lane_i;
+      rp->normal = isnorm;
+      if(sorted==1){
+        List_insert_sorted(bams->reads, rp, (List_compare)bam_access_compare_read_pos_t);
+      }else{
+        List_push(bams->reads,rp);
+      }
+    }//End of if this is a useful read, ACGT, and within qual boundaries.
+  }//End iterating through pileups at this position
+  free(nom);
+
+  return 0;
+error:
+  return 1;
+}
+
 List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
 	//Pileup and populate the list with valid reads.
 	char *region = NULL;
@@ -512,6 +580,8 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
   b = bam_init1();
   iter = sam_itr_querys(bams->idx, bams->head, region);
   int result;
+  int tid, pos, n_plp = -1;
+  const bam_pileup1_t *pil;
   while ((result = sam_itr_next(bams->in, iter, b)) >= 0) {
     if(b->core.qual == 0
           || (b->core.flag & BAM_FUNMAP)
@@ -534,60 +604,22 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
 	  }
 	  count++;
     bam_plp_push(buf, b);
+    while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
+      if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
+      int res = reads_at_pos_callback(tid, pos, n_plp, pil, bams, sorted, isnorm);
+      check(res==0,"Error running callback");
+    }
+
   }//End of while iterator to populate pileup
 
   sam_itr_destroy(iter);
 	bam_plp_push(buf,0); // finalize pileup
 
-  int tid, pos, n_plp = -1;
-  const bam_pileup1_t *pil;
 
   while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
     if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
-    char *nom = malloc(sizeof(char) * 350);
-    int i=0;
-   	for(i=0;i<n_plp;i++){
-      const bam_pileup1_t *p = pil + i;
-      int qual = bam_get_qual(p->b)[p->qpos];
-			uint8_t c = bam_seqi(bam_get_seq(p->b), p->qpos);
-  		if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
-				//Now we add a new read pos struct to the list since the read is valid.
-				read_pos_t *rp = malloc(sizeof(struct read_pos_t));
-				check_mem(rp);
-				rp->rd_len = bam_cigar2qlen(p->b->core.n_cigar,bam_get_cigar(p->b));
-				rp->ref_pos = pos+1;
-				rp->rd_pos = p->qpos+1;
-				rp->called_base = c;
-				rp->map_qual = p->b->core.qual;
-				rp->base_qual = qual;
-				//Check strandedness
-				if(p->b->core.flag & BAM_FREVERSE){
-					rp->rd_pos = (rp->rd_len - rp->rd_pos) + 1;
-					rp->strand = 1;
-				}else{
-					rp->strand = 0;
-				}
-				//Check read order
-				if(p->b->core.flag & BAM_FREAD1){
-					rp->read_order = 0;
-				}else if(p->b->core.flag & BAM_FREAD2){
-					rp->read_order = 1;
-				}
-				nom = strcpy(nom,bam_aux2Z(bam_aux_get(p->b,"RG")));
-				nom = strcat(nom,"_");
-				nom = strcat(nom,norm_char);
-				int lane_i = alg_bean_get_index_for_str_arr(bams->bean->lane,nom);
-				check(lane_i>=0,"Error calculating lane index %s.",nom);
-				rp->lane_i = lane_i;
-				rp->normal = isnorm;
-				if(sorted==1){
-				  List_insert_sorted(bams->reads, rp, (List_compare)bam_access_compare_read_pos_t);
-				}else{
-				  List_push(bams->reads,rp);
-				}
-			}//End of if this is a useful read, ACGT, and within qual boundaries.
-    }//End iterating through pileups at this position
-    free(nom);
+    int res = reads_at_pos_callback(tid, pos, n_plp, pil, bams, sorted, isnorm);
+    check(res==0,"Error running callback");
   }//End of iterating through pileups
 	bam_destroy1(b);
   bam_plp_destroy(buf);
