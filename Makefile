@@ -1,4 +1,4 @@
-CAVEMAN_VERSION=1.11.0
+CAVEMAN_VERSION=1.11.1
 TEST_REF?=""
 #Compiler
 CC?=gcc
@@ -12,7 +12,7 @@ CC+= -O3 -g -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
 # -Wall turns on most warnings from compiler
 CFLAGS = -Wall
 
-HTSADD="https://github.com/samtools/htslib/archive/1.2.1.tar.gz"
+HTSADD="https://github.com/samtools/htslib/archive/1.3.2.tar.gz"
 HTSPATCH=./patches/htslib/cram_idx.patch
 HTSLOC?=$(HTSLIB)
 
