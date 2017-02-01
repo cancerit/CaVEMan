@@ -1,3 +1,6 @@
+### 1.11.2
+* Update htslib version (1.11.1 updated an unused reference to this archive)
+
 ### 1.11.0
 * Rearrangement to htslib pileup code gives large speed increases
 
