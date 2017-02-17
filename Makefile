@@ -1,4 +1,4 @@
-CAVEMAN_VERSION=1.11.2
+CAVEMAN_VERSION=1.11.3
 TEST_REF?=""
 #Compiler
 CC?=gcc
@@ -12,14 +12,17 @@ CC+= -O3 -g -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
 # -Wall turns on most warnings from compiler
 CFLAGS = -Wall
 
-HTSPATCH=./patches/htslib/cram_idx.patch
 HTSLOC?=$(HTSLIB)
 
 HTSTMP?=./caveman_tmp
+prefix=?/usr/local/
 
 #Define locations of header files
 OPTINC?=-I$(HTSLOC)/
 INCLUDES= -Isrc $(OPTINC) -rdynamic
+
+JOIN_INCLUDES= -I$(prefix)/include
+CAT_LFLAGS= -L$(prefix)/lib
 
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
@@ -29,7 +32,7 @@ LFLAGS?=-L$(HTSTMP)
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname
 #   option, something like (this will link in libmylib.so and libm.so:
-LIBS =-ldl -lhts -lpthread -lz -lm
+LIBS =-lhts -lpthread -lz -lm -ldl
 
 # define the C source files
 SRCS = ./src/file_tests.c ./src/List.c ./src/List_algos.c ./src/bam_access.c ./src/config_file_access.c ./src/fai_access.c ./src/ignore_reg_access.c ./src/alg_bean.c ./src/split_access.c ./src/covs_access.c ./src/cn_access.c ./src/genotype.c ./src/algos.c ./src/output.c ./src/setup.c ./src/split.c ./src/mstep.c ./src/merge.c ./src/estep.c
@@ -67,14 +70,14 @@ all: clean make_bin make_htslib_tmp $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscrip
 	@echo  Binaries have been compiled.
 
 $(UMNORM_TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(UMNORM_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/generateCavemanVCFUnmatchedNormalPanel.c
+	$(CC) $(JOIN_INCLUDES) $(INCLUDES) $(CFLAGS) -o $(UMNORM_TARGET) $(OBJS) $(LFLAGS) $(CAT_LFLAGS) $(LIBS) ./src/generateCavemanVCFUnmatchedNormalPanel.c
 
 $(CAVEMAN_TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(CAVEMAN_TARGET) $(OBJS) $(LFLAGS) $(LIBS) ./src/caveman.c
+	$(CC) $(JOIN_INCLUDES) $(INCLUDES) $(CFLAGS) -o $(CAVEMAN_TARGET) $(OBJS) $(LFLAGS) $(CAT_LFLAGS) $(LIBS) ./src/caveman.c
 
 #Unit Tests
 test: $(CAVEMAN_TARGET)
-test: CFLAGS += $(INCLUDES) $(OBJS) $(LFLAGS) $(LIBS)
+test: CFLAGS += $(JOIN_INCLUDES) $(INCLUDES) $(OBJS) $(LFLAGS) $(LIBS) $(CAT_LFLAGS)
 test: $(TESTS)
 	sh ./tests/runtests.sh
 
@@ -106,7 +109,7 @@ valgrind:
 # the rule(a .c file) and $@: the name of the target of the rule (a .o file)
 # (see the gnu make manual section about automatic variables)
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS) -c $<  -o $@
+	$(CC) $(CFLAGS) $(JOIN_INCLUDES) $(INCLUDES) -c $<  -o $@
 
 clean:
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
