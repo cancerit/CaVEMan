@@ -1,3 +1,6 @@
+### 1.11.3
+* Makefile update to cope with central/prefix install of htslib
+
 ### 1.11.2
 * Update htslib version (1.11.1 updated an unused reference to this archive)
 
@@ -57,5 +60,3 @@
 * Cram support added using htslib
 * Added setup script to download and compile htslib with patch (required for CRAM support).
 * Added 2015 and date additional info to licenses in all files
-
-
