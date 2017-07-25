@@ -242,11 +242,11 @@ int estep_no_analysis_cram(){
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	FILE *snp_out = gzopen(test_snp_out,"wb");
+	gzFile snp_out = gzopen(test_snp_out,"wb");
 	check(snp_out!=NULL,"Error opening file.");
-	FILE *mut_out = gzopen(test_mut_out,"wb");
+	gzFile mut_out = gzopen(test_mut_out,"wb");
 	check(mut_out!=NULL,"Error opening file.");
-	FILE *dbg_out = gzopen(test_dbg_out,"wb");
+	gzFile dbg_out = gzopen(test_dbg_out,"wb");
 	check(dbg_out!=NULL,"Error opening file.");
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	check(no_anal_out!=NULL,"Error opening file.");
@@ -298,9 +298,9 @@ char *test_algos_estep_read_position(){
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	FILE *snp_out = gzopen(test_snp_out,"wb");
-	FILE *mut_out = gzopen(test_mut_out,"wb");
-	FILE *dbg_out = gzopen(test_dbg_out,"wb");
+	gzFile snp_out = gzopen(test_snp_out,"wb");
+	gzFile mut_out = gzopen(test_mut_out,"wb");
+	gzFile dbg_out = gzopen(test_dbg_out,"wb");
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
