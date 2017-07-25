@@ -318,7 +318,7 @@ char *test_output_to_file(){
 }
 
 char *test_output_header_to_file(){
-	FILE *out = gzopen(out_test_vcf,"wb");
+	gzFile *out = gzopen(out_test_vcf,"wb");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -484,7 +484,7 @@ char *test_output_header_to_file(){
 }
 
 char *test_output_header_to_file_cram(){
-	FILE *out = gzopen(out_test_vcf,"wb");
+	gzFile *out = gzopen(out_test_vcf,"wb");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
