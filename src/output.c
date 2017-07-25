@@ -107,7 +107,7 @@ void output_set_genotype_representations_for_genotype_t(genotype_t *geno,char re
 	}
 }
 
-int output_vcf_variant_position(estep_position_t *pos, gzFileout, char *chrom){
+int output_vcf_variant_position(estep_position_t *pos, gzFile out, char *chrom){
 	assert(pos != NULL);
 	assert(out != NULL);
 	assert(chrom != NULL);
@@ -246,7 +246,7 @@ char *output_generate_format_lines(){
 	return format;
 }
 
-int output_vcf_header(gzFileout, char *tum_bam, char *norm_bam, char *ref_seq_loc,
+int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
 													char *assembly, char *species, char *norm_prot, char *tum_prot,
 													char *normal_platform, char *tumour_platform){
 

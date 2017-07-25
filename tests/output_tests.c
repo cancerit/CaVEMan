@@ -105,7 +105,7 @@ int test_output_to_file_int(){
 	combined_genotype_t **somatic_genotypes = NULL;
 	combined_genotype_t **het_norm_genotypes = NULL;
 
-	gzFileout = NULL;
+	gzFile out = NULL;
 
 	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
 	estep_position_t *pos = malloc(sizeof(estep_position_t));
@@ -318,7 +318,7 @@ char *test_output_to_file(){
 }
 
 char *test_output_header_to_file(){
-	out = gzopen(out_test_vcf,"wb");
+	gzFile out = gzopen(out_test_vcf,"wb");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -484,7 +484,7 @@ char *test_output_header_to_file(){
 }
 
 char *test_output_header_to_file_cram(){
-	gzFileout = gzopen(out_test_vcf,"wb");
+	gzFile out = gzopen(out_test_vcf,"wb");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
