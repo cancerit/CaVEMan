@@ -361,9 +361,9 @@ int estep_main(int argc, char *argv[]){
 	FILE *no_analysis_file = NULL;
 	List *no_analysis_list = NULL;
 	char *ref_seq = NULL;
-	gzFile *debug_file = NULL;
-	gzFile *snp_file = NULL;
-	gzFile *mut_file = NULL;
+	gzFiledebug_file = NULL;
+	gzFilesnp_file = NULL;
+	gzFilemut_file = NULL;
 
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
