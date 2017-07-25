@@ -595,7 +595,7 @@ int algos_check_var_position_alleles(estep_position_t *pos, char *chr_name, char
 }
 
 int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char *chr_name, uint32_t from, uint32_t to,
-						char *ref_base, char *norm_cn, char *tum_cn, gzFile *snp_out, gzFile *tum_out, gzFile *debug_output, int split_size){
+						char *ref_base, char *norm_cn, char *tum_cn, gzFile snp_out, gzFile tum_out, gzFile debug_output, int split_size){
 
 	List *reads = NULL;
 	//If this region is larger than n bases, split it into regions of length n.
