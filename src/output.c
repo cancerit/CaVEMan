@@ -107,7 +107,7 @@ void output_set_genotype_representations_for_genotype_t(genotype_t *geno,char re
 	}
 }
 
-int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
+int output_vcf_variant_position(estep_position_t *pos, gzFile *out, char *chrom){
 	assert(pos != NULL);
 	assert(out != NULL);
 	assert(chrom != NULL);
@@ -117,30 +117,30 @@ int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
 	char *sec_ref = NULL;
 	char *sec_tum = NULL;
 
-	int write = fprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
+	int write = gzprintf(out,"%s\t%d\t.\t%s\t%c\t.\t.\t",chrom,pos->ref_pos,pos->ref_base,pos->top_geno->tum_geno->var_base);
 	check(write>0,"Error writing initial vcf variant line, top mutant genotype.");
 	//total depth seen by CaVEMan
-	write = fprintf(out,"DP=%d;",(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
+	write = gzprintf(out,"DP=%d;",(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg)
 								+genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg)));
 	check(write>0,"Error writing info line.");
 	//Total somatic prob
-	write = fprintf(out,"MP=%5.1Le;",pos->total_mut_prob);
+	write = gzprintf(out,"MP=%5.1Le;",pos->total_mut_prob);
 	check(write>0,"Error writing info line, mut_prob.");
 	//total germline prob
-	write = fprintf(out,"GP=%5.1Le;",pos->total_snp_prob);
+	write = gzprintf(out,"GP=%5.1Le;",pos->total_snp_prob);
 	check(write>0,"Error writing info line snp_prob.");
 	//Top genotype and second genotype info
 	top_ref = genotype_get_genotype_t_as_string(pos->top_geno->norm_geno);
 	top_tum = genotype_get_genotype_t_as_string(pos->top_geno->tum_geno);
 	sec_ref = genotype_get_genotype_t_as_string(pos->sec_geno->norm_geno);
 	sec_tum = genotype_get_genotype_t_as_string(pos->sec_geno->tum_geno);
-	write = fprintf(out,"TG=%s/%s;TP=%5.1Le;SG=%s/%s;SP=%5.1Le\t",
+	write = gzprintf(out,"TG=%s/%s;TP=%5.1Le;SG=%s/%s;SP=%5.1Le\t",
 						top_ref,top_tum,pos->top_geno->prob,
 						sec_ref,sec_tum,pos->sec_geno->prob);
 
 	check(write>0,"Error writing info line extra probs.");
 	//FORMAT line
-	write = fprintf(out,"%s\t",VCF_VAR_FORMAT_LINE);
+	write = gzprintf(out,"%s\t",VCF_VAR_FORMAT_LINE);
 	check(write>0,"Error writing vcf variant format line.");
 	//NORMAL FORMAT
 	int norm_geno_rep = 0;
@@ -151,7 +151,7 @@ int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
 		mut_prop = (double) mut_count / (double)(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg));
 	}
 	output_set_genotype_representations_for_genotype_t(pos->top_geno->norm_geno,pos->ref_base[0], &norm_geno_rep, &tum_geno_rep);
-	write = fprintf(out,"%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\t",
+	write = gzprintf(out,"%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\t",
 						norm_geno_rep,tum_geno_rep,
 						pos->norm_fwd_cvg->a_count,pos->norm_fwd_cvg->c_count,pos->norm_fwd_cvg->g_count,pos->norm_fwd_cvg->t_count,
 						pos->norm_rev_cvg->a_count,pos->norm_rev_cvg->c_count,pos->norm_rev_cvg->g_count,pos->norm_rev_cvg->t_count,
@@ -167,7 +167,7 @@ int output_vcf_variant_position(estep_position_t *pos, FILE *out, char *chrom){
 		mut_prop = (double) mut_count / (double)(genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg));
 	}
 	output_set_genotype_representations_for_genotype_t(pos->top_geno->tum_geno,pos->ref_base[0], &norm_geno_rep, &tum_geno_rep);
-	write = fprintf(out,"%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\n",
+	write = gzprintf(out,"%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\n",
 						norm_geno_rep,tum_geno_rep,
 						pos->tum_fwd_cvg->a_count,pos->tum_fwd_cvg->c_count,pos->tum_fwd_cvg->g_count,pos->tum_fwd_cvg->t_count,
 						pos->tum_rev_cvg->a_count,pos->tum_rev_cvg->c_count,pos->tum_rev_cvg->g_count,pos->tum_rev_cvg->t_count,
@@ -246,7 +246,7 @@ char *output_generate_format_lines(){
 	return format;
 }
 
-int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
+int output_vcf_header(gzFile *out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
 													char *assembly, char *species, char *norm_prot, char *tum_prot,
 													char *normal_platform, char *tumour_platform){
 
@@ -278,42 +278,42 @@ int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_lo
 
 	check(strcmp(tumour_platform,normal_platform)==0,"Normal and tumour platforms don't match: '%s' ne '%s'",normal_platform,tumour_platform);
 	//VCF version (fileformat)
-	int write = fprintf(out,"##%s=%s\n",VCF_VERSION_KEY,VCF_VERSION_VALUE);
+	int write = gzprintf(out,"##%s=%s\n",VCF_VERSION_KEY,VCF_VERSION_VALUE);
 	check(write>0,"Error writing version.");
 	//fileDate=20120104
 	char date[50];
 	time_t t = time(NULL);
 	strftime(date,sizeof(date),"%Y%m%d",localtime(&t));
-	write = fprintf(out,"##%s=%s\n",VCF_FILEDATE_KEY,date);
+	write = gzprintf(out,"##%s=%s\n",VCF_FILEDATE_KEY,date);
 	check(write>0,"Error writing filedate.");
 	//Reference sequence
-	write = fprintf(out,"##%s=%s\n",VCF_REF_SEQ_KEY,ref_seq_loc);
+	write = gzprintf(out,"##%s=%s\n",VCF_REF_SEQ_KEY,ref_seq_loc);
 	check(write>0,"Error writing reference.");
 	//vcfProcessLog for CaVEMan
 	char *cave_version = CAVEMAN_VERSION;
 	process = output_generate_CaVEMan_process_log(cave_version);
-	write = fprintf(out,"%s",process);
+	write = gzprintf(out,"%s",process);
 	check(write>0,"Error writing CaVEMan version.");
 
 	//Add reference sequence headers
 	contigs = output_generate_reference_contig_lines(tum_bam, assembly, species);
 	check(contigs != NULL,"Error fetching contigs from bam file.");
-	write = fprintf(out,"%s",contigs);
+	write = gzprintf(out,"%s",contigs);
 	check(write>0,"Error writing contigs.");
 
 	//INFO lines
 	info = output_generate_info_lines();
-	write = fprintf(out,"%s",info);
+	write = gzprintf(out,"%s",info);
 	check(write>0,"Error writing INFO.");
 
 	//FORMAT
 	format = output_generate_format_lines();
-	write = fprintf(out,"%s",format);
+	write = gzprintf(out,"%s",format);
 	check(write>0,"Error writing FORMAT.");
 
 	//SAMPLES
 	//Normal
-	write = fprintf(out,"##%s=<ID=%s,%s=\"Normal\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
+	write = gzprintf(out,"##%s=<ID=%s,%s=\"Normal\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
 			VCF_SAMPLE_KEY,VCF_NORMAL_NAME,VCF_DESCRIPTION_KEY,
 			VCF_ACCESSION_KEY,VCF_PLATFORM_KEY,normal_platform,
 			VCF_PROTOCOL_KEY,norm_prot,
@@ -321,7 +321,7 @@ int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_lo
 			VCF_SOURCE_KEY);
 	check(write>0,"Error writing normal sample.");
 	//Tumour
-	write = fprintf(out,"##%s=<ID=%s,%s=\"Tumour\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
+	write = gzprintf(out,"##%s=<ID=%s,%s=\"Tumour\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
 			VCF_SAMPLE_KEY,VCF_TUMOUR_NAME,VCF_DESCRIPTION_KEY,
 			VCF_ACCESSION_KEY,VCF_PLATFORM_KEY,tumour_platform,
 			VCF_PROTOCOL_KEY,tum_prot,
@@ -330,7 +330,7 @@ int output_vcf_header(FILE *out, char *tum_bam, char *norm_bam, char *ref_seq_lo
 	check(write>0,"Error writing tumour sample.");
 
 	///Finally the line above output.
-	write = fprintf(out,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\t%s\n",VCF_NORMAL_NAME,VCF_TUMOUR_NAME);
+	write = gzprintf(out,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\t%s\n",VCF_NORMAL_NAME,VCF_TUMOUR_NAME);
 	check(write>0,"Error writing column header line.");
 	free(tumour_name);
 	free(normal_name);

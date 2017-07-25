@@ -361,9 +361,9 @@ int estep_main(int argc, char *argv[]){
 	FILE *no_analysis_file = NULL;
 	List *no_analysis_list = NULL;
 	char *ref_seq = NULL;
-	FILE *debug_file = NULL;
-	FILE *snp_file = NULL;
-	FILE *mut_file = NULL;
+	gzFile *debug_file = NULL;
+	gzFile *snp_file = NULL;
+	gzFile *mut_file = NULL;
 
 	//Open the config file and do relevant things
 	FILE *config = fopen(config_file,"r");
@@ -499,24 +499,24 @@ int estep_main(int argc, char *argv[]){
 	char mut_out[500];
 	char debug_out[500];
 
-	int chk = sprintf(snp_out,"%s/%s/%d_%d.snps.vcf",results,chr_name,start_zero_based+1,stop);
+	int chk = sprintf(snp_out,"%s/%s/%d_%d.snps.vcf.gz",results,chr_name,start_zero_based+1,stop);
 	check(chk>0,"Error generating snp output file location.");
 
-	chk = sprintf(mut_out,"%s/%s/%d_%d.muts.vcf",results,chr_name,start_zero_based+1,stop);
+	chk = sprintf(mut_out,"%s/%s/%d_%d.muts.vcf.gz",results,chr_name,start_zero_based+1,stop);
 	check(chk>0,"Error generating mut output file location.");
 
-	chk = sprintf(debug_out,"%s/%s/%d_%d.dbg.vcf",results,chr_name,start_zero_based+1,stop);
+	chk = sprintf(debug_out,"%s/%s/%d_%d.dbg.vcf.gz",results,chr_name,start_zero_based+1,stop);
 	check(chk>0,"Error generating debug file location.");
 
 	//Open files for output
-	mut_file = fopen(mut_out,"w");
+	mut_file = gzopen(mut_out,"wb");
 	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
 	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
 																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to muts file.");
 
-	snp_file = fopen(snp_out,"w");
+	snp_file = gzopen(snp_out,"wb");
 	check(snp_file != 0, "Error trying to open snp file for output: %s.",snp_out);
 	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
@@ -525,7 +525,7 @@ int estep_main(int argc, char *argv[]){
 
 
 	if(debug == 1){
-		debug_file = fopen(debug_out,"w");
+		debug_file = gzopen(debug_out,"wb");
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
 		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
@@ -554,18 +554,12 @@ int estep_main(int argc, char *argv[]){
 	check(write_check==0,"Error writing no analysis regions to bed file.");
 
 	//Flush and Close output files.
-	int fcheck = fflush(snp_file);
-	check(fcheck==0,"Error flushing snp_file.");
-	fcheck = fflush(mut_file);
-	check(fcheck==0,"Error flushing mut_file.");
-	check(fclose(snp_file)==0,"Error closing snp file '%s'.",snp_out);
-	check(fclose(mut_file)==0,"Error closing mut file '%s'.",mut_out);
+	check(gzclose(snp_file)==0,"Error closing snp file '%s'.",snp_out);
+	check(gzclose(mut_file)==0,"Error closing mut file '%s'.",mut_out);
 	if(debug_file){
-		fcheck = fflush(debug_file);
-		check(fcheck==0,"Error flushing debug_file.");
-	 	check(fclose(debug_file)==0,"Error closing debug file.");
+	 	check(gzclose(debug_file)==0,"Error closing debug file.");
 	}
-	fcheck = fflush(no_analysis_file);
+	int fcheck = fflush(no_analysis_file);
 	check(fcheck==0,"Error flushing no_analysis_file.");
 	check(fclose(no_analysis_file)==0,"Error closing no analysis file.");
 	//cleanup
@@ -582,9 +576,9 @@ error:
 	if(no_analysis_list) List_clear_destroy(no_analysis_list);
 	if(fa_file) free(fa_file);
 	if(ref_seq) free(ref_seq);
-	if(mut_file) fclose(mut_file);
-	if(snp_file) fclose(snp_file);
-	if(debug_file) fclose(debug_file);
+	if(mut_file) gzclose(mut_file);
+	if(snp_file) gzclose(snp_file);
+	if(debug_file) gzclose(debug_file);
 	if(no_analysis_file) fclose(no_analysis_file);
 	bam_access_closebams();
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count,ignore_regs);
