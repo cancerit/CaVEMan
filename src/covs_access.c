@@ -133,7 +133,7 @@ void covs_access_free_prob_array_given_dimensions(int dim1,int dim2, int dim3, i
 int covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	assert(file_loc != NULL);
 	assert(arr != NULL);
-	FILE *file = fopen(file_loc,"wb");
+	gzFile file = gzopen(file_loc,"wb1");
 	check(file,"Error opening file to write cov array: %s.",file_loc);
 	int i,j,k,m,n,p,r;
 	for(i=0;i<dim1;i++){
@@ -143,8 +143,8 @@ int covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,
 					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
-                int chk = fwrite(arr[i][j][k][m][n][p][r],sizeof(arr[i][j][k][m][n][p][r][0]),dim8,file);
-	              check(chk==dim8,"Error writing cov array to file '%s'.",file_loc);
+                int chk = gzwrite(file,arr[i][j][k][m][n][p][r],sizeof(uint64_t)*dim8);
+	              check(chk==sizeof(uint64_t)*dim8,"Error writing cov array to file '%s'.",file_loc);
 							}
 						}
 					}
@@ -152,18 +152,17 @@ int covs_access_write_covs_to_file(char *file_loc,uint64_t ********arr,int dim1,
 			}
 		}
 	}
-	check(fflush(file)==0,"Error flushing output to cov array file '%s'.",file_loc);
-	check(fclose(file)==0,"Error closing cov array file after writing '%s'.",file_loc);
+	check(gzclose(file)==0,"Error closing cov array file after writing '%s'.",file_loc);
 	return 0;
 error:
-	if(file) fclose(file);
+	if(file) gzclose(file);
 	return -1;
 }
 
 uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim2, int dim3, int dim4, int dim5, int dim6, int dim7, int dim8){
 	assert(file_loc != NULL);
 	//Use a real array rather than pointers for reading...
-  FILE *file = fopen(file_loc,"rb");
+  gzFile file = gzopen(file_loc,"rb");
   check(file!=NULL,"Error opening file to read cov array: %s.",file_loc);
 	//Actual return array
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(dim1, dim2, dim3, dim4, dim5, dim6, dim7, dim8);
@@ -176,8 +175,9 @@ uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim
 					for(n=0;n<dim5;n++){
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
-								int chk = fread(arr[i][j][k][m][n][p][r],sizeof(arr[i][j][k][m][n][p][r][0]),dim8,file);
-	              check(chk==dim8,"Error reading cov array from file.");
+								int chk = gzread(file,arr[i][j][k][m][n][p][r],sizeof(uint64_t) * dim8);
+								int errn = 0;
+	              check(chk==sizeof(uint64_t) * dim8,"Error reading cov array from file.");
 							}
 						}
 					}
@@ -185,10 +185,10 @@ uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim
 			}
 		}
 	}
-	check(fclose(file)==0,"Error closing cov array file after reading '%s'.",file_loc);
+	check(gzclose(file)==0,"Error closing cov array file after reading '%s'.",file_loc);
 	return arr;
 error:
-	if(file) fclose(file);
+	if(file) gzclose(file);
 	return NULL;
 }
 

@@ -34,6 +34,7 @@
 #define _covs_access_h
 
 #include <stdint.h>
+#include "zlib.h"
 
 
 uint64_t ********covs_access_generate_cov_array_given_dimensions(int rd_order_size,int strand_size, int lane_size, int rpos_size, int mq_size, int bq_size, int ref_b_size, int called_b_size);
