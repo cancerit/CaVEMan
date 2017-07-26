@@ -112,7 +112,7 @@ valgrind:
 	$(CC) $(CFLAGS) $(JOIN_INCLUDES) $(INCLUDES) -c $<  -o $@
 
 clean:
-	rm -rf ./bin $(HTSTMP) /tests/*.dSYM
+	rm -rf ./bin $(HTSTMP) ./tests/*.dSYM
 	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
 
 depend: $(SRCS)
