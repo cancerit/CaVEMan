@@ -246,7 +246,7 @@ int test_output_to_file_int(){
 	pos->top_geno = som;
 	pos->sec_geno = ref;
 
-	out = gzopen(out_test_vcf,"w");
+	out = gzopen(out_test_vcf,"wb1");
 
 	int chk = output_vcf_variant_position(pos, out, chrom);
 	check(chk==0,"Error running output_vcf_variant_position.");
@@ -318,7 +318,7 @@ char *test_output_to_file(){
 }
 
 char *test_output_header_to_file(){
-	gzFile out = gzopen(out_test_vcf,"wb");
+	gzFile out = gzopen(out_test_vcf,"wb1");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -403,7 +403,7 @@ char *test_output_header_to_file(){
 
 	chk=0;
 
-	out = gzopen(out_test_vcf,"wb");
+	out = gzopen(out_test_vcf,"wb1");
 
 	char *norm_plat2 = malloc(sizeof(char)*50);
 	char *tum_plat2 = malloc(sizeof(char)*50);
@@ -484,7 +484,7 @@ char *test_output_header_to_file(){
 }
 
 char *test_output_header_to_file_cram(){
-	gzFile out = gzopen(out_test_vcf,"wb");
+	gzFile out = gzopen(out_test_vcf,"wb1");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -569,7 +569,7 @@ char *test_output_header_to_file_cram(){
 
 	chk=0;
 
-	out = gzopen(out_test_vcf,"wb");
+	out = gzopen(out_test_vcf,"wb1");
 
 	char *norm_plat2 = malloc(sizeof(char)*50);
 	char *tum_plat2 = malloc(sizeof(char)*50);

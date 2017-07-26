@@ -509,14 +509,14 @@ int estep_main(int argc, char *argv[]){
 	check(chk>0,"Error generating debug file location.");
 
 	//Open files for output
-	mut_file = gzopen(mut_out,"wb");
+	mut_file = gzopen(mut_out,"wb1");
 	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
 	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
 																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to muts file.");
 
-	snp_file = gzopen(snp_out,"wb");
+	snp_file = gzopen(snp_out,"wb1");
 	check(snp_file != 0, "Error trying to open snp file for output: %s.",snp_out);
 	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
@@ -525,7 +525,7 @@ int estep_main(int argc, char *argv[]){
 
 
 	if(debug == 1){
-		debug_file = gzopen(debug_out,"wb");
+		debug_file = gzopen(debug_out,"wb1");
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
 		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
