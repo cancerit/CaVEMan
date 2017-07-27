@@ -176,7 +176,6 @@ uint64_t ********covs_access_read_covs_from_file(char *file_loc,int dim1,int dim
 						for(p=0;p<dim6;p++){
 							for(r=0;r<dim7;r++){
 								int chk = gzread(file,arr[i][j][k][m][n][p][r],sizeof(uint64_t) * dim8);
-								int errn = 0;
 	              check(chk==sizeof(uint64_t) * dim8,"Error reading cov array from file.");
 							}
 						}
