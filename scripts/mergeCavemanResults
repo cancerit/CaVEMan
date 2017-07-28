@@ -55,8 +55,7 @@ my $pattern;
 	if($splitSectcounts != scalar(@{$options->{'files'}})){
 	  croak("Expected $splitSectcounts files but got ".scalar(@{$options->{'files'}}).".");
 	}
-	my ($readmode,$writemode,$zipout) = choose_read_mode($options->{'files'}->[0]);
-	warn Dumper($readmode,$writemode,$zipout);
+	my ($readmode,$writemode,$zipout) = choose_read_mode($options->{'files'}->[0],$options->{'o'});
 	my $OUT = new IO::Zlib;
 	$OUT->open($options->{'o'}.".tmp",$writemode) or die("Error opening output file $options->{o}.tmp for write: $!\n");
 		#Iterate through each file
@@ -159,12 +158,12 @@ my $pattern;
 }
 
 sub choose_read_mode{
-	my $filename = shift;
+	my ($filename,$outname) = @_;
 	my $readmode = "r";
 	my $writemode = "w";
 	my $zipout = "";
-	if($filename=~m/\.gz$/){
-		$readmode .= "b1";
+	$readmode .= "b1" if($filename=~m/\.gz$/);
+	if($outname=~m/\.gz$/){
 		$writemode .= "b1";
 		$zipout = "| gzip -1 -c - "
 	}
