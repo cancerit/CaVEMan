@@ -22,7 +22,7 @@ See INSTALL.TXT
 * BWA Mapped, indexed, duplicate marked/removed bam files, for both a normal and tumour sample
 * Reference.fasta and index
 * A one based bed style format file of regions to ignore during analysis (see specified format).
-* [zlib](https://zlib.net/) <= 1.2.3.5
+* [zlib](https://zlib.net/) >= 1.2.3.5
 
 ## Optional inputs (will result in more accurate calls)
 
