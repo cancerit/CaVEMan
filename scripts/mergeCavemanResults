@@ -168,7 +168,7 @@ sub choose_read_mode{
 		$writemode .= "b";
 		$zipout = "| gzip -1 -c - "
 	}
-	return $readmode;
+	return ($readmode,$writemode,$writemode);
 }
 
 sub get_line_count_from_splitlist{
