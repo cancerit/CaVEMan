@@ -56,8 +56,9 @@ my $pattern;
 	  croak("Expected $splitSectcounts files but got ".scalar(@{$options->{'files'}}).".");
 	}
 	my ($readmode,$writemode,$zipout) = choose_read_mode($options->{'files'}->[0]);
+	warn Dumper($readmode,$writemode,$zipout);
 	my $OUT = new IO::Zlib;
-	$OUT->open($options->{'o'}.".tmp") or die("Error opening output file $options->{o}.tmp for write: $!\n");
+	$OUT->open($options->{'o'}.".tmp",$writemode) or die("Error opening output file $options->{o}.tmp for write: $!\n");
 		#Iterate through each file
 		my $have_head = 0;
 		my @head ;
@@ -158,16 +159,16 @@ my $pattern;
 }
 
 sub choose_read_mode{
-	my $filename = $_;
+	my $filename = shift;
 	my $readmode = "r";
 	my $writemode = "w";
 	my $zipout = "";
 	if($filename=~m/\.gz$/){
-		$readmode .= "b";
-		$writemode .= "b";
+		$readmode .= "b1";
+		$writemode .= "b1";
 		$zipout = "| gzip -1 -c - "
 	}
-	return ($readmode,$writemode,$writemode);
+	return ($readmode,$writemode,$zipout);
 }
 
 sub get_line_count_from_splitlist{
@@ -205,6 +206,9 @@ sub setup{
   my (@dirs) = getDirsAndPattern($opts{'f'});
   find(\&wanted, @dirs);
 
+  if($opts{'o'}!~m/\.gz/){
+  	$opts{'o'}.=".gz";
+  }
   @{$opts{'files'}} = @files;
 
 	return \%opts;
