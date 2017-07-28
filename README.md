@@ -6,6 +6,7 @@ approach to calling single base substitutions in paired data.
 Designed for use with a compute farm/cluster most steps in the program make
 use of an index parameter. The split step is designed to divide the genome into
 chunks of adjustable size to optimise for runtime/memory usage requirements.
+For simple execution of CaVEMan please see [cgpCaVEManWrapper](https://github.com/cancerit/cgpCaVEManWrapper)
 
 | Master | Dev |
 |---|---|
