@@ -41,6 +41,7 @@ use Pod::Usage qw(pod2usage);
 use File::Find;
 use File::Spec;
 use Data::Dumper;
+use IO::Zlib;
 use Carp;
 
 my @files;
@@ -54,9 +55,9 @@ my $pattern;
 	if($splitSectcounts != scalar(@{$options->{'files'}})){
 	  croak("Expected $splitSectcounts files but got ".scalar(@{$options->{'files'}}).".");
 	}
-
-	my $OUT;
-	open($OUT,'>',$options->{'o'}.".tmp") or die("Error opening output file $options->{o}.tmp for write: $!\n");
+	my ($readmode,$writemode,$zipout) = choose_read_mode($options->{'files'}->[0],$options->{'o'});
+	my $OUT = new IO::Zlib;
+	$OUT->open($options->{'o'}.".tmp",$writemode) or die("Error opening output file $options->{o}.tmp for write: $!\n");
 		#Iterate through each file
 		my $have_head = 0;
 		my @head ;
@@ -64,8 +65,8 @@ my $pattern;
 		#Do the header checks first;
 		foreach my $filename(@{$options->{'files'}}){
 			#open file
-			my $IN;
-			open($IN, '<', $filename) or die("Error trying to open '$filename' for read: $!\n");
+			my $IN = new IO::Zlib;
+			$IN->open($filename,$readmode) or die("Error trying to open '$filename' for read: $!\n");
 				my @tmp_head;
 				while(<$IN>){
 					my $line = $_;
@@ -93,7 +94,7 @@ my $pattern;
 					}
 				}
 			$have_head = 1 if($have_head == 0); #in case we hit a file containing only the header first.
-			close($IN) or croak ("Error closing file '$filename' when checking header: $!");
+			$IN->close or croak ("Error closing file '$filename' when checking header: $!");
 		}
 
 		warn "".scalar(@head)." header lines\n";
@@ -115,17 +116,17 @@ my $pattern;
 		    croak("Error detecting start and stop from CaVEMan output file $filename.");
 		  }
 
-			my $IN;
-			open($IN, '<', $filename) or die("Error trying to open $filename for read: $!\n");
+			my $IN = new IO::Zlib;
+			$IN->open($filename,$readmode) or die("Error trying to open $filename for read: $!\n");
 				while(<$IN>){
 					my $line = $_;
 					if($line !~ m/^#/){
 						print $OUT $line;
 					}
 				}
-			close($IN);
+			$IN->close;
 		}
-	close ($OUT);
+	$OUT->close;
 
 	my @missed_files = ();
 	foreach my $chr(keys %$sects){
@@ -145,15 +146,28 @@ my $pattern;
 	# and sort the remaining entries into the proper output file.
 
 	# Get the header into the file.
-	my $head_cmd = "grep -e '^#' ".$options->{'o'}.".tmp > ".$options->{'o'};
+	my $head_cmd = "zgrep -e '^#' ".$options->{'o'}.".tmp ".$zipout."> ".$options->{'o'};
 	`$head_cmd`;
 
 	# Get the non header lines and sort accordingly
-	my $non_head_sort_cmd = "grep -ve '^#' ".$options->{'o'}.".tmp | sort -k1,1 -k2,2n >> ".$options->{'o'};
+	my $non_head_sort_cmd = "zgrep -ve '^#' ".$options->{'o'}.".tmp | sort -k1,1 -k2,2n ".$zipout.">> ".$options->{'o'};
 	`$non_head_sort_cmd`;
 
 	# delete the tmp file
 	unlink($options->{'o'}.".tmp") or die("ERROR: Couldn't delete temporary output file ".$options->{'o'}.".tmp".":$!");
+}
+
+sub choose_read_mode{
+	my ($filename,$outname) = @_;
+	my $readmode = "r";
+	my $writemode = "w";
+	my $zipout = "";
+	$readmode .= "b1" if($filename=~m/\.gz$/);
+	if($outname=~m/\.gz$/){
+		$writemode .= "b1";
+		$zipout = "| gzip -1 -c - "
+	}
+	return ($readmode,$writemode,$zipout);
 }
 
 sub get_line_count_from_splitlist{
@@ -191,6 +205,9 @@ sub setup{
   my (@dirs) = getDirsAndPattern($opts{'f'});
   find(\&wanted, @dirs);
 
+  if($opts{'o'}!~m/\.gz/){
+  	$opts{'o'}.=".gz";
+  }
   @{$opts{'files'}} = @files;
 
 	return \%opts;

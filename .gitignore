@@ -4,3 +4,5 @@
 /samtools/
 /tests/tests_log
 setup.log
+/tests/*.dSYM
+/install
