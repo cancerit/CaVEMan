@@ -299,17 +299,17 @@ int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_l
 	contigs = output_generate_reference_contig_lines(tum_bam, assembly, species);
 	check(contigs != NULL,"Error fetching contigs from bam file.");
 	write = gzprintf(out,"%s",contigs);
-	check(write>0,"Error writing contigs.");
+	check(write==sizeof(char)*strlen(contigs),"Error (%lu) writing contigs. ERROR: %s(errno %d)",write,gzerror(out,&errno),errno);
 
 	//INFO lines
 	info = output_generate_info_lines();
 	write = gzprintf(out,"%s",info);
-	check(write>0,"Error writing INFO.");
+	check(write==sizeof(char)*strlen(info),"Error (%lu) writing INFO.",write);
 
 	//FORMAT
 	format = output_generate_format_lines();
 	write = gzprintf(out,"%s",format);
-	check(write>0,"Error writing FORMAT.");
+	check(write==sizeof(char)*strlen(format),"Error (%lu) writing FORMAT.",write);
 
 	//SAMPLES
 	//Normal
@@ -319,7 +319,7 @@ int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_l
 			VCF_PROTOCOL_KEY,norm_prot,
 			VCF_INDIVIDUAL_KEY,normal_name,
 			VCF_SOURCE_KEY);
-	check(write>0,"Error writing normal sample.");
+	check(write>0,"Error (%lu) writing normal sample.",write);
 	//Tumour
 	write = gzprintf(out,"##%s=<ID=%s,%s=\"Tumour\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
 			VCF_SAMPLE_KEY,VCF_TUMOUR_NAME,VCF_DESCRIPTION_KEY,
@@ -327,7 +327,7 @@ int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_l
 			VCF_PROTOCOL_KEY,tum_prot,
 			VCF_INDIVIDUAL_KEY,tumour_name,
 			VCF_SOURCE_KEY);
-	check(write>0,"Error writing tumour sample.");
+	check(write>0,"Error (%lu) writing tumour sample.",write);
 
 	///Finally the line above output.
 	write = gzprintf(out,"#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t%s\t%s\n",VCF_NORMAL_NAME,VCF_TUMOUR_NAME);
