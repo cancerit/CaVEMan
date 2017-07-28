@@ -55,7 +55,7 @@ my $pattern;
 	if($splitSectcounts != scalar(@{$options->{'files'}})){
 	  croak("Expected $splitSectcounts files but got ".scalar(@{$options->{'files'}}).".");
 	}
-	my ($readmode,$writemode,$zipout) = choose_read_mode($filename);
+	my ($readmode,$writemode,$zipout) = choose_read_mode($options->{'files'}->[0]);
 	my $OUT = new IO::Zlib;
 	$OUT->open($options->{'o'}.".tmp") or die("Error opening output file $options->{o}.tmp for write: $!\n");
 		#Iterate through each file
@@ -64,7 +64,6 @@ my $pattern;
 
 		#Do the header checks first;
 		foreach my $filename(@{$options->{'files'}}){
-			my $readmode = choose_read_mode($filename);
 			#open file
 			my $IN = new IO::Zlib;
 			$IN->open($filename,$readmode) or die("Error trying to open '$filename' for read: $!\n");
