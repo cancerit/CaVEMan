@@ -205,9 +205,6 @@ sub setup{
   my (@dirs) = getDirsAndPattern($opts{'f'});
   find(\&wanted, @dirs);
 
-  if($opts{'o'}!~m/\.gz/){
-  	$opts{'o'}.=".gz";
-  }
   @{$opts{'files'}} = @files;
 
 	return \%opts;
