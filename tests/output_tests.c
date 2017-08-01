@@ -46,7 +46,7 @@ char *mut_norm = "testData/testing_wt.bam";
 char *mut_tum = "testData/testing_mt.bam";
 char *mut_norm_cram = "testData/testing_wt.cram";
 char *mut_tum_cram = "testData/testing_mt.cram";
-char *out_test_vcf = "testData/test_out.vcf";
+char *out_test_vcf = "testData/test_out.vcf.gz";
 char *test_fai_out = TEST_REF;
 
 char *test_output_generate_info_lines(){
@@ -105,7 +105,7 @@ int test_output_to_file_int(){
 	combined_genotype_t **somatic_genotypes = NULL;
 	combined_genotype_t **het_norm_genotypes = NULL;
 
-	FILE *out = NULL;
+	gzFile out = NULL;
 
 	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
 	estep_position_t *pos = malloc(sizeof(estep_position_t));
@@ -246,23 +246,23 @@ int test_output_to_file_int(){
 	pos->top_geno = som;
 	pos->sec_geno = ref;
 
-	out = fopen(out_test_vcf,"w");
+	out = gzopen(out_test_vcf,"wb1");
 
 	int chk = output_vcf_variant_position(pos, out, chrom);
 	check(chk==0,"Error running output_vcf_variant_position.");
 
-	fclose(out);
+	gzclose(out);
 
 	char *exp = "Y\t10\t.\tC\tT\t.\t.\tDP=136;MP=9.4e-01;GP=7.7e-02;TG=CC/TT;TP=9.5e-01;SG=CC/CC;SP=4.8e-02\tGT:FAZ:FCZ:FGZ:FTZ:RAZ:RCZ:RGZ:RTZ:PM\t0|0:1:2:3:4:5:6:7:8:3.3e-01\t1|1:9:10:11:12:13:14:15:16:2.8e-01\n";
-	out = fopen(out_test_vcf,"r");
+	out = gzopen(out_test_vcf,"rb");
 	char line[5000];
 	int count = 0;
-	while ( fgets(line,sizeof(line),out) != NULL ){
+	while ( gzgets(out,line,sizeof(line)) != NULL ){
 		check(count==0,"Too many lines output to mutation file.");
 		check(strcmp(exp,line)==0,"Incorrect variant output in file.");
 		count++;
 	}
-	fclose(out);
+	gzclose(out);
 	unlink(out_test_vcf);
 
 
@@ -318,7 +318,7 @@ char *test_output_to_file(){
 }
 
 char *test_output_header_to_file(){
-	FILE *out = fopen(out_test_vcf,"w");
+	gzFile out = gzopen(out_test_vcf,"wb1");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -330,9 +330,9 @@ char *test_output_header_to_file(){
 																		NULL, NULL, norm_protocol, tum_protocol, norm_plat, tum_plat);
 	mu_assert(chk==0,"Error running output header method.");
 
-	fclose(out);
+	gzclose(out);
 
-	out = fopen(out_test_vcf,"r");
+	out = gzopen(out_test_vcf,"rb");
 	char exp[20000];
 	strcpy(exp,"");
 	strcat(exp,"##fileformat=VCFv4.1\n");
@@ -389,7 +389,7 @@ char *test_output_header_to_file(){
 	int exp_lines = 52;
 	char got[20000];
 	strcpy(got,"");
-	while ( fgets(line,sizeof(line),out) != NULL ){
+	while ( gzgets(out,line,sizeof(line)) != NULL ){
 		mu_assert(count<=exp_lines,"Too many header lines.");
 		strcat(got,line);
 		count++;
@@ -398,12 +398,12 @@ char *test_output_header_to_file(){
 		printf("exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
 	}
 	mu_assert(strcmp(exp,got)==0,"Header in file doesn't match.");
-	fclose(out);
+	gzclose(out);
 	unlink(out_test_vcf);
 
 	chk=0;
 
-	out = fopen(out_test_vcf,"w");
+	out = gzopen(out_test_vcf,"wb1");
 
 	char *norm_plat2 = malloc(sizeof(char)*50);
 	char *tum_plat2 = malloc(sizeof(char)*50);
@@ -414,9 +414,9 @@ char *test_output_header_to_file(){
 																		NULL, NULL, norm_protocol, tum_protocol, norm_plat2, tum_plat2);
 	mu_assert(chk==0,"Error running output header method.");
 
-	fclose(out);
+	gzclose(out);
 
-	out = fopen(out_test_vcf,"r");
+	out = gzopen(out_test_vcf,"rb");
 	strcpy(exp,"");
 	strcat(exp,"##fileformat=VCFv4.1\n");
 	//fileDate=20120104
@@ -468,7 +468,7 @@ char *test_output_header_to_file(){
 	count = 0;
 	exp_lines = 52;
 	strcpy(got,"");
-	while ( fgets(line,sizeof(line),out) != NULL ){
+	while ( gzgets(out,line,sizeof(line)) != NULL ){
 		mu_assert(count<=exp_lines,"Too many header lines.");
 		strcat(got,line);
 		count++;
@@ -477,14 +477,14 @@ char *test_output_header_to_file(){
 		printf("exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
 	}
 	mu_assert(strcmp(exp,got)==0,"Header in file doesn't match.");
-	fclose(out);
+	gzclose(out);
 	unlink(out_test_vcf);
 
 	return NULL;
 }
 
 char *test_output_header_to_file_cram(){
-	FILE *out = fopen(out_test_vcf,"w");
+	gzFile out = gzopen(out_test_vcf,"wb1");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -496,9 +496,9 @@ char *test_output_header_to_file_cram(){
 																		NULL, NULL, norm_protocol, tum_protocol, norm_plat, tum_plat);
 	mu_assert(chk==0,"Error running output header method.");
 
-	fclose(out);
+	gzclose(out);
 
-	out = fopen(out_test_vcf,"r");
+	out = gzopen(out_test_vcf,"rb");
 	char exp[20000];
 	strcpy(exp,"");
 	strcat(exp,"##fileformat=VCFv4.1\n");
@@ -555,7 +555,7 @@ char *test_output_header_to_file_cram(){
 	int exp_lines = 52;
 	char got[20000];
 	strcpy(got,"");
-	while ( fgets(line,sizeof(line),out) != NULL ){
+	while ( gzgets(out,line,sizeof(line)) != NULL ){
 		mu_assert(count<=exp_lines,"Too many header lines.");
 		strcat(got,line);
 		count++;
@@ -564,12 +564,12 @@ char *test_output_header_to_file_cram(){
 		printf("exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
 	}
 	mu_assert(strcmp(exp,got)==0,"Header in file doesn't match.");
-	fclose(out);
+	gzclose(out);
 	unlink(out_test_vcf);
 
 	chk=0;
 
-	out = fopen(out_test_vcf,"w");
+	out = gzopen(out_test_vcf,"wb1");
 
 	char *norm_plat2 = malloc(sizeof(char)*50);
 	char *tum_plat2 = malloc(sizeof(char)*50);
@@ -580,9 +580,9 @@ char *test_output_header_to_file_cram(){
 																		NULL, NULL, norm_protocol, tum_protocol, norm_plat2, tum_plat2);
 	mu_assert(chk==0,"Error running output header method.");
 
-	fclose(out);
+	gzclose(out);
 
-	out = fopen(out_test_vcf,"r");
+	out = gzopen(out_test_vcf,"rb");
 	strcpy(exp,"");
 	strcat(exp,"##fileformat=VCFv4.1\n");
 	//fileDate=20120104
@@ -634,7 +634,7 @@ char *test_output_header_to_file_cram(){
 	count = 0;
 	exp_lines = 52;
 	strcpy(got,"");
-	while ( fgets(line,sizeof(line),out) != NULL ){
+	while ( gzgets(out,line,sizeof(line)) != NULL ){
 		mu_assert(count<=exp_lines,"Too many header lines.");
 		strcat(got,line);
 		count++;
@@ -643,7 +643,7 @@ char *test_output_header_to_file_cram(){
 		printf("exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
 	}
 	mu_assert(strcmp(exp,got)==0,"Header in file doesn't match.");
-	fclose(out);
+	gzclose(out);
 	unlink(out_test_vcf);
 
 	return NULL;

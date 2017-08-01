@@ -1,3 +1,7 @@
+### 1.12.0
+* Now outputs snp and mut vcf files as gzipped.
+* Requires [zlib](https://zlib.net/) >= 1.2.3.5
+
 ### 1.11.3
 * Makefile update to cope with central/prefix install of htslib
 

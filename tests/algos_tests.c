@@ -58,9 +58,9 @@ char *test_fai_out = TEST_REF;
 char *mut_alg = "testData/test_mut_alg";
 char *mut_mt_cn = "testData/mc.cave.cn";
 char *mut_wt_cn = "testData/wc.cave.cn";
-char *test_snp_out = "testData/snp.vcf";
-char *test_mut_out = "testData/mut.vcf";
-char *test_dbg_out = "testData/dbg.vcf";
+char *test_snp_out = "testData/snp.vcf.gz";
+char *test_mut_out = "testData/mut.vcf.gz";
+char *test_dbg_out = "testData/dbg.vcf.gz";
 char *test_no_anal_out = "testData/no_analysis.bed";
 
 char *test_algos_mstep_read_position(){
@@ -190,11 +190,11 @@ int estep_no_analysis(){
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	FILE *snp_out = fopen(test_snp_out,"w");
+	gzFile snp_out = gzopen(test_snp_out,"wb1");
 	check(snp_out!=NULL,"Error opening file.");
-	FILE *mut_out = fopen(test_mut_out,"w");
+	gzFile mut_out = gzopen(test_mut_out,"wb1");
 	check(mut_out!=NULL,"Error opening file.");
-	FILE *dbg_out = fopen(test_dbg_out,"w");
+	gzFile dbg_out = gzopen(test_dbg_out,"wb1");
 	check(dbg_out!=NULL,"Error opening file.");
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	check(no_anal_out!=NULL,"Error opening file.");
@@ -203,9 +203,9 @@ int estep_no_analysis(){
 	int estep = algos_estep_read_position(alg, probs,"1", 192462250, 192462300, ref_base, mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	output_flush_no_analysis("1");
 	check(estep==0,"Error running estep.");
-	fclose(snp_out);
-	fclose(mut_out);
-	fclose(dbg_out);
+	gzclose(snp_out);
+	gzclose(mut_out);
+	gzclose(dbg_out);
 	fclose(no_anal_out);
 
 	bam_access_closebams();
@@ -242,11 +242,11 @@ int estep_no_analysis_cram(){
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	FILE *snp_out = fopen(test_snp_out,"w");
+	gzFile snp_out = gzopen(test_snp_out,"wb1");
 	check(snp_out!=NULL,"Error opening file.");
-	FILE *mut_out = fopen(test_mut_out,"w");
+	gzFile mut_out = gzopen(test_mut_out,"wb1");
 	check(mut_out!=NULL,"Error opening file.");
-	FILE *dbg_out = fopen(test_dbg_out,"w");
+	gzFile dbg_out = gzopen(test_dbg_out,"wb1");
 	check(dbg_out!=NULL,"Error opening file.");
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	check(no_anal_out!=NULL,"Error opening file.");
@@ -255,9 +255,9 @@ int estep_no_analysis_cram(){
 	int estep = algos_estep_read_position(alg, probs,"1", 192462250, 192462300, ref_base, mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	output_flush_no_analysis("1");
 	check(estep==0,"Error running estep.");
-	fclose(snp_out);
-	fclose(mut_out);
-	fclose(dbg_out);
+	gzclose(snp_out);
+	gzclose(mut_out);
+	gzclose(dbg_out);
 	fclose(no_anal_out);
 
 	bam_access_closebams();
@@ -298,17 +298,17 @@ char *test_algos_estep_read_position(){
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	FILE *snp_out = fopen(test_snp_out,"w");
-	FILE *mut_out = fopen(test_mut_out,"w");
-	FILE *dbg_out = fopen(test_dbg_out,"w");
+	gzFile snp_out = gzopen(test_snp_out,"wb1");
+	gzFile mut_out = gzopen(test_mut_out,"wb1");
+	gzFile dbg_out = gzopen(test_dbg_out,"wb1");
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
 	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	mu_assert(estep==0,"Error running estep.");
-	fclose(snp_out);
-	fclose(mut_out);
-	fclose(dbg_out);
+	gzclose(snp_out);
+	gzclose(mut_out);
+	gzclose(dbg_out);
 	fclose(no_anal_out);
 
 	bam_access_closebams();
@@ -316,10 +316,10 @@ char *test_algos_estep_read_position(){
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),probs);
 				alg_bean_destroy(alg);
 
-	mut_out = fopen(test_mut_out,"r");
+	mut_out = gzopen(test_mut_out,"rb");
 	char line[5000];
 	int count = 0;
-	while ( fgets(line,sizeof(line),mut_out) != NULL ){
+	while ( gzgets(mut_out,line,sizeof(line)) != NULL ){
 		mu_assert(strncmp("1\t192462357",line,(sizeof(char) * 11))==0,"Incorrect mutation output in file.");
 		//printf("%s",line);
 		//mu_assert(strcmp(
@@ -329,7 +329,7 @@ char *test_algos_estep_read_position(){
 		count++;
 	}
 	mu_assert(count==1,"Wrong number of mutations output in the mutant file.");
-	fclose(mut_out);
+	gzclose(mut_out);
 	unlink(test_snp_out);
 	unlink(test_mut_out);
 	unlink(test_dbg_out);
@@ -344,17 +344,17 @@ char *test_algos_estep_read_position_cram(){
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	FILE *snp_out = fopen(test_snp_out,"w");
-	FILE *mut_out = fopen(test_mut_out,"w");
-	FILE *dbg_out = fopen(test_dbg_out,"w");
+	gzFile snp_out = gzopen(test_snp_out,"wb1");
+	gzFile mut_out = gzopen(test_mut_out,"wb1");
+	gzFile dbg_out = gzopen(test_dbg_out,"wb1");
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
 	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	mu_assert(estep==0,"Error running estep.");
-	fclose(snp_out);
-	fclose(mut_out);
-	fclose(dbg_out);
+	gzclose(snp_out);
+	gzclose(mut_out);
+	gzclose(dbg_out);
 	fclose(no_anal_out);
 
 	bam_access_closebams();
@@ -362,10 +362,10 @@ char *test_algos_estep_read_position_cram(){
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),probs);
 				alg_bean_destroy(alg);
 
-	mut_out = fopen(test_mut_out,"r");
+	mut_out = gzopen(test_mut_out,"rb");
 	char line[5000];
 	int count = 0;
-	while ( fgets(line,sizeof(line),mut_out) != NULL ){
+	while ( gzgets(mut_out,line,sizeof(line)) != NULL ){
 		mu_assert(strncmp("1\t192462357",line,(sizeof(char) * 11))==0,"Incorrect mutation output in file.");
 		//printf("%s",line);
 		//mu_assert(strcmp(
@@ -375,7 +375,7 @@ char *test_algos_estep_read_position_cram(){
 		count++;
 	}
 	mu_assert(count==1,"Wrong number of mutations output in the mutant file.");
-	fclose(mut_out);
+	gzclose(mut_out);
 	unlink(test_snp_out);
 	unlink(test_mut_out);
 	unlink(test_dbg_out);

@@ -1,4 +1,4 @@
-CAVEMAN_VERSION=1.11.3
+CAVEMAN_VERSION=1.12.0
 TEST_REF?=""
 #Compiler
 CC?=gcc
@@ -112,8 +112,8 @@ valgrind:
 	$(CC) $(CFLAGS) $(JOIN_INCLUDES) $(INCLUDES) -c $<  -o $@
 
 clean:
-	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./bin/* ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
-	rm -rf ./bin $(HTSTMP)
+	rm -rf ./bin $(HTSTMP) ./tests/*.dSYM
+	$(RM) ./src/*.o *~ $(CAVEMAN_TARGET) $(UMNORM_TARGET) ./tests/tests_log $(TESTS) ./src/*.gcda ./src/*.gcov ./src/*.gcno *.gcda *.gcov *.gcno ./tests/*.gcda ./tests/*.gcov ./tests/*.gcno
 
 depend: $(SRCS)
 	makedepend $(INCLUDES) $^
