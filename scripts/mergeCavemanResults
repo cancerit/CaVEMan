@@ -165,7 +165,7 @@ sub choose_read_mode{
 	$readmode .= "b1" if($filename=~m/\.gz$/);
 	if($outname=~m/\.gz$/){
 		$writemode .= "b1";
-		$zipout = "| gzip -1 -c - "
+		$zipout = "| bgzip -c - "
 	}
 	return ($readmode,$writemode,$zipout);
 }
@@ -205,9 +205,6 @@ sub setup{
   my (@dirs) = getDirsAndPattern($opts{'f'});
   find(\&wanted, @dirs);
 
-  if($opts{'o'}!~m/\.gz/){
-  	$opts{'o'}.=".gz";
-  }
   @{$opts{'files'}} = @files;
 
 	return \%opts;
