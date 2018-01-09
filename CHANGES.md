@@ -1,3 +1,6 @@
+### 1.12.1
+* Resolves #74
+
 ### 1.12.0
 * Now outputs snp and mut vcf files as gzipped.
 * Requires [zlib](https://zlib.net/) >= 1.2.3.5
