@@ -1,3 +1,9 @@
+### 1.11.5
+* Further fix to split step bug found in targeted data
+
+### 1.11.4
+* Fix to split step bug found in targeted data
+
 ### 1.11.3
 * Makefile update to cope with central/prefix install of htslib
 
