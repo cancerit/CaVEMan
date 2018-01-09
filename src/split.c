@@ -333,7 +333,7 @@ int split_main(int argc, char *argv[]){
 				//Set old stop position (Min of curr_t_pos & curr_n_pos)
 				sect_stop = min(curr_t_pos,curr_n_pos);
 				//This is the position on which to separate the split sections so print it.
-				if(sect_stop>0) {
+				if(sect_stop>0 && sect_stop >= sect_start) {
 					split_access_print_section(output,chr_name,sect_start,sect_stop);
 				}
 				//printf("Found %d reads for %s:%d-%d\n",rd_count,chr_name,sect_start,sect_stop);
