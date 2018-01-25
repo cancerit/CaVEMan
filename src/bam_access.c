@@ -40,6 +40,9 @@
 #include <dbg.h>
 #include <bam_access.h>
 #include <time.h>
+#include "khash.h"
+
+KHASH_MAP_INIT_STR(strh,uint8_t)
 
 static file_holder *norm = NULL;
 static file_holder *tum = NULL;
@@ -111,12 +114,28 @@ int bam_access_get_avg_readlength_from_bam(htsFile *sf){
 
 int pos_counts_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int strand){
   file_holder *norm  = (file_holder *) data;
+	khash_t(strh) *h;
+	khiter_t k;
+	h = kh_init(strh);
   int i=0;
   for(i=0;i<n_plp;i++){
     const bam_pileup1_t *p = pil + i;
     bam1_t *algn = p->b;
+
+		int absent;
     uint8_t cbase = bam_seqi(bam_get_seq(algn),p->qpos);
-    if(!(p->is_del) && bam_get_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)){//check bases are ACGT
+		k = kh_put(strh, h, bam_get_qname(p->b), &absent);
+		uint8_t pre_b;
+		if(!absent){ //Read already processed to get base processed (we only increment if base is different between overlapping read pairs)
+			k = kh_get(strh, h, bam_get_qname(p->b));
+			pre_b = kh_val(h,k);
+		}else{
+			//Add the value to the hash
+			kh_value(h, k) = cbase;
+		}
+
+    if(!(p->is_del) && bam_get_qual(algn)[p->qpos] >= min_base_qual && (cbase == 1 || cbase == 2 || cbase == 4 || cbase == 8)
+															&& (absent || pre_b != cbase)){//check bases are ACGT and not same base in overlapping read]]
       int loc = (pos + 1) - norm->beg;
       if(norm->base_counts[loc] == NULL || norm->base_counts[loc] == 0){
         if(strand == 1 ){
@@ -141,9 +160,10 @@ int pos_counts_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1
       }
     }//End of checking base is ACGT & fits quality requirements
   }//Iteration through pileups at this position
-
+	kh_destroy(strh, h);
   return 0;
 error:
+	kh_destroy(strh, h);
   return 1;
 }
 
@@ -507,13 +527,28 @@ int bam_access_compare_read_pos_t(const void *in_a, const void *in_b){
 
 int reads_at_pos_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int sorted, int isnorm){
   file_holder* bams = (file_holder* )data;
+	khash_t(strh) *h;
+	khiter_t k;
   char *nom = malloc(sizeof(char) * 350);
+	h = kh_init(strh);
   int i=0;
   for(i=0;i<n_plp;i++){
-    const bam_pileup1_t *p = pil + i;
+		const bam_pileup1_t *p = pil + i;
     int qual = bam_get_qual(p->b)[p->qpos];
     uint8_t c = bam_seqi(bam_get_seq(p->b), p->qpos);
-    if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)){
+
+		int absent;
+    k = kh_put(strh, h, bam_get_qname(p->b), &absent);
+		uint8_t pre_b;
+		if(!absent){ //Read already processed to get base processed (we only increment if base is different between overlapping read pairs)
+			k = kh_get(strh, h, bam_get_qname(p->b));
+			pre_b = kh_val(h,k);
+		}else{
+			//Add the value to the hash
+			kh_value(h, k) = c;
+		}
+
+    if(!(p->is_del) &&  qual >= min_base_qual && (c == 1 || c == 2 || c == 4 || c == 8)&& (absent || pre_b != c)){
       //Now we add a new read pos struct to the list since the read is valid.
       read_pos_t *rp = malloc(sizeof(struct read_pos_t));
       check_mem(rp);
@@ -551,9 +586,10 @@ int reads_at_pos_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileu
     }//End of if this is a useful read, ACGT, and within qual boundaries.
   }//End iterating through pileups at this position
   free(nom);
-
+	kh_destroy(strh, h);
   return 0;
 error:
+	kh_destroy(strh, h);
   return 1;
 }
 
