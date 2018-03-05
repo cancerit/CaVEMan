@@ -23,6 +23,10 @@
 
 SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.3.2/htslib-1.3.2.tar.bz2"
 
+REQUIRED_MIN_LIBZ="1.2.3.5"
+
+function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+
 get_distro () {
   EXT=""
   DECOMP="gunzip -f"
@@ -76,6 +80,18 @@ INIT_DIR=`pwd`
     grep MemTotal /proc/meminfo
     set +x
     echo; echo
+
+LIBZ_VER=`ldconfig -v | grep libz.so | perl -pi -e 'chomp($_); $_=~s/^\s+libz\.so\.1\s+.+\s+libz\.so\.//;'`
+echo $LIBZ_VER
+if version_gt $LIBZ_VER $REQUIRED_MIN_LIBZ ; then
+	echo "Found acceptable libz version $LIBZ_VER."
+	echo "Continuing install"
+else
+	echo "ERROR: CaVEMan requires libz version >= $REQUIRED_MIN_LIBZ"
+	echo "Found libz version: $LIBZ_VER"
+	echo "Exiting install"
+	exit 1
+fi
 
 set -ue
 
