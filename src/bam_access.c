@@ -105,6 +105,11 @@ int bam_access_get_avg_readlength_from_bam(htsFile *sf){
   bam1_t *b = bam_init1();
   int ret;
   while ((ret = sam_read1(sf, head, b)) >= 0 && read_count < 100) {
+		if((b->core.flag & BAM_FSECONDARY)
+		|| (b->core.flag & BAM_FSUPPLEMENTARY)
+		|| (b->core.flag & BAM_FQCFAIL)){
+			continue;
+		}
     read_count++;
     read_length_sum += b->core.l_qseq;
   }
