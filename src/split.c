@@ -48,9 +48,7 @@
 static int includeSW = 0;
 static int includeSingleEnd = 0;
 static int includeDups = 0;
-static unsigned int increment = 250000;
 static unsigned int max_read_count = 350000;
-static double maxPropRdCount = 1.25;
 static unsigned int read_length_base = 100;
 static char tum_bam_file[512];
 static char norm_bam_file[512];
@@ -70,8 +68,6 @@ void split_print_usage (int exit_code){
   printf("-i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)\n\n");
 	printf("Optional\n");
 	printf("-f  --config-file [file]          Path to the config file produced by setup [default:'%s'].\n",config_file);
-	printf("-c  --increment [int]             Increment to use when deciding split sizes [default:%d]\n",increment);
-	printf("-m  --max-read-count [double]     Proportion of read-count to allow as a max in a split section [default:%f]\n",maxPropRdCount);
 	printf("-e  --read-count [int]            Guide for maximum read count in a section [default:%d]\n",max_read_count);
 	printf("-h	help                          Display this usage information.\n");
   exit(exit_code);
@@ -93,7 +89,7 @@ void split_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "f:i:m:c:e:h",
+   while((iarg = getopt_long(argc, argv, "f:i:e:h",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'h':
@@ -107,18 +103,6 @@ void split_setup_options(int argc, char *argv[]){
       	case 'i':
       		if(sscanf(optarg, "%i", &idx) != 1){
       			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
-      		}
-      		break;
-
-      	case 'm':
-      		if(sscanf(optarg, "%lf", &maxPropRdCount) != 1){
-      			sentinel("Error parsing -m argument '%s'. Should be a double > 0.0.",optarg);
-      		}
-      		break;
-
-      	case 'c':
-      		if(sscanf(optarg, "%i", &increment) != 1){
-      			sentinel("Error parsing -c argument '%s'. Should be an integer > 0",optarg);
       		}
       		break;
 
