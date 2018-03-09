@@ -200,7 +200,7 @@ void estep_setup_options(int argc, char *argv[]){
 
       case 'M':
       	if(sscanf(optarg, "%i", &cn) != 1){
-      		sentinel("Error parsing -M argument '%s'. Should be an integer > 0",optarg);
+      		sentinel("Error parsing -M argument '%s'. Should be an integer > 0",optarg,1);
       	}
         cn_access_set_max_cn(cn);
         break;
@@ -215,79 +215,79 @@ void estep_setup_options(int argc, char *argv[]){
 
       case 'n':
       	if(sscanf(optarg, "%i", &normal_copy_number) != 1){
-      		sentinel("Error parsing -n argument '%s'. Should be an integer > 0",optarg);
+      		sentinel("Error parsing -n argument '%s'. Should be an integer > 0",optarg,1);
       	}
         break;
 
       case 't':
       	if(sscanf(optarg, "%i", &tumour_copy_number) != 1){
-      		sentinel("Error parsing -t argument '%s'. Should be an integer > 0",optarg);
+      		sentinel("Error parsing -t argument '%s'. Should be an integer > 0",optarg,1);
       	}
         break;
 
       case 'i':
       	if(sscanf(optarg, "%i", &idx) != 1){
-      		sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
+      		sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg,1);
       	}
         break;
 
       case 'm':
       	if(sscanf(optarg, "%i", &min_bq) != 1){
-      		sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg);
+      		sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg,1);
       	}
         break;
 
 			case 'k':
 				if(sscanf(optarg, "%f", &norm_contam) != 1){
-      		sentinel("Error parsing -k argument '%s'. Should be a float >= 0.0.",optarg);
+      		sentinel("Error parsing -k argument '%s'. Should be a float >= 0.0.",optarg,1);
       	}
 				break;
 
 			case 'd':
 				if(sscanf(optarg, "%f", &prior_snp_prob) != 1){
-      		sentinel("Error parsing -d argument '%s'. Should be a float > 0.0.",optarg);
+      		sentinel("Error parsing -d argument '%s'. Should be a float > 0.0.",optarg,1);
       	}
 				break;
 
 			case 'c':
 				if(sscanf(optarg, "%f", &prior_mut_prob) != 1){
-      		sentinel("Error parsing -c argument '%s'. Should be a float > 0.0.",optarg);
+      		sentinel("Error parsing -c argument '%s'. Should be a float > 0.0.",optarg,1);
       	}
 				break;
 
 			case 'b':
 				if(sscanf(optarg, "%f", &ref_bias) != 1){
-      		sentinel("Error parsing -b argument '%s'. Should be a float >= 0.0.",optarg);
+      		sentinel("Error parsing -b argument '%s'. Should be a float >= 0.0.",optarg,1);
       	}
 				break;
 
 			case 'p':
 				if(sscanf(optarg, "%f", &min_mut_prob) != 1){
-      		sentinel("Error parsing -p argument '%s'. Should be a float >= 0.0.",optarg);
+      		sentinel("Error parsing -p argument '%s'. Should be a float >= 0.0.",optarg,1);
       	}
 				break;
 
 			case 'q':
 				if(sscanf(optarg, "%f", &min_snp_prob) != 1){
-      		sentinel("Error parsing -q argument '%s'. Should be a float >= 0.0.",optarg);
+      		sentinel("Error parsing -q argument '%s'. Should be a float >= 0.0.",optarg,1);
       	}
 				break;
 
 			case 'x':
 				if(sscanf(optarg, "%i", &min_tum_cvg) != 1){
-      		sentinel("Error parsing -x argument '%s'. Should be an integer > 0",optarg);
+      		sentinel("Error parsing -x argument '%s'. Should be an integer > 0",optarg,1);
       	}
 				break;
 
 			case 'y':
 				if(sscanf(optarg, "%i", &min_norm_cvg) != 1){
-      		sentinel("Error parsing -y argument '%s'. Should be an integer > 0",optarg);
+      		sentinel("Error parsing -y argument '%s'. Should be an integer > 0",optarg,1);
       	}
 				break;
 
 			case 'a':
 				if(sscanf(optarg, "%i", &split_size) != 1){
-      		sentinel("Error parsing -a argument '%s'. Should be an integer >= 0",optarg);
+      		sentinel("Error parsing -a argument '%s'. Should be an integer >= 0",optarg,1);
       	}
 				break;
 

@@ -321,7 +321,7 @@ List *gen_panel_get_list_of_samples_and_locs(){
 	bamchar = strtok(bam_file_locs,",");
 	LIST_FOREACH(samples, first, next, cur){
 		if(bamchar == NULL){
-			sentinel("List of sample names and bam locations are not equal in length.");
+			sentinel("List of sample names and bam locations are not equal in length.",1);
 		}
 		((sample_bam *)cur->value)->bam_file = malloc(sizeof(char) * (strlen(bamchar) + 1));
 		check_mem(((sample_bam *)cur->value)->bam_file);

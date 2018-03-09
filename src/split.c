@@ -102,13 +102,13 @@ void split_setup_options(int argc, char *argv[]){
 
       	case 'i':
       		if(sscanf(optarg, "%i", &idx) != 1){
-      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
+      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg,1);
       		}
       		break;
 
       	case 'e':
       		if(sscanf(optarg, "%i", &max_read_count) != 1){
-      			sentinel("Error parsing -e argument '%s'. Should be an integer > 0",optarg);
+      			sentinel("Error parsing -e argument '%s'. Should be an integer > 0",optarg,1);
       		}
       		break;
 

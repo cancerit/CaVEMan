@@ -77,7 +77,7 @@ int config_file_access_read_config_file(FILE *file, char *tum_bam_file, char *no
 			check(chk!=NULL,"Error retrieving CWD when reading config file.");
 			if(strcmp(cur_wd,value)!=0){
 				sentinel("Your current working directory '%s' is not the same as the directory you setup CaVEMan: '%s'. Please change to that directory and try again.",
-										cur_wd,value);
+										cur_wd,value,1);
 			}
 		}else if(strcmp(MUT_TUM,key)==0){
 			strcpy(tum_bam_file,value);
@@ -118,7 +118,7 @@ int config_file_access_read_config_file(FILE *file, char *tum_bam_file, char *no
 		}else if(strcmp(TUM_CN_KEY,key)==0){
 			strcpy(tum_cn,value);
 		}else{
-			sentinel("Unrecognised key in config file '%s'.",key);
+			sentinel("Unrecognised key in config file '%s'.",key,1);
 		}
 	}
 
