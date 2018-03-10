@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.1
+
+* Ensure all `sentinel` calls return non-zero exit code.
+
 ## 1.13.0
 
 * Overlapping reads now handled #78

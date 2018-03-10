@@ -142,7 +142,7 @@ int8_t cn_access_get_copy_number_for_location(char *file_loc,char *chr,uint32_t 
       }
     }
 	}else{
-		sentinel("Somehow copy number for location %s:%d was not available.",chr,pos);
+		sentinel("Somehow copy number for location %s:%d was not available.",chr,pos,1);
 	}
 	return cn;
 error:
