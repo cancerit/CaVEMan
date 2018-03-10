@@ -70,7 +70,7 @@ void genotype_add_base_to_count(genotype_t *geno, const char base){
 			break;
 
 		default:
-			sentinel("Incorrect base passed to add: %c",base);
+			sentinel("Incorrect base passed to add: %c",base,1);
 			break;
 	};
 	return;

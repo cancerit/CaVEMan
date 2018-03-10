@@ -106,19 +106,19 @@ void mstep_setup_options(int argc, char *argv[]){
 
       	case 'i':
       		if(sscanf(optarg, "%i", &idx) != 1){
-      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
+      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg,1);
       		}
       		break;
 
       	case 'm':
       		if(sscanf(optarg, "%i", &min_bq) != 1){
-      			sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg);
+      			sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg,1);
       		}
       		break;
 
       	case 'a':
       		if(sscanf(optarg, "%i", &split_size) != 1){
-      			sentinel("Error parsing -a argument '%s'. Should be an integer > 0",optarg);
+      			sentinel("Error parsing -a argument '%s'. Should be an integer > 0",optarg,1);
       		}
 					break;
 
