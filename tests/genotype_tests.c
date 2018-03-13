@@ -70,12 +70,16 @@ char *test_genotype_hard_copy_genotype_t_list(){
 }
 
 char *test_genotype_add_base_to_count(){
+	int chk = 0;
 	genotype_t *geno = genotype_init_genotype();
-	genotype_add_base_to_count(geno,'C');
+	chk = genotype_add_base_to_count(geno,'C');
+	mu_assert(chk==0, "Error adding base to genotype count.");
 	mu_assert(geno->c_count == 1, "Incorrect count of C after first add.");
-	genotype_add_base_to_count(geno,'C');
+	chk = genotype_add_base_to_count(geno,'C');
+	mu_assert(chk==0, "Error adding base to genotype count.");
 	mu_assert(geno->c_count == 2, "Incorrect count of C after second add.");
-	genotype_add_base_to_count(geno,'T');
+	chk = genotype_add_base_to_count(geno,'T');
+	mu_assert(chk==0, "Error adding base to genotype count.");
 	mu_assert(geno->t_count == 1, "Incorrect count of T after third add.");
 	mu_assert(geno->c_count == 2, "Incorrect count of C after third add.");
 	mu_assert(geno->a_count == 0, "Incorrect count of A after third add.");

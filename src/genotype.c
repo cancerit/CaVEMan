@@ -50,7 +50,7 @@ List *genotype_hard_copy_genotype_t_list(List *new_list, List *old){
 	return new_list;
 }
 
-void genotype_add_base_to_count(genotype_t *geno, const char base){
+int genotype_add_base_to_count(genotype_t *geno, const char base){
 	assert(geno != NULL);
 	switch(base){
 		case 'A':
@@ -70,12 +70,12 @@ void genotype_add_base_to_count(genotype_t *geno, const char base){
 			break;
 
 		default:
-			sentinel("Incorrect base passed to add: %c",base,1);
+			sentinel("Incorrect base passed to add: %c",base);
 			break;
 	};
-	return;
+	return 0;
 error:
-	return;
+	return -1;
 }
 
 void genotype_set_base_count(genotype_t *geno, const char base, int count){
@@ -226,14 +226,16 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
          	//Create 2 copies, one will be reference, the next will be mutant base.
          	genotype_t *gen1 = genotype_copy_genotype(gen);
          	genotype_t *gen2 = genotype_copy_genotype(gen1);
-         	genotype_add_base_to_count(gen2,ref_base[0]);
+         	int chk = genotype_add_base_to_count(gen2,ref_base[0]);
+					check(chk==0,"Error adding base to genotype count.");
          	List_push(tmp,gen2);
          	int j=0;
       		for(j=0; j<4; j++){
       			int base_count = genotype_get_base_count(gen1,bases[j]);
       			check(base_count >= 0, "Error fetching base count for base: %c with genotype: %s.",bases[j],genotype_get_genotype_t_as_string(gen1));
 						if(base_count>=1 && ref_base[0] != bases[j]){
-							genotype_add_base_to_count(gen1,bases[j]);
+							chk = genotype_add_base_to_count(gen1,bases[j]);
+							check(chk==0,"Error adding base to genotype count.");
 							List_push(tmp,gen1);
 						}
       		}
@@ -247,7 +249,8 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base){
       	for(j=0; j<4; j++){
       		genotype_t *gen = genotype_init_genotype();
       		check(gen != NULL, "Error generating genotype.");
-      		genotype_add_base_to_count(gen,bases[j]);
+      		int chk = genotype_add_base_to_count(gen,bases[j]);
+					check(chk==0,"Error adding base to genotype count.");
       		List_push(genos,gen);
       	}
       }

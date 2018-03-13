@@ -122,7 +122,7 @@ void estep_print_usage (int exit_code){
   exit(exit_code);
 }
 
-void estep_setup_options(int argc, char *argv[]){
+int estep_setup_options(int argc, char *argv[]){
 	const struct option long_opts[] =
 	{
              	{"config-file", required_argument, 0, 'f'},
@@ -200,7 +200,7 @@ void estep_setup_options(int argc, char *argv[]){
 
       case 'M':
       	if(sscanf(optarg, "%i", &cn) != 1){
-      		sentinel("Error parsing -M argument '%s'. Should be an integer > 0",optarg,1);
+      		sentinel("Error parsing -M argument '%s'. Should be an integer > 0",optarg);
       	}
         cn_access_set_max_cn(cn);
         break;
@@ -215,79 +215,79 @@ void estep_setup_options(int argc, char *argv[]){
 
       case 'n':
       	if(sscanf(optarg, "%i", &normal_copy_number) != 1){
-      		sentinel("Error parsing -n argument '%s'. Should be an integer > 0",optarg,1);
+      		sentinel("Error parsing -n argument '%s'. Should be an integer > 0",optarg);
       	}
         break;
 
       case 't':
       	if(sscanf(optarg, "%i", &tumour_copy_number) != 1){
-      		sentinel("Error parsing -t argument '%s'. Should be an integer > 0",optarg,1);
+      		sentinel("Error parsing -t argument '%s'. Should be an integer > 0",optarg);
       	}
         break;
 
       case 'i':
       	if(sscanf(optarg, "%i", &idx) != 1){
-      		sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg,1);
+      		sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
       	}
         break;
 
       case 'm':
       	if(sscanf(optarg, "%i", &min_bq) != 1){
-      		sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg,1);
+      		sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg);
       	}
         break;
 
 			case 'k':
 				if(sscanf(optarg, "%f", &norm_contam) != 1){
-      		sentinel("Error parsing -k argument '%s'. Should be a float >= 0.0.",optarg,1);
+      		sentinel("Error parsing -k argument '%s'. Should be a float >= 0.0.",optarg);
       	}
 				break;
 
 			case 'd':
 				if(sscanf(optarg, "%f", &prior_snp_prob) != 1){
-      		sentinel("Error parsing -d argument '%s'. Should be a float > 0.0.",optarg,1);
+      		sentinel("Error parsing -d argument '%s'. Should be a float > 0.0.",optarg);
       	}
 				break;
 
 			case 'c':
 				if(sscanf(optarg, "%f", &prior_mut_prob) != 1){
-      		sentinel("Error parsing -c argument '%s'. Should be a float > 0.0.",optarg,1);
+      		sentinel("Error parsing -c argument '%s'. Should be a float > 0.0.",optarg);
       	}
 				break;
 
 			case 'b':
 				if(sscanf(optarg, "%f", &ref_bias) != 1){
-      		sentinel("Error parsing -b argument '%s'. Should be a float >= 0.0.",optarg,1);
+      		sentinel("Error parsing -b argument '%s'. Should be a float >= 0.0.",optarg);
       	}
 				break;
 
 			case 'p':
 				if(sscanf(optarg, "%f", &min_mut_prob) != 1){
-      		sentinel("Error parsing -p argument '%s'. Should be a float >= 0.0.",optarg,1);
+      		sentinel("Error parsing -p argument '%s'. Should be a float >= 0.0.",optarg);
       	}
 				break;
 
 			case 'q':
 				if(sscanf(optarg, "%f", &min_snp_prob) != 1){
-      		sentinel("Error parsing -q argument '%s'. Should be a float >= 0.0.",optarg,1);
+      		sentinel("Error parsing -q argument '%s'. Should be a float >= 0.0.",optarg);
       	}
 				break;
 
 			case 'x':
 				if(sscanf(optarg, "%i", &min_tum_cvg) != 1){
-      		sentinel("Error parsing -x argument '%s'. Should be an integer > 0",optarg,1);
+      		sentinel("Error parsing -x argument '%s'. Should be an integer > 0",optarg);
       	}
 				break;
 
 			case 'y':
 				if(sscanf(optarg, "%i", &min_norm_cvg) != 1){
-      		sentinel("Error parsing -y argument '%s'. Should be an integer > 0",optarg,1);
+      		sentinel("Error parsing -y argument '%s'. Should be an integer > 0",optarg);
       	}
 				break;
 
 			case 'a':
 				if(sscanf(optarg, "%i", &split_size) != 1){
-      		sentinel("Error parsing -a argument '%s'. Should be an integer >= 0",optarg,1);
+      		sentinel("Error parsing -a argument '%s'. Should be an integer >= 0",optarg);
       	}
 				break;
 
@@ -341,15 +341,16 @@ void estep_setup_options(int argc, char *argv[]){
 
    set_max_tum_cvg(estep_max_tumour_coverage);
 
-   return;
+   return 0;
 
 error:
 	estep_print_usage (1);
-	return;
+	return -1;
 }
 
 int estep_main(int argc, char *argv[]){
-	estep_setup_options(argc, argv);
+	int is_err = estep_setup_options(argc, argv);
+	check(is_err==0, "Error parsing options");
 
 	long double ********prob_arr = NULL;
 	alg_bean_t *alg = NULL;

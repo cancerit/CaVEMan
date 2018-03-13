@@ -73,7 +73,7 @@ void split_print_usage (int exit_code){
   exit(exit_code);
 }
 
-void split_setup_options(int argc, char *argv[]){
+int split_setup_options(int argc, char *argv[]){
 	const struct option long_opts[] =
 	{
              	{"config-file", required_argument, 0, 'f'},
@@ -102,13 +102,13 @@ void split_setup_options(int argc, char *argv[]){
 
       	case 'i':
       		if(sscanf(optarg, "%i", &idx) != 1){
-      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg,1);
+      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
       		}
       		break;
 
       	case 'e':
       		if(sscanf(optarg, "%i", &max_read_count) != 1){
-      			sentinel("Error parsing -e argument '%s'. Should be an integer > 0",optarg,1);
+      			sentinel("Error parsing -e argument '%s'. Should be an integer > 0",optarg);
       		}
       		break;
 
@@ -133,11 +133,11 @@ void split_setup_options(int argc, char *argv[]){
    	split_print_usage(1);
    }
 
-   return;
+   return 0;
 
 error:
 	split_print_usage(1);
-	return;
+	return -1;
 }
 
 int round_divide_integer(int dividend, int divisor){
@@ -169,7 +169,8 @@ int split_main(int argc, char *argv[]){
 	seq_region_t **ignore_regs = NULL;
 	int ignore_reg_count = 0;
 
-	split_setup_options(argc,argv);
+	int is_err = split_setup_options(argc,argv);
+	check(is_err==0,"Error parsing options");
 
 	char *chr_name = malloc(sizeof(char *));
 	//Open the config file and do relevant things
