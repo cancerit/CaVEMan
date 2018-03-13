@@ -23,7 +23,7 @@
 
 SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.3.2/htslib-1.3.2.tar.bz2"
 
-REQUIRED_MIN_LIBZ="1.2.3.5"
+REQUIRED_MIN_LIBZ="1.2.3.4"
 
 function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
 
