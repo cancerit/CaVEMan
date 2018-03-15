@@ -78,7 +78,7 @@ List *genotype_calculate_genotypes(int copy_num, char *ref_base);
 char *genotype_get_genotype_t_as_string(genotype_t *geno);
 long double genotype_get_var_base_proportion(genotype_t *gen, char ref_base, int copy_num);
 char genotype_get_var_base(genotype_t *geno, char ref_base);
-void genotype_add_base_to_count(genotype_t *geno, char base);
+int genotype_add_base_to_count(genotype_t *geno, char base);
 int genotype_get_base_count(genotype_t *geno, char base);
 void genotype_set_base_count(genotype_t *geno, char base, int count);
 int genotype_get_total_base_count(genotype_t *geno);

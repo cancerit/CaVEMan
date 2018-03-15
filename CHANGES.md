@@ -1,5 +1,10 @@
 # CHANGES
 
+## 1.13.2
+
+* Futher fixes for `sentinel` calls.
+* * Correct versin of REQUIRED_MIN_LIBZ as we are looking for greater than.
+
 ## 1.13.1
 
 * Ensure all `sentinel` calls return non-zero exit code.
