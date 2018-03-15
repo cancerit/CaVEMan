@@ -78,7 +78,7 @@ void mstep_print_usage (int exit_code){
   exit(exit_code);
 }
 
-void mstep_setup_options(int argc, char *argv[]){
+int mstep_setup_options(int argc, char *argv[]){
 	const struct option long_opts[] =
 	{
 		         {"config-file", required_argument, 0, 'f'},
@@ -106,19 +106,19 @@ void mstep_setup_options(int argc, char *argv[]){
 
       	case 'i':
       		if(sscanf(optarg, "%i", &idx) != 1){
-      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg,1);
+      			sentinel("Error parsing -i argument '%s'. Should be an integer > 0",optarg);
       		}
       		break;
 
       	case 'm':
       		if(sscanf(optarg, "%i", &min_bq) != 1){
-      			sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg,1);
+      			sentinel("Error parsing -m argument '%s'. Should be an integer >= 0",optarg);
       		}
       		break;
 
       	case 'a':
       		if(sscanf(optarg, "%i", &split_size) != 1){
-      			sentinel("Error parsing -a argument '%s'. Should be an integer > 0",optarg,1);
+      			sentinel("Error parsing -a argument '%s'. Should be an integer > 0",optarg);
       		}
 					break;
 
@@ -144,15 +144,16 @@ void mstep_setup_options(int argc, char *argv[]){
    	mstep_print_usage(1);
    }
 
-   return;
+   return 0;
 
 error:
 	mstep_print_usage (1);
-	return;
+	return -1;
 }
 
 int mstep_main(int argc, char *argv[]){
-	mstep_setup_options(argc,argv);
+	int is_err = mstep_setup_options(argc,argv);
+	check(is_err==0, "Error parsing options.");
 
 	char *fa_file = NULL;
 	uint64_t ********arr_check = NULL;

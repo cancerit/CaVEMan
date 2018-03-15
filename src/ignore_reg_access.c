@@ -127,7 +127,7 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
 			}
 		}else{
 			free(chr_nom);
-			sentinel("Incorrect line read from ignore file %s.",rd,1);
+			sentinel("Incorrect line read from ignore file %s.",rd);
 		}
 		free(chr_nom);
 	}

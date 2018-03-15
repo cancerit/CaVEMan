@@ -93,7 +93,7 @@ alg_bean_t *alg_bean_read_file(FILE *file){
 			bean->lane = lanes_list;
 			bean->lane_size = List_count(lanes_list);
 		}else{
-			sentinel("Unrecognised id passed: %s.",text_id,1);
+			sentinel("Unrecognised id passed: %s.",text_id);
 		}
 	}
 

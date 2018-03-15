@@ -708,22 +708,24 @@ int algos_estep_read_position(alg_bean_t *alg,long double ********prob_arr, char
 				}
 				//read_pos_t struct has copy number and ref base is a usable base.
 				if(pos->ref_base_idx >= 0 && pos->norm_cn > 0 && pos->tum_cn > 0){
+					int chk = 0;
 					//Adding to the counts at this position.
 					if(pos_t->normal == 1){
 						if(pos_t->strand == 1){
-							genotype_add_base_to_count(pos->norm_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
+							chk = genotype_add_base_to_count(pos->norm_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}else{
-							genotype_add_base_to_count(pos->norm_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
+							chk = genotype_add_base_to_count(pos->norm_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}
 						pos->total_cvg_norm++;
 					}else if(pos_t->normal == 0){
 						if(pos_t->strand == 1){
-							genotype_add_base_to_count(pos->tum_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
+							chk = genotype_add_base_to_count(pos->tum_rev_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}else{
-							genotype_add_base_to_count(pos->tum_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
+							chk = genotype_add_base_to_count(pos->tum_fwd_cvg,toupper(seq_nt16_str[pos_t->called_base]));
 						}
 						pos->total_cvg_tum++;
 					}
+					check(chk==0,"Error adding genotype to base count.");
 					//Get the index for things we'll use during analysis
 					int rpos_i,mq_i,bq_i,callbase_i;
 					int ok = algos_get_read_specific_indices(alg,pos_t,&rpos_i,&mq_i,&bq_i,&callbase_i);
