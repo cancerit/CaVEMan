@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2015 Genome Research Ltd.
+* Copyright (c) 2014-2018 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -45,8 +45,8 @@ int fai_access_get_name_from_index(int idx, char *index_file_name, char *chr_nam
 	check(fai != NULL,"Invalid line read\n");
 	//read each chromosome until we have reached the index.
 	int i=0;
-	char rd[200];
-	while(fgets(rd, 200, fai) != NULL){
+	char rd[1000];
+	while(fgets(rd, 1000, fai) != NULL){
 		check(rd != NULL,"Invalid line read\n");
 		i++;
 		if(i == idx){
@@ -61,6 +61,36 @@ int fai_access_get_name_from_index(int idx, char *index_file_name, char *chr_nam
 	return 0;
 error:
 	if(fai)	fclose(fai);
+	return -1;
+}
+
+int fai_access_get_count_length_all_contigs(char *fa_loc, int *count, int *total_len){
+    char *chr_name = NULL;
+    int length = 0;
+    assert(fa_loc != NULL);
+    //Open fai file
+    chr_name = malloc(sizeof(char *));
+	FILE *fai = fopen(fa_loc, "r");
+	check(fai != NULL,"Invalid line read\n");
+	//read each chromosome
+    *count = 0;
+    *total_len = 0;
+    char rd[1000];
+	while(fgets(rd, 1000, fai) != NULL){
+		check(rd != NULL,"Invalid line read\n");
+        *count = *count+1;
+        fprintf(stderr,"********** %s\n", rd);
+		int chk = sscanf(rd,"%s\t%d\t%*d\t%*d\t%*d",chr_name,&length);
+		check(chk == 2,"Wrong number of entries (%d) found in fasta index file line %s",chk,rd);
+        *total_len += strlen(chr_name);
+	}
+    free (chr_name);
+	//close file
+	check(fclose(fai)==0,"Error closing fai file.");
+	return 0;
+error:
+	if(fai)	fclose(fai);
+    if(chr_name) free(chr_name);
 	return -1;
 }
 
