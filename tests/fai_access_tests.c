@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2015 Genome Research Ltd.
+* Copyright (c) 2014-2018 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -67,10 +67,21 @@ char *test_fai_access_get_ref_seqeuence_for_pos(){
 	return NULL;
 }
 
+test_fai_access_get_count_length_all_contigs(){
+    int count = 0;
+    int total_len = 0;
+    int res = fai_access_get_count_length_all_contigs(fai_test_file, &count, &total_len);
+    mu_assert(res == 0, "Error readion fai file for contigs and lengths.");
+    mu_assert(count == 2, "Wrong number of contigs counted");
+    mu_assert(total_len == 3, "Wrong length of total contigs estabished");
+    return NULL;
+}
+
 char *all_tests() {
    mu_suite_start();
    mu_run_test(test_fai_access_get_name_from_index);
    mu_run_test(test_fai_access_get_ref_seqeuence_for_pos);
+   mu_run_test(test_fai_access_get_count_length_all_contigs);
    return NULL;
 }
 

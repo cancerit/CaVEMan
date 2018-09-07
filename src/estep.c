@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2015 Genome Research Ltd.
+* Copyright (c) 2014-2018 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -47,6 +47,7 @@
 #include <output.h>
 #include <fai_access.h>
 #include <algos.h>
+#include <inttypes.h>
 #include <config_file_access.h>
 
 static char tum_bam_file[512];// = NULL;
@@ -88,6 +89,8 @@ static char *species = NULL;
 static char *norm_prot = "WGS";
 static char *tum_prot = "WGS";
 static int max_copy_number = 10;
+static uint32_t default_zbuffer = 1024*1024;
+static char *contig_str = "##contig=<ID=,length=,assembly=,species=>\n";
 char *valid_protocols[3] = {"WGS","WXS","RNA"};
 
 void estep_print_usage (int exit_code){
@@ -403,9 +406,9 @@ int estep_main(int argc, char *argv[]){
 
 	//Load in probability array
 	prob_arr = covs_access_read_probs_from_file(probs_file,
-														List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
-														List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),
-																												List_count(alg->ref_base),List_count(alg->call_base));
+										List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
+										List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),
+										List_count(alg->ref_base),List_count(alg->call_base));
 
 	//Set the algorithm modifiers and open the bam files
 	//Set the min base qual in case it's been changed.
@@ -510,15 +513,29 @@ int estep_main(int argc, char *argv[]){
 	check(chk>0,"Error generating debug file location.");
 
 	//Open files for output
+    uint32_t no_contigs = 0;
+    uint32_t total_contigs_length = 0;
+    int res_contig_cnt = fai_access_get_count_length_all_contigs(fa_file, &no_contigs, &total_contigs_length);
+    check(res_contig_cnt==0, "Error establishing contig count and name length.");
+
+    uint64_t buf_sz = (no_contigs * (strlen(contig_str) + strlen(assembly) + strlen(species) + 20 )) + total_contigs_length;
+    if (buf_sz < default_zbuffer){
+        buf_sz = default_zbuffer;
+    }
+
 	mut_file = gzopen(mut_out,"wb1");
-	check(mut_file != 0, "Error trying to open mut file for output: %s.",mut_out);
+    int buf_res = gzbuffer(mut_file, buf_sz);
+	check(mut_file!=0, "Error trying to open mut file for output: %s.",mut_out);
+    check(buf_res!=-1, "Error setting gzbuffer for file %s size to (%"PRIu32")", mut_out, buf_sz);
 	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
 																									norm_plat, tum_plat);
 	check(chk_write==0,"Error writing header to muts file.");
 
 	snp_file = gzopen(snp_out,"wb1");
-	check(snp_file != 0, "Error trying to open snp file for output: %s.",snp_out);
+    buf_res = gzbuffer(snp_file, buf_sz);
+	check(snp_file!=0, "Error trying to open snp file for output: %s.",snp_out);
+    check(buf_res!=-1, "Error setting gzbuffer for file %s size to (%"PRIu32")", snp_out, buf_sz);
 	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
 																									norm_plat, tum_plat);
@@ -527,7 +544,9 @@ int estep_main(int argc, char *argv[]){
 
 	if(debug == 1){
 		debug_file = gzopen(debug_out,"wb1");
+        buf_res = gzbuffer(debug_file, buf_sz);
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
+        check(buf_res != -1, "Error setting gzbuffer for file %s size to (%"PRIu32")", debug_out, buf_sz);
 		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file,
 																									assembly, species, norm_prot, tum_prot,
 																									norm_plat, tum_plat);

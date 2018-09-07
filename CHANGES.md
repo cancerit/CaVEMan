@@ -1,9 +1,16 @@
 # CHANGES
 
+## 1.13.3
+
+* Add gzbuffer call after gzopen to ensure we don't hit the limit where many contigs are printed
+* Added unit test for additional methods
+* Fixes #77
+* Update license dates
+
 ## 1.13.2
 
 * Futher fixes for `sentinel` calls.
-* * Correct versin of REQUIRED_MIN_LIBZ as we are looking for greater than.
+* Correct version of REQUIRED_MIN_LIBZ as we are looking for greater than.
 
 ## 1.13.1
 
