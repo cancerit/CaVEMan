@@ -515,7 +515,7 @@ int estep_main(int argc, char *argv[]){
 	//Open files for output
     uint32_t no_contigs = 0;
     uint32_t total_contigs_length = 0;
-    int res_contig_cnt = fai_access_get_count_length_all_contigs(fa_file, &no_contigs, &total_contigs_length);
+    int res_contig_cnt = fai_access_get_count_length_all_contigs(ref_idx, &no_contigs, &total_contigs_length);
     check(res_contig_cnt==0, "Error establishing contig count and name length.");
 
     uint64_t buf_sz = (no_contigs * (strlen(contig_str) + strlen(assembly) + strlen(species) + 20 )) + total_contigs_length;

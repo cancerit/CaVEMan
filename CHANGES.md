@@ -1,5 +1,10 @@
 # CHANGES
 
+## 1.13.4
+
+* Fix incorrect file path introduced in 1.13.3
+* Fixes #82
+
 ## 1.13.3
 
 * Add gzbuffer call after gzopen to ensure we don't hit the limit where many contigs are printed
