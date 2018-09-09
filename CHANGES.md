@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.5
+
+* Remove printf that causes all contigs to be printed to stderr.
+
 ## 1.13.4
 
 * Fix incorrect file path introduced in 1.13.3

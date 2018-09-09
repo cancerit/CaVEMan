@@ -79,7 +79,6 @@ int fai_access_get_count_length_all_contigs(char *fa_loc, int *count, int *total
 	while(fgets(rd, 1000, fai) != NULL){
 		check(rd != NULL,"Invalid line read\n");
         *count = *count+1;
-        fprintf(stderr,"********** %s\n", rd);
 		int chk = sscanf(rd,"%s\t%d\t%*d\t%*d\t%*d",chr_name,&length);
 		check(chk == 2,"Wrong number of entries (%d) found in fasta index file line %s",chk,rd);
         *total_len += strlen(chr_name);
