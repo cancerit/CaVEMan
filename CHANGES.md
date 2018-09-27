@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.6
+
+* Modify means by which zlib version is detected.
+
 ## 1.13.5
 
 * Remove printf that causes all contigs to be printed to stderr.
