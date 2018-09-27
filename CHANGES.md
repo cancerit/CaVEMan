@@ -1,6 +1,6 @@
 # CHANGES
 
-## 1.13.6
+## 1.13.7
 
 * Modify means by which zlib version is detected.
 
