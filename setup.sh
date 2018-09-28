@@ -129,7 +129,7 @@ else
   mkdir hts_tmp
   ln -s $(HTSLIB)/libhts.a hts_tmp/libhts.a
   autoreconf -i
-  ./configure --CFLAGS="$HTSLIB" --LDFLAGS="$HTSLIB" --prefix="$INST_PATH"
+  ./configure CFLAGS="-I$HTSLIB" LDFLAGS="-L$HTSLIB" --prefix="$INST_PATH"
   make 
   make check
   make install
