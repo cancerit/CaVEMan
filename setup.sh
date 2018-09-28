@@ -126,11 +126,10 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
-  mkdir -p $INIT_DIR/c/bin &&
-  make clean &&
-  make -j$CPU &&
-  cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
-  cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
+  ./configure --prefix="$INST_PATH"
+  make 
+  make check
+  make install
   touch $SETUP_DIR/caveman.success
 fi
 

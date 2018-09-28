@@ -196,22 +196,25 @@ char *output_generate_CaVEMan_process_log(char *cave_version){
 	return process;
 }
 
-char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species){
+char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species, 
+                                                    List *contig_list, uint64_t total_contig_length){
 	assert(bam_file != NULL);
-	List *contig_list = bam_access_get_contigs_from_bam(bam_file, assembly, species);
-	check(contig_list != NULL,"Error fetching contigs from bam file.");
-	char *contigs = malloc(sizeof(char) * 1000 * List_count(contig_list));
+	char *contigs = malloc(sizeof(char) * total_contig_length);
+    check_mem(contigs);
 	strcpy(contigs,"");
 	LIST_FOREACH(contig_list, first,next,cur){
 		ref_seq_t *ref = (ref_seq_t *)cur->value;
-		char contig_str[1000];
-		sprintf(contig_str,"##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n",ref->name,ref->length,ref->ass,ref->spp);
+		char contig_str[4000];
+		int check_sprintf = sprintf(contig_str,"##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n",
+                                                                            ref->name,ref->length,ref->ass,ref->spp);
+        check(check_sprintf>0,"Error writing contig string.");
 		strcat(contigs,contig_str);
 	}
 	List_clear_destroy(contig_list);
 	return contigs;
 error:
 	if(contig_list) List_clear_destroy(contig_list);
+    if(contigs) free(contigs);
 	return NULL;
 }
 
@@ -248,7 +251,8 @@ char *output_generate_format_lines(){
 
 int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
 													char *assembly, char *species, char *norm_prot, char *tum_prot,
-													char *normal_platform, char *tumour_platform){
+													char *normal_platform, char *tumour_platform, List *contig_list,
+                                                    uint64_t total_contig_length){
 
 	assert(out != NULL);
 	char *contigs = NULL;
@@ -276,7 +280,8 @@ int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_l
 	res = bam_access_sample_name_platform_from_header(tum_bam,tumour_name, tumour_platform);
 	check(res != NULL,"Error fetching tumour sample and platform from bam header.");
 
-	check(strcmp(tumour_platform,normal_platform)==0,"Normal and tumour platforms don't match: '%s' ne '%s'",normal_platform,tumour_platform);
+	check(strcmp(tumour_platform,normal_platform)==0,"Normal and tumour platforms don't match: '%s' ne '%s'",
+                                                                                    normal_platform,tumour_platform);
 	//VCF version (fileformat)
 	int write = gzprintf(out,"##%s=%s\n",VCF_VERSION_KEY,VCF_VERSION_VALUE);
 	check(write>0,"Error writing version.");
@@ -296,7 +301,7 @@ int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_l
 	check(write>0,"Error writing CaVEMan version.");
 
 	//Add reference sequence headers
-	contigs = output_generate_reference_contig_lines(tum_bam, assembly, species);
+	contigs = output_generate_reference_contig_lines(tum_bam, assembly, species, contig_list, total_contig_length);
 	check(contigs != NULL,"Error fetching contigs from bam file.");
 	write = gzprintf(out,"%s",contigs);
 	check(write==sizeof(char)*strlen(contigs),"Error (%d) writing contigs.",write);
@@ -319,7 +324,7 @@ int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_l
 			VCF_PROTOCOL_KEY,norm_prot,
 			VCF_INDIVIDUAL_KEY,normal_name,
 			VCF_SOURCE_KEY);
-	check(write>0,"Error (%lu) writing normal sample.",write);
+	check(write>0,"Error (%d) writing normal sample.",write);
 	//Tumour
 	write = gzprintf(out,"##%s=<ID=%s,%s=\"Tumour\",%s=.,%s=%s,%s=%s,%s=%s,%s=.>\n",
 			VCF_SAMPLE_KEY,VCF_TUMOUR_NAME,VCF_DESCRIPTION_KEY,

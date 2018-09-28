@@ -71,14 +71,14 @@ int bam_access_openbams(char *norm_file, char *tum_file, char *ref_file){
 	check(norm->in != 0,"Normal file %s failed to open.",norm_file);
 	norm->idx = sam_index_load(norm->in,norm_file);
 	check(norm->idx != 0,"Normal index file %s failed to open.",norm_file);
+    if(ref_file) hts_set_fai_filename(norm->in, ref_file);
 	norm->head = sam_hdr_read(norm->in);
-	hts_set_fai_filename(norm->in, ref_file);
 	tum->in = hts_open(tum_file, "r");
 	check(tum->in != 0,"Tumour file %s failed to open.",tum_file);
 	tum->idx = sam_index_load(tum->in,tum_file);
 	check(tum->idx != 0,"Normal index file %s failed to open.",tum_file);
+    if(ref_file) hts_set_fai_filename(norm->in, ref_file);
 	tum->head = sam_hdr_read(tum->in);
-	hts_set_fai_filename(tum->in, ref_file);
 	return 0;
 error:
 	if(norm->in) hts_close(norm->in);
@@ -130,7 +130,7 @@ int pos_counts_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1
 		int absent;
     uint8_t cbase = bam_seqi(bam_get_seq(algn),p->qpos);
 		k = kh_put(strh, h, bam_get_qname(p->b), &absent);
-		uint8_t pre_b;
+		uint8_t pre_b = 0;
 		if(!absent){ //Read already processed to get base processed (we only increment if base is different between overlapping read pairs)
 			k = kh_get(strh, h, bam_get_qname(p->b));
 			pre_b = kh_val(h,k);
@@ -281,9 +281,10 @@ file_holder *bam_access_get_by_position_counts(char *norm_file, char *chr, uint3
 
 char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, char *plat){
 	assert(bam_file != NULL);
+    bam_hdr_t *header = NULL;
 	htsFile *bam = hts_open(bam_file, "r");
 	check(bam != 0,"Failed to open bam file to read sample name: %s.",bam_file);
-	bam_hdr_t *header = sam_hdr_read(bam);
+	header = sam_hdr_read(bam);
 	char *head_txt = header->text;
 	char *line;
 	line = strtok(head_txt,"\n");
@@ -308,8 +309,10 @@ char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, c
 	check(plat!= NULL,"Platform was not found in RG line for VCF output.");
 	check(sample!= NULL,"Sample name was not found in RG line for VCF output.");
 	hts_close(bam);
+    bam_hdr_destroy(header);
 	return "";
 error:
+    if(header) bam_hdr_destroy(header);
 	if(bam) hts_close(bam);
 	return NULL;
 }
@@ -353,19 +356,20 @@ error:
   return 1;
 }
 
-List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species){
+List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species, int *total_contigs_length){
 	assert(bam_file != NULL);
 	char *line = NULL;
 	ref_seq_t *ref = NULL;
 	char ** ptr = NULL;
 	List *conts = List_create();
 	char *tmp_line = NULL;
+    *total_contigs_length = 0;
 	htsFile *bam = hts_open(bam_file, "r");
 	check(bam != 0,"Failed to open bam file to read contigs: %s.",bam_file);
 	bam_hdr_t *header = sam_hdr_read(bam);
 	char *head_txt = header->text;
 	ptr = malloc(sizeof(char **));
-  check_mem(ptr);
+    check_mem(ptr);
 	line = strtok_r(head_txt,"\n",ptr);
 	while(line != NULL){
 		//First check it's a sequence line
@@ -384,13 +388,24 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 				char *dummy = malloc(sizeof(char) * 100);
 				check_mem(dummy);
 				bam_access_parse_sq_line(tmp_line,dummy,dummy,ref->name,&(ref->length));
+                fprintf(stderr,"*********%s\t%lu\n",ref->name,ref->length);
+                *total_contigs_length +=    ( //Funky maths to get the legnth of the integer in chars
+                                                (floor(log10(abs(ref->length))) + 1)
+                                                +
+                                                strlen(ref->name)
+                                            );
 			}else{
 				//Look for species and assembly as well as name and length
 				ref->ass = malloc(sizeof(char) * 100);
 				check_mem(ref->ass);
 				ref->spp = malloc(sizeof(char) * 100);
 				check_mem(ref->spp);
-        bam_access_parse_sq_line(tmp_line,ref->spp,ref->ass,ref->name,&(ref->length));
+                bam_access_parse_sq_line(tmp_line,ref->spp,ref->ass,ref->name,&(ref->length));
+                *total_contigs_length +=    ( //Funky maths to get the legnth of the integer in chars
+                                                (floor(log10(abs(ref->length))) + 1)
+                                                +
+                                                strlen(ref->name)
+                                            );
 			}
 			check(ref->name!=NULL,"Sequence name not found/set in SQ line %s",line);
 			check(ref->ass!=NULL,"Sequence assembly not found/set in SQ line %s",line);
@@ -544,7 +559,7 @@ int reads_at_pos_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileu
 
 		int absent;
     k = kh_put(strh, h, bam_get_qname(p->b), &absent);
-		uint8_t pre_b;
+		uint8_t pre_b = 0;
 		if(!absent){ //Read already processed to get base processed (we only increment if base is different between overlapping read pairs)
 			k = kh_get(strh, h, bam_get_qname(p->b));
 			pre_b = kh_val(h,k);
@@ -772,10 +787,11 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	char ** ptr = NULL;
 	char *tmp_line = NULL;
 	htsFile *bam =  NULL;
+    bam_hdr_t *header = NULL;
 	int rg_found = 0;
 	bam = hts_open(bam_loc, "r");
 	check(bam != 0,"Bam file %s failed to open to read header.",bam_loc);
-	bam_hdr_t *header = sam_hdr_read(bam);
+	header = sam_hdr_read(bam);
 	char *head_txt = header->text;
 	li = List_create();
 	line = strtok(head_txt,"\n");
@@ -811,6 +827,8 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 				}// If this is a match for RG
 				tmp_line = strtok_r(NULL,"\t",ptr);
 			}
+            free(id);
+            free(ptr);
 		}//End of if this is an RG line
 		line = strtok(NULL,"\n");
 	}
@@ -818,10 +836,12 @@ List *bam_access_get_lane_list_from_header(char *bam_loc, char *isnorm){
 	check(rg_found==1,"No RG lines with IDs found in header of bam file %s.",bam_loc);
 
 	if(line) free(line);
+    bam_hdr_destroy(header);
 	hts_close(bam);
 	return li;
 error:
 	if(line) free(line);
+    if(header) bam_hdr_destroy(header);
 	if(bam) hts_close(bam);
 	if(li) List_clear_destroy(li);
 	return NULL;

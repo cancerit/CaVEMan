@@ -38,6 +38,7 @@
 #include <alg_bean.h>
 #include <List_algos.h>
 #include <stdint.h>
+#include <math.h>
 #include "htslib/sam.h"
 
 typedef struct file_holder{
@@ -109,7 +110,7 @@ char *bam_access_sample_name_platform_from_header(char *bam_file,char *sample, c
 
 void List_insert_sorted(List *list, void *value, List_compare cmp);
 
-List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species);
+List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *species, int *total_contigs_length);
 
 file_holder *bam_access_get_by_position_counts(char *normFile, char *chr, uint32_t start, uint32_t end);
 

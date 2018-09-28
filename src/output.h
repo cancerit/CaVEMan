@@ -38,10 +38,12 @@
 int output_vcf_variant_position(estep_position_t *pos, gzFile out, char *chrom);
 int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
 													char *assembly, char *species, char *norm_prot, char *tum_prot,
-													char *norm_plat, char *tum_plat);
+													char *norm_plat, char *tum_plat, List *contig_list, 
+                                                    uint64_t total_contig_length);
 char *output_generate_info_lines();
 char *output_generate_format_lines();
-char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species);
+char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species, 
+                                                List *contig_list, uint64_t total_contig_length);
 int output_append_position_to_no_analysis(char *chr_name, int start_one_base, int stop);
 int output_flush_no_analysis(char *chr_name);
 void output_set_no_analysis_file(FILE *file);
