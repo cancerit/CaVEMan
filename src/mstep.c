@@ -152,9 +152,6 @@ error:
 }
 
 int mstep_main(int argc, char *argv[]){
-	int is_err = mstep_setup_options(argc,argv);
-	check(is_err==0, "Error parsing options.");
-
 	char *fa_file = NULL;
 	uint64_t ********arr_check = NULL;
 	char *ref_seq = NULL;
@@ -163,10 +160,14 @@ int mstep_main(int argc, char *argv[]){
 	uint64_t ********covs = NULL;
 	FILE *alg_bean_file = NULL;
 	alg_bean_t *alg = NULL;
+    FILE *config = NULL;
+    int ignore_reg_count = 0;
+    
+    int is_err = mstep_setup_options(argc,argv);
+	check(is_err==0, "Error parsing options.");
 
-	int ignore_reg_count = 0;
 	//Open the config file and do relevant things
-	FILE *config = fopen(config_file,"r");
+	config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
 
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,ref_idx,ignore_regions_file,alg_bean,

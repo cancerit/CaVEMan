@@ -352,9 +352,6 @@ error:
 }
 
 int estep_main(int argc, char *argv[]){
-	int is_err = estep_setup_options(argc, argv);
-	check(is_err==0, "Error parsing options");
-
 	long double ********prob_arr = NULL;
 	alg_bean_t *alg = NULL;
 	char *fa_file = NULL;
@@ -365,12 +362,17 @@ int estep_main(int argc, char *argv[]){
 	FILE *no_analysis_file = NULL;
 	List *no_analysis_list = NULL;
 	char *ref_seq = NULL;
+    List *bam_contigs = NULL;
 	gzFile debug_file = NULL;
 	gzFile snp_file = NULL;
 	gzFile mut_file = NULL;
+    FILE *config = NULL;
+
+    int is_err = estep_setup_options(argc, argv);
+	check(is_err==0, "Error parsing options");
 
 	//Open the config file and do relevant things
-	FILE *config = fopen(config_file,"r");
+	config = fopen(config_file,"r");
 	check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
 	int cfg = config_file_access_read_config_file(config,tum_bam_file,norm_bam_file,
 														ref_idx,ignore_regions_file,alg_bean_loc,results,list_loc,
@@ -379,23 +381,23 @@ int estep_main(int argc, char *argv[]){
 	check(strcmp(version,CAVEMAN_VERSION)==0,"Stored version in %s %s and current code version %s did not match.",config_file,version,CAVEMAN_VERSION);
 
 	check(cfg==0,"Error parsing config file.");
-  bam_access_include_sw(includeSW);
-  bam_access_include_se(includeSingleEnd);
-  bam_access_include_dup(includeDups);
+    bam_access_include_sw(includeSW);
+    bam_access_include_se(includeSingleEnd);
+    bam_access_include_dup(includeDups);
 
-  set_normal_cn(normal_copy_number);
-  set_tumour_cn(tumour_copy_number);
+    set_normal_cn(normal_copy_number);
+    set_tumour_cn(tumour_copy_number);
 
-  if(norm_plat==NULL){
-  	norm_plat = malloc(sizeof(char) * 50);
-		check_mem(norm_plat);
-		strcpy(norm_plat,".");
-  }
-  if(tum_plat==NULL){
-		tum_plat = malloc(sizeof(char) * 50);
-		check_mem(tum_plat);
-		strcpy(tum_plat,".");
-  }
+    if(norm_plat==NULL){
+        norm_plat = malloc(sizeof(char) * 50);
+            check_mem(norm_plat);
+            strcpy(norm_plat,".");
+    }
+    if(tum_plat==NULL){
+            tum_plat = malloc(sizeof(char) * 50);
+            check_mem(tum_plat);
+            strcpy(tum_plat,".");
+    }
 
 	//Load in alg bean
 	FILE *alg_bean_file = fopen(alg_bean_loc,"r");
@@ -443,7 +445,7 @@ int estep_main(int argc, char *argv[]){
 	fa_file[strlen(ref_idx)-4] = '\0';
 	check(fa_file != NULL, "Error decoding FASTA file name");
 
-  //Open no analsyis file here so we can write ignored regions.
+    //Open no analsyis file here so we can write ignored regions.
 	int chk_no = sprintf(no_analysis_file_loc,"%s/%s/%d_%d.no_analysis.bed",results,chr_name,start_zero_based+1,stop);
 	check(chk_no>0,"Error generating no analysis file location.");
 	no_analysis_file = fopen(no_analysis_file_loc,"w");
@@ -512,33 +514,37 @@ int estep_main(int argc, char *argv[]){
 	chk = sprintf(debug_out,"%s/%s/%d_%d.dbg.vcf.gz",results,chr_name,start_zero_based+1,stop);
 	check(chk>0,"Error generating debug file location.");
 
-	//Open files for output
-    uint32_t no_contigs = 0;
-    uint32_t total_contigs_length = 0;
-    int res_contig_cnt = fai_access_get_count_length_all_contigs(ref_idx, &no_contigs, &total_contigs_length);
-    check(res_contig_cnt==0, "Error establishing contig count and name length.");
-
-    uint64_t buf_sz = (no_contigs * (strlen(contig_str) + strlen(assembly) + strlen(species) + 20 )) + total_contigs_length;
+    /*
+    * We need the list of contigs, assemble and species set for headers, 
+    * so retieve them here. We can use the results to generate the buffer size too
+    */ 
+    int total_contigs_length = 0;
+    bam_contigs = bam_access_get_contigs_from_bam(tum_bam_file, assembly, species, &total_contigs_length);
+    check(bam_contigs != NULL,"Error fetching contigs from bam file %s.",tum_bam_file);
+    uint64_t buf_sz =   (
+                            List_count(bam_contigs) 
+                            * 
+                            (strlen(contig_str) + strlen(assembly) + strlen(species))
+                        ) + total_contigs_length;
     if (buf_sz < default_zbuffer){
         buf_sz = default_zbuffer;
     }
-
 	mut_file = gzopen(mut_out,"wb1");
     int buf_res = gzbuffer(mut_file, buf_sz);
 	check(mut_file!=0, "Error trying to open mut file for output: %s.",mut_out);
-    check(buf_res!=-1, "Error setting gzbuffer for file %s size to (%"PRIu32")", mut_out, buf_sz);
+    check(buf_res!=-1, "Error setting gzbuffer for file %s size to (%"PRIu64")", mut_out, buf_sz);
 	int chk_write = output_vcf_header(mut_file, tum_bam_file, norm_bam_file, fa_file,
-																									assembly, species, norm_prot, tum_prot,
-																									norm_plat, tum_plat);
+                                                assembly, species, norm_prot, tum_prot,
+                                                norm_plat, tum_plat, bam_contigs, buf_sz);
 	check(chk_write==0,"Error writing header to muts file.");
 
 	snp_file = gzopen(snp_out,"wb1");
     buf_res = gzbuffer(snp_file, buf_sz);
 	check(snp_file!=0, "Error trying to open snp file for output: %s.",snp_out);
-    check(buf_res!=-1, "Error setting gzbuffer for file %s size to (%"PRIu32")", snp_out, buf_sz);
+    check(buf_res!=-1, "Error setting gzbuffer for file %s size to (%"PRIu64")", snp_out, buf_sz);
 	chk_write = output_vcf_header(snp_file, tum_bam_file, norm_bam_file, fa_file,
-																									assembly, species, norm_prot, tum_prot,
-																									norm_plat, tum_plat);
+                                            assembly, species, norm_prot, tum_prot,
+                                            norm_plat, tum_plat, bam_contigs, buf_sz);
 	check(chk_write==0,"Error writing header to SNP file.");
 
 
@@ -546,10 +552,10 @@ int estep_main(int argc, char *argv[]){
 		debug_file = gzopen(debug_out,"wb1");
         buf_res = gzbuffer(debug_file, buf_sz);
 		check(debug_file != 0, "Error trying to open snp file for output: %s.",debug_out);
-        check(buf_res != -1, "Error setting gzbuffer for file %s size to (%"PRIu32")", debug_out, buf_sz);
+        check(buf_res != -1, "Error setting gzbuffer for file %s size to (%"PRIu64")", debug_out, buf_sz);
 		chk_write = output_vcf_header(debug_file, tum_bam_file, norm_bam_file, fa_file,
-																									assembly, species, norm_prot, tum_prot,
-																									norm_plat, tum_plat);
+                                                    assembly, species, norm_prot, tum_prot,
+                                                    norm_plat, tum_plat, bam_contigs, buf_sz);
 		check(chk_write==0,"Error writing header to dbg file.");
 	}
 
