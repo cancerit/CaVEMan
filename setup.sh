@@ -126,6 +126,7 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
+  autoconf
   ./configure --prefix="$INST_PATH"
   make 
   make check
