@@ -127,7 +127,7 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
 else
   cd $INIT_DIR
   mkdir hts_tmp
-  ln -s $(HTSLIB)/libhts.a hts_tmp/libhts.a
+  ln -s $HTSLIB/libhts.a hts_tmp/libhts.a
   autoreconf -i
   ./configure CFLAGS="-I$HTSLIB" LDFLAGS="-L$HTSLIB" --prefix="$INST_PATH"
   make 
