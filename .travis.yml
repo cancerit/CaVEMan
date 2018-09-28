@@ -11,5 +11,7 @@ install: true
 compiler:
   - gcc
 
+install: automake m4
+
 script:
   - ./setup.sh ~/wtsi-opt
