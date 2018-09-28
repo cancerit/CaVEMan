@@ -81,7 +81,7 @@ INIT_DIR=`pwd`
     set +x
     echo; echo
 
-LIBZ_VER=`ldconfig -v | grep libz.so | perl -pi -e 'chomp($_); $_=~s/^\s+libz\.so\.1\s+.+\s+libz\.so\.//;'`
+LIBZ_VER=`echo '#include <zlib.h>' | cpp -H -o /dev/null |& head -1 | cut -d' ' -f 2 | xargs grep -e '#define ZLIB_VERSION' | cut -d ' ' -f 3 | perl -pe 's/["\n]//g'`
 echo $LIBZ_VER
 if version_gt $LIBZ_VER $REQUIRED_MIN_LIBZ ; then
 	echo "Found acceptable libz version $LIBZ_VER."
