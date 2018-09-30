@@ -126,10 +126,12 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
-  mkdir hts_tmp
-  ln -s $HTSLIB/libhts.a hts_tmp/libhts.a
+  export HTSTMP="$INIT_DIR/hts_tmp"
+  echo $HTSTMP
+  mkdir -p $HTSTMP
+  ln -fs $HTSLIB/libhts.a hts_tmp/libhts.a
   autoreconf -i
-  ./configure CFLAGS="-I$HTSLIB" LDFLAGS="-L$HTSLIB" --prefix="$INST_PATH"
+  ./configure CPPFLAGS=-I$HTSLIB/ LDFLAGS=-L$HTSTMP --prefix="$INST_PATH"
   make 
   make check
   make install
