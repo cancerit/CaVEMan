@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2015 Genome Research Ltd.
+* Copyright (c) 2014-2018 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -30,36 +30,40 @@
 *
 */
 
-#undef NDEBUG
-#ifndef _minunit_h
-#define _minunit_h
-
 #include <stdio.h>
-#include <dbg.h>
 #include <stdlib.h>
+#include <string.h>
+#include <check.h>
+#include "check_alg_bean_tests.h"
+#include "check_algos_tests.h"
+#include "check_bam_access_tests.h"
+#include "check_cn_access_tests.h"
+#include "check_config_file_access_tests.h"
+#include "check_covs_access_tests.h"
+#include "check_fai_access_tests.h"
+#include "check_genotype_tests.h"
+#include "check_ign_region_access_tests.h"
+#include "check_output_tests.h"
+#include "check_split_access_tests.h"
 
-#define mu_suite_start() char *message = NULL
+int main (void)
+{
+    int number_failed;
+    Suite *s = check_alg_bean_tests_suite ();
+    SRunner *sr = srunner_create (s);
+    srunner_add_suite (sr, check_algos_tests_suite());
+    srunner_add_suite (sr, check_bam_access_tests_suite());
+    srunner_add_suite (sr, check_cn_access_tests_suite());
+    srunner_add_suite (sr, check_config_file_access_tests_suite());
+    srunner_add_suite (sr, check_covs_access_tests_suite());
+    srunner_add_suite (sr, check_fai_access_tests_suite());
+    srunner_add_suite (sr, check_genotype_tests_suite());
+    srunner_add_suite (sr, check_ign_region_access_tests_suite());
+    srunner_add_suite (sr, check_output_tests_suite());
+    srunner_add_suite (sr, check_split_access_tests_suite());
 
-#define mu_assert(test, message) if (!(test)) { log_err(message); return message; }
-#define mu_run_test(test) debug("\n-----%s", " " #test); \
-    message = test(); tests_run++; if (message) return message;
-
-#define RUN_TESTS(name) int main(int argc, char *argv[]) {\
-    argc = 1; \
-    debug("----- RUNNING: %s", argv[0]);\
-        printf("----\nRUNNING: %s\n", argv[0]);\
-        char *result = name();\
-        if (result != 0) {\
-            printf("FAILED: %s\n", result);\
-        }\
-        else {\
-            printf("ALL TESTS PASSED\n");\
-        }\
-    printf("Tests run: %d\n", tests_run);\
-        exit(result != 0);\
+    srunner_run_all (sr, CK_VERBOSE);
+    number_failed = srunner_ntests_failed (sr);
+    srunner_free (sr);
+    return (number_failed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-
-
-int tests_run;
-
-#endif

@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2015 Genome Research Ltd.
+* Copyright (c) 2014-2018 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -28,20 +28,23 @@
 *    identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
 *    2009, 2010, 2011, 2012’."
 *
-*
 */
 
-#include "minunit.h"
+#include <stdlib.h>
+#include <check.h>
 #include <alg_bean.h>
 #include <List.h>
 #include <math.h>
+#include "check_alg_bean_tests.h"
 
-char *norm_file = "testData/mt.bam";
-char *tum_file = "testData/wt.bam";
-char *norm_file_cram = "testData/mt.cram";
-char *tum_file_cram = "testData/wt.cram";
-char *test_alg_out_loc = "testData/test_alg_bean.out";
-char *test_alg_loc = "testData/test_alg_bean";
+
+
+char *norm_file = "../testData/mt.bam";
+char *tum_file = "../testData/wt.bam";
+char *norm_file_cram = "../testData/mt.cram";
+char *tum_file_cram = "../testData/wt.cram";
+char *test_alg_out_loc = "../testData/test_alg_bean.out";
+char *test_alg_loc = "../testData/test_alg_bean";
 
 static alg_bean_t *test_bean;
 
@@ -175,7 +178,6 @@ int check_alg_bean_defaults(alg_bean_t *test_bean){
 	check(check_base_quality(test_bean->base_qual),"Error in base_quality default checks.\n");
 
 	check(test_bean->map_qual != NULL,"map_qual list unset.\n");
-	fprintf(stderr,"***********%d\n",List_count(test_bean->map_qual));
 	check(List_count(test_bean->map_qual) == 3,"Incorrect map_quality array size.\n");
 	check(check_map_quality(test_bean->map_qual),"Error in map_quality default checks.\n");
 
@@ -197,162 +199,175 @@ error:
 	return 1;
 }
 
-char *test_alg_bean_read_file(){
+START_TEST (test_alg_bean_read_file){
 	FILE *open = fopen(test_alg_loc,"r");
-	mu_assert(open != NULL, "Problem opening test alg_bean file");
+	ck_assert_msg(open != NULL, "Problem opening test alg_bean file");
 	test_bean = alg_bean_read_file(open);
 	fclose(open);
-	mu_assert(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
+	ck_assert_msg(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
 	alg_bean_destroy(test_bean);
-	return NULL;
 }
+END_TEST
 
-char *test_alg_bean_get_index_for_str_arr(){
-	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
+START_TEST (test_alg_bean_get_index_for_str_arr){
+	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
 	//We know the
 	//6514_2_PD4107a
 	//6640_4_PD4107a
 	//6514_2_PD4107a
 	//6640_4_PD4107a
 	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_1")==0,"Wrong index returned for lane check 1.\n");
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_1")==1,"Wrong index returned for lane check 2.\n");
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_0")==2,"Wrong index returned for lane check 3.\n");
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_0")==3,"Wrong index returned for lane check 4.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_1")==0,"Wrong index returned for lane check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_1")==1,"Wrong index returned for lane check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_0")==2,"Wrong index returned for lane check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_0")==3,"Wrong index returned for lane check 4.\n");
 	alg_bean_destroy(test_bean);
-	return NULL;
 }
+END_TEST
 
-char *test_alg_bean_get_index_for_str_arr_cram(){
-	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
+START_TEST (test_alg_bean_get_index_for_str_arr_cram){
+	test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
 	//We know the
 	//6514_2_PD4107a
 	//6640_4_PD4107a
 	//6514_2_PD4107a
 	//6640_4_PD4107a
 	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_1")==0,"Wrong index returned for lane check 1.\n");
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_1")==1,"Wrong index returned for lane check 2.\n");
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_0")==2,"Wrong index returned for lane check 3.\n");
-	mu_assert(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_0")==3,"Wrong index returned for lane check 4.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_1")==0,"Wrong index returned for lane check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_1")==1,"Wrong index returned for lane check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6514_2_0")==2,"Wrong index returned for lane check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_str_arr(test_bean->lane,"6640_4_0")==3,"Wrong index returned for lane check 4.\n");
 	alg_bean_destroy(test_bean);
-	return NULL;
 }
+END_TEST
 
-char *test_alg_bean_get_index_for_intrange_arr(){
-	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
-	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,8)==0,"Wrong index returned for base qual check 1.\n");
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,10)==1,"Wrong index returned for base qual check 2.\n");
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,25)==3,"Wrong index returned for base qual check 3.\n");
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,35)==5,"Wrong index returned for base qual check 4.\n");
-	return NULL;
-}
-
-char *test_alg_bean_get_index_for_intrange_arr_cram(){
-	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
-	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,8)==0,"Wrong index returned for base qual check 1.\n");
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,10)==1,"Wrong index returned for base qual check 2.\n");
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,25)==3,"Wrong index returned for base qual check 3.\n");
-	mu_assert(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,35)==5,"Wrong index returned for base qual check 4.\n");
-	return NULL;
-}
-
-char *test_alg_bean_get_index_for_char_arr(){
-	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
-	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"A")==0,"Wrong index returned for base check 1.\n");
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"C")==1,"Wrong index returned for base check 2.\n");
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"G")==2,"Wrong index returned for base check 3.\n");
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"T")==3,"Wrong index returned for base check 4.\n");
-	return NULL;
-}
-
-char *test_alg_bean_get_index_for_char_arr_cram(){
-	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
-	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"A")==0,"Wrong index returned for base check 1.\n");
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"C")==1,"Wrong index returned for base check 2.\n");
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"G")==2,"Wrong index returned for base check 3.\n");
-	mu_assert(alg_bean_get_index_for_char_arr(test_bean->call_base,"T")==3,"Wrong index returned for base check 4.\n");
-	return NULL;
-}
-
-char *test_alg_bean_get_index_for_read_pos_prop_arr(){
+START_TEST (test_alg_bean_get_index_for_intrange_arr){
 	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
 	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,2,75)==0,"Wrong index returned for RD pos check 1.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,3,75)==1,"Wrong index returned for RD pos check 2.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,4,150)==0,"Wrong index returned for RD pos check 3.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,5,150)==1,"Wrong index returned for RD pos check 4.\n");
-	return NULL;
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,8)==0,"Wrong index returned for base qual check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,10)==1,"Wrong index returned for base qual check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,25)==3,"Wrong index returned for base qual check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,35)==5,"Wrong index returned for base qual check 4.\n");
 }
+END_TEST
 
-char *test_alg_bean_get_index_for_read_pos_prop_arr_cram(){
+START_TEST (test_alg_bean_get_index_for_intrange_arr_cram){
 	test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
 	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,2,75)==0,"Wrong index returned for RD pos check 1.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,3,75)==1,"Wrong index returned for RD pos check 2.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,4,150)==0,"Wrong index returned for RD pos check 3.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,5,150)==1,"Wrong index returned for RD pos check 4.\n");
-	return NULL;
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,8)==0,"Wrong index returned for base qual check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,10)==1,"Wrong index returned for base qual check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,25)==3,"Wrong index returned for base qual check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_intrange_arr(test_bean->base_qual,35)==5,"Wrong index returned for base qual check 4.\n");
+    alg_bean_destroy(test_bean);
 }
+END_TEST
 
-char *test_alg_bean_generate_default_alg_bean(){
+START_TEST (test_alg_bean_get_index_for_char_arr){
 	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
-	mu_assert(test_bean != NULL, "Couldn't retrieve default alg_bean.\n");
-
-	mu_assert(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
-	return NULL;
+	//Expect the following results:
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"A")==0,"Wrong index returned for base check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"C")==1,"Wrong index returned for base check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"G")==2,"Wrong index returned for base check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"T")==3,"Wrong index returned for base check 4.\n");
+    alg_bean_destroy(test_bean);
 }
+END_TEST
 
-char *test_alg_bean_generate_default_alg_bean_cram(){
-	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
-	mu_assert(test_bean != NULL, "Couldn't retrieve default alg_bean.\n");
-
-	mu_assert(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
-	return NULL;
+START_TEST (test_alg_bean_get_index_for_char_arr_cram){
+	test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
+	//Expect the following results:
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"A")==0,"Wrong index returned for base check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"C")==1,"Wrong index returned for base check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"G")==2,"Wrong index returned for base check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_char_arr(test_bean->call_base,"T")==3,"Wrong index returned for base check 4.\n");
+    alg_bean_destroy(test_bean);
 }
+END_TEST
 
-char *test_alg_bean_hard_copy_char_list(){
+START_TEST (test_alg_bean_get_index_for_read_pos_prop_arr){
+	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
+	//Expect the following results:
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,2,75)==0,"Wrong index returned for RD pos check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,3,75)==1,"Wrong index returned for RD pos check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,4,150)==0,"Wrong index returned for RD pos check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,5,150)==1,"Wrong index returned for RD pos check 4.\n");
+    alg_bean_destroy(test_bean);
+}
+END_TEST
+
+START_TEST (test_alg_bean_get_index_for_read_pos_prop_arr_cram){
+	test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
+	//Expect the following results:
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,2,75)==0,"Wrong index returned for RD pos check 1.\n");
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,3,75)==1,"Wrong index returned for RD pos check 2.\n");
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,4,150)==0,"Wrong index returned for RD pos check 3.\n");
+	ck_assert_msg(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,5,150)==1,"Wrong index returned for RD pos check 4.\n");
+    alg_bean_destroy(test_bean);
+}
+END_TEST
+
+START_TEST (test_alg_bean_generate_default_alg_bean){
+	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
+	ck_assert_msg(test_bean != NULL, "Couldn't retrieve default alg_bean.\n");
+
+	ck_assert_msg(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
+    alg_bean_destroy(test_bean);
+}
+END_TEST
+
+START_TEST (test_alg_bean_generate_default_alg_bean_cram){
+	test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
+	ck_assert_msg(test_bean != NULL, "Couldn't retrieve default alg_bean.\n");
+
+	ck_assert_msg(check_alg_bean_defaults(test_bean) == 0, "Error with loaded default bean.\n");
+    alg_bean_destroy(test_bean);
+}
+END_TEST
+
+START_TEST (test_alg_bean_hard_copy_char_list){
 	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
 	List *one = test_bean->lane;
 	List *joined = List_create();
 	alg_bean_hard_copy_char_list(joined,one);
-	mu_assert(List_count(one) == List_count(joined),"Wrong number of elements after hard copy");
-	List_clear_destroy(one);
+	ck_assert_msg(List_count(one) == List_count(joined),"Wrong number of elements after hard copy");
 	List_clear_destroy(joined);
-	return NULL;
+    alg_bean_destroy(test_bean);
 }
+END_TEST
 
-char *test_alg_bean_hard_copy_char_list_cram(){
+START_TEST (test_alg_bean_hard_copy_char_list_cram){
 	test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
 	List *one = test_bean->lane;
 	List *joined = List_create();
 	alg_bean_hard_copy_char_list(joined,one);
-	mu_assert(List_count(one) == List_count(joined),"Wrong number of elements after hard copy");
-	List_clear_destroy(one);
+	ck_assert_msg(List_count(one) == List_count(joined),"Wrong number of elements after hard copy");
 	List_clear_destroy(joined);
-	return NULL;
+    alg_bean_destroy(test_bean);
 }
+END_TEST
 
-char *all_tests() {
-  mu_suite_start();
-  mu_run_test(test_alg_bean_generate_default_alg_bean);
-  mu_run_test( test_alg_bean_generate_default_alg_bean_cram);
-  mu_run_test(test_alg_bean_read_file);
-  mu_run_test(test_alg_bean_get_index_for_str_arr);
-  mu_run_test(test_alg_bean_get_index_for_str_arr_cram);
-  mu_run_test(test_alg_bean_get_index_for_intrange_arr);
-  mu_run_test(test_alg_bean_get_index_for_intrange_arr_cram);
-  mu_run_test(test_alg_bean_get_index_for_char_arr);
-  mu_run_test(test_alg_bean_get_index_for_char_arr_cram);
-  mu_run_test(test_alg_bean_get_index_for_read_pos_prop_arr);
-  mu_run_test(test_alg_bean_get_index_for_read_pos_prop_arr_cram);
-  mu_run_test(test_alg_bean_hard_copy_char_list);
-  mu_run_test(test_alg_bean_hard_copy_char_list_cram);
-  return NULL;
+Suite * check_alg_bean_tests_suite(void){
+    Suite *s;
+    TCase *tc_alg_bean;
+
+    s = suite_create("alg_bean_tests");
+
+    /* Core test case */
+    tc_alg_bean = tcase_create("alg bean testing");
+    tcase_add_test(tc_alg_bean,test_alg_bean_generate_default_alg_bean);
+    tcase_add_test(tc_alg_bean, test_alg_bean_generate_default_alg_bean_cram);
+    tcase_add_test(tc_alg_bean,test_alg_bean_read_file);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_str_arr);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_str_arr_cram);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_intrange_arr);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_intrange_arr_cram);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_char_arr);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_char_arr_cram);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_read_pos_prop_arr);
+    tcase_add_test(tc_alg_bean,test_alg_bean_get_index_for_read_pos_prop_arr_cram);
+    tcase_add_test(tc_alg_bean,test_alg_bean_hard_copy_char_list);
+    tcase_add_test(tc_alg_bean,test_alg_bean_hard_copy_char_list_cram);
+
+    suite_add_tcase (s, tc_alg_bean);
+    return s;
 }
-
-RUN_TESTS(all_tests);

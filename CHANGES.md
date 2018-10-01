@@ -1,5 +1,11 @@
 # CHANGES
 
+## Changes in the automake feature
+
+* Convert install to use [autotools](https://www.gnu.org/software/automake/)
+* Change unit tests to use [check](https://libcheck.github.io/check/)
+* Update .travis.yml, README.md etc inline with changes
+
 ## 1.13.7
 
 * Modify means by which zlib version is detected.

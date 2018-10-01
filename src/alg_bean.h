@@ -35,6 +35,7 @@
 
 #include <stdio.h>
 #include <List.h>
+#include "dbg.h"
 
 typedef struct alg_bean_intrange{
 	int from;

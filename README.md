@@ -1,5 +1,9 @@
-CaVEMan
-======
+# CaVEMan
+
+| Master                                                                                                              | Dev                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| [![Build Status](https://travis-ci.org/cancerit/CaVEMan.svg?branch=master)](https://travis-ci.org/cancerit/CaVEMan) | [![Build Status](https://travis-ci.org/cancerit/CaVEMan.svg?branch=dev)](https://travis-ci.org/cancerit/CaVEMan) |
+
 
 A C implementation of the CaVEMan program. Uses an expectation maximisation
 approach to calling single base substitutions in paired data.
@@ -8,27 +12,62 @@ use of an index parameter. The split step is designed to divide the genome into
 chunks of adjustable size to optimise for runtime/memory usage requirements.
 For simple execution of CaVEMan please see [cgpCaVEManWrapper](https://github.com/cancerit/cgpCaVEManWrapper)
 
-| Master                                                                                                              | Dev                                                                                                              |
-| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [![Build Status](https://travis-ci.org/cancerit/CaVEMan.svg?branch=master)](https://travis-ci.org/cancerit/CaVEMan) | [![Build Status](https://travis-ci.org/cancerit/CaVEMan.svg?branch=dev)](https://travis-ci.org/cancerit/CaVEMan) |
+---- 
+<!-- TOC depthFrom:2 -->
 
-Installation
-============
+- [Installation](#installation)
+    - [Default install](#default-install)
+    - [Dependencies](#dependencies)
+- [Prerequisites to running CaVEMan](#prerequisites-to-running-caveman)
+- [Optional inputs (will result in more accurate calls)](#optional-inputs-will-result-in-more-accurate-calls)
+- [Processing flow](#processing-flow)
+    - [Setup](#setup)
+    - [Split](#split)
+    - [Mstep](#mstep)
+    - [Merge](#merge)
+    - [Estep](#estep)
+- [File Formats](#file-formats)
+    - [Copy Number](#copy-number)
+    - [Ignored regions file](#ignored-regions-file)
+- [Default Settings](#default-settings)
+- [LICENCE](#licence)
 
-See INSTALL.TXT
+<!-- /TOC -->
 
-## Prerequisites
+## Installation
 
-* As of version 1.6.0 CaVEMan supports cram files (with index).
-* BWA Mapped, indexed, duplicate marked/removed bam files, for both a normal and tumour sample
-* Reference.fasta and index
-* A one based bed style format file of regions to ignore during analysis (see specified format).
-* [zlib](https://zlib.net/) >= 1.2.3.5
+### Default install
+
+Use the [setup.sh](setup.sh) script. This installs htslib temporarily and uses the autoconf/autotools method to install
+CaVEMan binaries to `~/install_loc/bin/`
+
+`./setup.sh ~/install_loc`
+
+### Dependencies
+
+CaVEMan is designed to run in a compute farm/clustre environment.
+
+CaVEMan depends on [htslib], by default [htslib] is installed temporarily and linked for you by [setup.sh](/setup.sh)
+
+CaVEMan also requires the following libraries to be installed
+
+- build-essential
+- autoconf
+- pkg-config
+- check 
+- [zlib](https://zlib.net/) > 1.2.3.4
+
+## Prerequisites to running CaVEMan
+
+- As of version 1.6.0 CaVEMan supports cram files (with index).
+- BWA Mapped, indexed, duplicate marked/removed bam files, for both a normal and tumour sample
+- Reference.fa (fasta) and (.fai) index
+- A one based bed style format file of regions to ignore during analysis (see specified format).
 
 ## Optional inputs (will result in more accurate calls)
 
-* Normal and tumour copy number files (see specified format).
-* A normal contamination of tumour value
+- Normal and tumour copy number files (see specified format).
+- A normal contamination of tumour value
 
 ## Processing flow
 
@@ -39,8 +78,9 @@ CaVEMan is executed in several distinct steps in the order listed below.
 Generates a config file for use with the remaining CaVEMan steps (it'll save you a lot of time typing commandline args).
 Also generates a file named 'alg_bean' in the run directory.
 
-	bin/caveman setup || ./bin/setupCaveman
-	Usage: caveman setup -t tum.bam -n norm.bam -r reference.fa.fai -g ignore_regions.tab -e tum_cn.bed -j norm_cn.bed [-f path] [-l path] [-a path] [-wzu]
+```bash
+bin/caveman setup
+Usage: caveman setup -t tum.bam -n norm.bam -r reference.fa.fai -g ignore_regions.tab -e tum_cn.bed -j norm_cn.bed [-f path] [-l path] [-a path] [-wzu]
 
 	-t  --tumour-bam [file]             Location of tumour bam
 	-n  --normal-bam [file]             Location of normal bam
@@ -58,7 +98,7 @@ Also generates a file named 'alg_bean' in the run directory.
 	-e  --tumour-copy-no-file [file]    Location of tumour copy number bed file (if the extension is not .bed the file will 		be treated as 1 based start). If no copy number file is supplied then the default cn of 2 will be used
 	-j  --normal-copy-no-file [file]    Location of normal copy number bed file (if the extension is not .bed the file will 		be treated as 1 based start). If no copy number file is supplied then the default cn of 2 will be used
 	-h	--help                          Display this usage information.
-
+```
 
 ### Split
 
@@ -69,8 +109,9 @@ the -m, -c and -e parameters. Once all jobs complete successfully you will need 
 all split files into a single file with the name passed to the setup step in -f parameter
 (or splitList if you used the default).
 
-	bin/caveman split || ./bin/splitCaveman
-	Usage: caveman split -i jobindex -f path [-c int] [-m int] [-e int]
+```bash
+bin/caveman split
+Usage: caveman split -i jobindex -f path [-c int] [-m int] [-e int]
 
 	-f --config-file file           Path to the config file produced by setup [default: 'caveman.cfg.ini'].
 	-i  --index int                 Job index (e.g. from $LSB_JOBINDEX)
@@ -80,6 +121,7 @@ all split files into a single file with the name passed to the setup step in -f 
 	-m  --max-read-count double     Proportion of read-count to allow as a max in a split section
 	-e  --read-count int            Guide for maximum read count in a section
 	-h	help                        Display this usage information.
+```
 
 ### Mstep
 
@@ -88,8 +130,9 @@ Requires one job per entry in the merged split file. The parameter -i referes to
 of the memory footprint. The mstep will create a file for each job under the results folder
 (specified as a parameter in the setup step).
 
-	bin/caveman mstep || ./bin/mstepCaveman
-	Usage: caveman mstep -f config.file -i jobindex [-m int] [-a int]
+```bash
+bin/caveman mstep
+Usage: caveman mstep -f config.file -i jobindex [-m int] [-a int]
 
 	-f --config-file file                  Path to the config file produced by setup [default: 'caveman.cfg.ini'].
 	-i --index int                         Job index.
@@ -98,6 +141,7 @@ of the memory footprint. The mstep will create a file for each job under the res
 	-a --split_size int                    Size of section to retrieve at a time from bam file. Allows memory footprint tuning [default:50000].
 	-m  --min-base-qual int                Minimum base quality to include in analysis [default:11]
 	-h	help                                Display this usage information.
+```
 
 ### Merge
 
@@ -105,8 +149,9 @@ Runs as a single job, merging all the cov_array files generated by the mstep int
 representing the profile of the whole genome. The resulting file is named cov_array and stored
 in the root run folder. Another file named prob_array is also created.
 
-	bin/caveman merge || ./bin/mergeCaveman
-	Usage: caveman merge -f config_file [-c path] [-p path]
+```bash
+bin/caveman merge
+Usage: caveman merge -f config_file [-c path] [-p path]
 
 	-f --config-file file                Path to the config file produced by setup. [default: 'caveman.cfg.ini']
 
@@ -114,6 +159,7 @@ in the root run folder. Another file named prob_array is also created.
 	-c  --covariate-file filename        Location to write merged covariate array [default: covs_arr]
 	-p  --probabilities-file filename    Location to write probability array [default: probs_arr]
 	-h	help                              Display this usage information.
+```
 
 ### Estep
 
@@ -127,8 +173,9 @@ Using the debugoption will output another file named *.dbg.vcf containing  a lin
 in the genome that was analysed with read counts (as seen by CaVEMan) and top two probabilities
 calculated.
 
-	bin/caveman estep || ./bin/estepCaveman
-	Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c 	float] [-d float] [-a int]
+```bash
+bin/caveman estep
+Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]
 
 	-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)
 
@@ -156,11 +203,10 @@ calculated.
 	-P  --normal-platform [string]                   Normal platform. Overrides the values retrieved from bam header.
 	-T  --tumour-platform [string]                   Tumour platform. Overrides the values retrieved from bam header.
 	-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the 								 offending region will be set to this value. [default:10].
-	-h  --help                                     Display this usage information.
-
+	-h  --help                                       Display this usage information.
+```
 
 ## File Formats
-
 
 ### Copy Number
 
@@ -169,16 +215,17 @@ Where the columns are chromosome,start,stop,copynumber(integer). A separate file
 for normal and tumour. Each file should have a copy number assigned for every region requested
 to be analysed (NB, CaVEMan set CN to 2 in regions where copy number is 0).
 
-	Example:
-		1	0	20000	2
-		2	0	2500	4
-		2	2501	500000	6
+```	
+Example:
+	1	0	20000	2
+	2	0	2500	4
+	2	2501	500000	6
+```
 
 ### Ignored regions file
 
 A 1-based bed style tab separated format file of regions to be ignored during analysis.
 An example might be regions known to have extreme depth of mapped reads through mismapping.
-
 
 ## Default Settings
 
@@ -187,8 +234,7 @@ it is advised to use copy number 2 in the normal and 5 in the tumour in combinat
 a normal contamination of 0.1 . This gives CaVEMan a broad range over which variants will
 be called compared to a copy number of 2 in the tumour.
 
-LICENCE
-=======
+## LICENCE
 
 Copyright (c) 2014-2018 Genome Research Ltd.
 
@@ -218,3 +264,6 @@ reads ‘Copyright (c) 2005, 2007, 2008, 2009, 2011, 2012’ and a copyright
 statement that reads ‘Copyright (c) 2005-2012’ should be interpreted as being
 identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
 2009, 2010, 2011, 2012’."
+
+<!-- References -->
+[htslib]: https://github.com/samtools/htslib/releases/download/1.3/htslib-1.3.tar.bz2

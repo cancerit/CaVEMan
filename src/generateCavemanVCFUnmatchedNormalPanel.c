@@ -259,7 +259,9 @@ int gen_panel_write_VCF_header(List *samples,FILE *vcf_out){
 	//Print header to VCF output file
 	char *contigs = NULL;
 	check(fprintf(vcf_out,"%s\n",VCF_FILE_FORMAT)>0,"Error writing file format line to VCF");
-
+    int total_contigs_length = 0;
+    List *bam_contigs = bam_access_get_contigs_from_bam(((sample_bam *)samples->first->value)->bam_file, 
+                                                                    species_vers, species, &total_contigs_length);
 	char date[50];
 	time_t current_time;
 	time(&current_time);
@@ -267,7 +269,8 @@ int gen_panel_write_VCF_header(List *samples,FILE *vcf_out){
 
 	check(fprintf(vcf_out,VCF_FILE_DATE,date)>0,"Error writing file date line to VCF");
 	check(fprintf(vcf_out,"%s%s%s\n",VCF_SOURCE,date,VCF_SOURCE_2)>0,"Error writing source line to VCF");
-	contigs = output_generate_reference_contig_lines(((sample_bam *)samples->first->value)->bam_file, species_vers, species);
+	contigs = output_generate_reference_contig_lines(((sample_bam *)samples->first->value)->bam_file, species_vers, 
+                                                                        species, bam_contigs, total_contigs_length);
 	check(contigs!=NULL,"Error calculating contig lines for VCF");
 	check(fprintf(vcf_out,"%s",contigs)>0,"Error writing contig lines to VCF");
 	check(fprintf(vcf_out,"%s",VCF_INFO)>0,"Error writing info line to VCF");

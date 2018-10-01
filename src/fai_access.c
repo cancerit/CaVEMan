@@ -64,35 +64,6 @@ error:
 	return -1;
 }
 
-int fai_access_get_count_length_all_contigs(char *fa_loc, int *count, int *total_len){
-    char *chr_name = NULL;
-    int length = 0;
-    assert(fa_loc != NULL);
-    //Open fai file
-    chr_name = malloc(sizeof(char *));
-	FILE *fai = fopen(fa_loc, "r");
-	check(fai != NULL,"Invalid line read\n");
-	//read each chromosome
-    *count = 0;
-    *total_len = 0;
-    char rd[1000];
-	while(fgets(rd, 1000, fai) != NULL){
-		check(rd != NULL,"Invalid line read\n");
-        *count = *count+1;
-		int chk = sscanf(rd,"%s\t%d\t%*d\t%*d\t%*d",chr_name,&length);
-		check(chk == 2,"Wrong number of entries (%d) found in fasta index file line %s",chk,rd);
-        *total_len += strlen(chr_name);
-	}
-    free (chr_name);
-	//close file
-	check(fclose(fai)==0,"Error closing fai file.");
-	return 0;
-error:
-	if(fai)	fclose(fai);
-    if(chr_name) free(chr_name);
-	return -1;
-}
-
 char *fai_access_get_ref_seqeuence_for_pos(char *fa_loc,char *char_nom,int start_one_based,int stop){
 	assert(char_nom !=NULL);
 	assert(fa_loc != NULL);

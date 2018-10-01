@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2015 Genome Research Ltd.
+* Copyright (c) 2014-2018 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -30,7 +30,8 @@
 *
 */
 
-#include "minunit.h"
+#include <stdlib.h>
+#include <check.h>
 #include <algos.h>
 #include <covs_access.h>
 #include <bam_access.h>
@@ -40,77 +41,83 @@
 #include <unistd.h>
 #include <dbg.h>
 #include <math.h>
+#include "check_algos_tests.h"
 
-char *norm = "testData/wt.bam";
-char *tum = "testData/mt.bam";
-char *norm_cram = "testData/wt.cram";
-char *tum_cram = "testData/mt.cram";
-char *mut_norm = "testData/testing_wt.bam";
-char *mut_tum = "testData/testing_mt.bam";
-char *mut_norm_cram = "testData/testing_wt.cram";
-char *mut_tum_cram = "testData/testing_mt.cram";
-char *mstep_mut = "testData/mstep_test_mt.bam";
-char *mstep_norm = "testData/mstep_test_wt.bam";
-char *mstep_mut_cram = "testData/mstep_test_mt.cram";
-char *mstep_norm_cram = "testData/mstep_test_wt.cram";
-char *mut_probs = "testData/test_mut_probs_array";
-char *test_fai_out = TEST_REF;
-char *mut_alg = "testData/test_mut_alg";
-char *mut_mt_cn = "testData/mc.cave.cn";
-char *mut_wt_cn = "testData/wc.cave.cn";
-char *test_snp_out = "testData/snp.vcf.gz";
-char *test_mut_out = "testData/mut.vcf.gz";
-char *test_dbg_out = "testData/dbg.vcf.gz";
-char *test_no_anal_out = "testData/no_analysis.bed";
+char *norm = "../testData/wt.bam";
+char *tum = "../testData/mt.bam";
+char *norm_cram = "../testData/wt.cram";
+char *tum_cram = "../testData/mt.cram";
+char  *algos_mut_norm = "../testData/testing_wt.bam";
+char *algos_mut_tum = "../testData/testing_mt.bam";
+char *algos_mut_norm_cram = "../testData/testing_wt.cram";
+char *algos_mut_tum_cram = "../testData/testing_mt.cram";
+char *mstep_mut = "../testData/mstep_test_mt.bam";
+char *mstep_norm = "../testData/mstep_test_wt.bam";
+char *mstep_mut_cram = "../testData/mstep_test_mt.cram";
+char *mstep_norm_cram = "../testData/mstep_test_wt.cram";
+char *mut_probs = "../testData/test_mut_probs_array";
+char *algos_test_fai_out = NULL;
+char *mut_alg = "../testData/test_mut_alg";
+char *mut_mt_cn = "../testData/mc.cave.cn";
+char *mut_wt_cn = "../testData/wc.cave.cn";
+char *test_snp_out = "../testData/snp.vcf.gz";
+char *test_mut_out = "../testData/mut.vcf.gz";
+char *test_dbg_out = "../testData/dbg.vcf.gz";
+char *test_no_anal_out = "../testData/no_analysis.bed";
 
-char *test_algos_mstep_read_position(){
+START_TEST (test_algos_mstep_read_position){
 	//algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, int from, int to, char *ref_base);
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(norm,tum);
-	mu_assert(bam_access_openbams(norm, tum,test_fai_out)==0,"Bams not opened.\n");
+	ck_assert_msg(bam_access_openbams(norm, tum, algos_test_fai_out)==0,"Bams not opened.\n");
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	mu_assert(arr != NULL,"Array not properly created.\n");
+	ck_assert_msg(arr != NULL,"Array not properly created.\n");
 	char *chr = "22";
 	int from = 17619559;
 	int to = 17619559;
 	char *ref_base = "A";
 	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
 	//check we have a count of 2 in the expected place...
-	mu_assert(arr[0][1][1][4][1][4][0][3] == 1, "Incorrect data returned.\n");
+	ck_assert_msg(arr[0][1][1][4][1][4][0][3] == 1, "Incorrect data returned.\n");
 	covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),arr);
 	alg_bean_destroy(alg);
-	return NULL;
+    bam_access_closebams();
 }
+END_TEST
 
-char *test_algos_mstep_read_position_cram(){
+START_TEST (test_algos_mstep_read_position_cram){
 	//algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, int from, int to, char *ref_base);
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(norm_cram,tum_cram);
-	mu_assert(bam_access_openbams(norm_cram, tum_cram,test_fai_out)==0,"Bams not opened.\n");
+    ck_assert_msg(bam_access_openbams(norm_cram, tum_cram, algos_test_fai_out)==0,"Bams not opened.\n");
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	mu_assert(arr != NULL,"Array not properly created.\n");
+	ck_assert_msg(arr != NULL,"Array not properly created.\n");
 	char *chr = "22";
 	int from = 17619559;
 	int to = 17619559;
 	char *ref_base = "A";
 	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
 	//check we have a count of 2 in the expected place...
-	mu_assert(arr[0][1][1][4][1][4][0][3] == 1, "Incorrect data returned.\n");
+	ck_assert_msg(arr[0][1][1][4][1][4][0][3] == 1, "Incorrect data returned.\n");
 	covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),arr);
 	alg_bean_destroy(alg);
-	return NULL;
+    bam_access_closebams();
 }
+END_TEST
 
-char *test_algos_mstep_read_position_two(){
+START_TEST (test_algos_mstep_read_position_two){
 	//2	38000243	.	G	A	.	.	DP=178;MP=1.7e-84;GP=1.0e+00;TG=AG/AAGG;TP=1.0e+00;SG=AG/AGGG;SP=1.9e-03	GT:AF:CF:GF:TF:AR:CR:GR:TR:PM	0|1:17:0:28:0:19:0:17:0:4.4e-01	0|1:25:0:30:0:18:0:24:0:4.4e-01
 	//char *mstep_mut = "tests/mstep_test_mt.bam";
 	//char *mstep_norm = "tests/mstep_test_wt.bam";
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(mstep_norm,mstep_mut);
-	mu_assert(bam_access_openbams(mstep_norm,mstep_mut,test_fai_out)==0,"Bams not opened.\n");
-	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	mu_assert(arr != NULL,"Array not properly created.\n");
+	ck_assert_msg(bam_access_openbams(mstep_norm,mstep_mut,algos_test_fai_out)==0,"Bams not opened.\n");
+	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),
+                            List_count(alg->strand),List_count(alg->lane),List_count(alg->rd_pos), 
+                            List_count(alg->map_qual),List_count(alg->base_qual), 
+                            List_count(alg->ref_base),List_count(alg->call_base));
+	ck_assert_msg(arr != NULL,"Array not properly created.\n");
 	char *chr = "2";
 	int from = 38000243;
 	int to = 38000243;
@@ -136,20 +143,22 @@ char *test_algos_mstep_read_position_two(){
 			}
 		}
 	}
-	mu_assert(sum==178,"Incorrect total count in cov array.");
-	covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),arr);
+	ck_assert_msg(sum==178,"Incorrect total count in cov array.");
+	covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),
+                        List_count(alg->lane),List_count(alg->rd_pos),List_count(alg->map_qual),
+                        List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),arr);
 	alg_bean_destroy(alg);
-	return NULL;
 }
+END_TEST
 
-char *test_algos_mstep_read_position_two_cram(){
+START_TEST (test_algos_mstep_read_position_two_cram){
 	//2	38000243	.	G	A	.	.	DP=178;MP=1.7e-84;GP=1.0e+00;TG=AG/AAGG;TP=1.0e+00;SG=AG/AGGG;SP=1.9e-03	GT:AF:CF:GF:TF:AR:CR:GR:TR:PM	0|1:17:0:28:0:19:0:17:0:4.4e-01	0|1:25:0:30:0:18:0:24:0:4.4e-01
 	//char *mstep_mut = "tests/mstep_test_mt.bam";
 	//char *mstep_norm = "tests/mstep_test_wt.bam";
 	alg_bean_t *alg = alg_bean_generate_default_alg_bean(mstep_norm_cram,mstep_mut_cram);
-	mu_assert(bam_access_openbams(mstep_norm_cram,mstep_mut_cram,test_fai_out)==0,"Bams not opened.\n");
+	ck_assert_msg(bam_access_openbams(mstep_norm_cram,mstep_mut_cram,algos_test_fai_out)==0,"Bams not opened.\n");
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
-	mu_assert(arr != NULL,"Array not properly created.\n");
+	ck_assert_msg(arr != NULL,"Array not properly created.\n");
 	char *chr = "2";
 	int from = 38000243;
 	int to = 38000243;
@@ -175,15 +184,15 @@ char *test_algos_mstep_read_position_two_cram(){
 			}
 		}
 	}
-	mu_assert(sum==178,"Incorrect total count in cov array.");
+	ck_assert_msg(sum==178,"Incorrect total count in cov array.");
 	covs_access_free_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base),arr);
 	alg_bean_destroy(alg);
-	return NULL;
 }
+END_TEST
 
 int estep_no_analysis(){
 	FILE *alg_file = fopen(mut_alg,"r");
-	check(bam_access_openbams(mut_norm, mut_tum,test_fai_out)==0,"Bams not opened.");
+	check(bam_access_openbams( algos_mut_norm, algos_mut_tum,algos_test_fai_out)==0,"Bams not opened.");
 	alg_bean_t *alg = alg_bean_read_file(alg_file);
 	char *ref_base = malloc(sizeof(char)*51);
 	memset(ref_base,'C',51*sizeof(char));
@@ -235,7 +244,7 @@ error:
 
 int estep_no_analysis_cram(){
 	FILE *alg_file = fopen(mut_alg,"r");
-	check(bam_access_openbams(mut_norm_cram, mut_tum_cram,test_fai_out)==0,"Bams not opened.");
+	check(bam_access_openbams(algos_mut_norm_cram, algos_mut_tum_cram,algos_test_fai_out)==0,"Bams not opened.");
 	alg_bean_t *alg = alg_bean_read_file(alg_file);
 	char *ref_base = malloc(sizeof(char)*51);
 	memset(ref_base,'C',51*sizeof(char));
@@ -285,15 +294,15 @@ error:
 	return -1;
 }
 
-char *test_algos_estep_read_position_real_data_no_analysis(){
-	mu_assert(estep_no_analysis()==0,"Error testing no analysis estep.");
-	mu_assert(estep_no_analysis_cram()==0,"Error testing no analysis cram estep.");
-	return NULL;
+START_TEST (test_algos_estep_read_position_real_data_no_analysis){
+	ck_assert_msg(estep_no_analysis()==0,"Error testing no analysis estep.");
+	ck_assert_msg(estep_no_analysis_cram()==0,"Error testing no analysis cram estep.");
 }
+END_TEST
 
-char *test_algos_estep_read_position(){
+START_TEST (test_algos_estep_read_position){
 	FILE *alg_file = fopen(mut_alg,"r");
-	mu_assert(bam_access_openbams(mut_norm, mut_tum,test_fai_out)==0,"Bams not opened.\n");
+	ck_assert_msg(bam_access_openbams( algos_mut_norm, algos_mut_tum,algos_test_fai_out)==0,"Bams not opened.\n");
 	alg_bean_t *alg = alg_bean_read_file(alg_file);
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
@@ -305,7 +314,7 @@ char *test_algos_estep_read_position(){
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
 	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
-	mu_assert(estep==0,"Error running estep.");
+	ck_assert_msg(estep==0,"Error running estep.");
 	gzclose(snp_out);
 	gzclose(mut_out);
 	gzclose(dbg_out);
@@ -320,26 +329,26 @@ char *test_algos_estep_read_position(){
 	char line[5000];
 	int count = 0;
 	while ( gzgets(mut_out,line,sizeof(line)) != NULL ){
-		mu_assert(strncmp("1\t192462357",line,(sizeof(char) * 11))==0,"Incorrect mutation output in file.");
+		ck_assert_msg(strncmp("1\t192462357",line,(sizeof(char) * 11))==0,"Incorrect mutation output in file.");
 		//printf("%s",line);
-		//mu_assert(strcmp(
+		//ck_assert_msg(strcmp(
 			//"1\t192462357\t.\tC\tA\t.\t.\tDP=77;MP=1.0e+00;GP=2.2e-06;TG=CC/AAC;TP=5.9e-01;SG=CC/AAA;SP=4.1e-01\tGT:AF:CF:GF:TF:AR:CR:GR:TR:PM\t0|0:0:21:0:0:0:4:0:0:0.0e+00\t0|1:14:7:0:0:23:8:0:0:7.1e-01\n",
 			//line)==0,"Incorrect mutation line in file.");
 		//printf("%s\n",line);
 		count++;
 	}
-	mu_assert(count==1,"Wrong number of mutations output in the mutant file.");
+	ck_assert_msg(count==1,"Wrong number of mutations output in the mutant file.");
 	gzclose(mut_out);
 	unlink(test_snp_out);
 	unlink(test_mut_out);
 	unlink(test_dbg_out);
 	unlink(test_no_anal_out);
-	return NULL;
 }
+END_TEST
 
-char *test_algos_estep_read_position_cram(){
+START_TEST (test_algos_estep_read_position_cram){
 	FILE *alg_file = fopen(mut_alg,"r");
-	mu_assert(bam_access_openbams(mut_norm_cram, mut_tum_cram,test_fai_out)==0,"Bams not opened.\n");
+	ck_assert_msg(bam_access_openbams(algos_mut_norm_cram, algos_mut_tum_cram,algos_test_fai_out)==0,"Bams not opened.\n");
 	alg_bean_t *alg = alg_bean_read_file(alg_file);
 	fclose(alg_file);
 	long double ********probs = covs_access_read_probs_from_file(mut_probs,List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
@@ -351,7 +360,7 @@ char *test_algos_estep_read_position_cram(){
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
 	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
-	mu_assert(estep==0,"Error running estep.");
+	ck_assert_msg(estep==0,"Error running estep.");
 	gzclose(snp_out);
 	gzclose(mut_out);
 	gzclose(dbg_out);
@@ -366,34 +375,34 @@ char *test_algos_estep_read_position_cram(){
 	char line[5000];
 	int count = 0;
 	while ( gzgets(mut_out,line,sizeof(line)) != NULL ){
-		mu_assert(strncmp("1\t192462357",line,(sizeof(char) * 11))==0,"Incorrect mutation output in file.");
+		ck_assert_msg(strncmp("1\t192462357",line,(sizeof(char) * 11))==0,"Incorrect mutation output in file.");
 		//printf("%s",line);
-		//mu_assert(strcmp(
+		//ck_assert_msg(strcmp(
 			//"1\t192462357\t.\tC\tA\t.\t.\tDP=77;MP=1.0e+00;GP=2.2e-06;TG=CC/AAC;TP=5.9e-01;SG=CC/AAA;SP=4.1e-01\tGT:AF:CF:GF:TF:AR:CR:GR:TR:PM\t0|0:0:21:0:0:0:4:0:0:0.0e+00\t0|1:14:7:0:0:23:8:0:0:7.1e-01\n",
 			//line)==0,"Incorrect mutation line in file.");
 		//printf("%s\n",line);
 		count++;
 	}
-	mu_assert(count==1,"Wrong number of mutations output in the mutant file.");
+	ck_assert_msg(count==1,"Wrong number of mutations output in the mutant file.");
 	gzclose(mut_out);
 	unlink(test_snp_out);
 	unlink(test_mut_out);
 	unlink(test_dbg_out);
 	unlink(test_no_anal_out);
-	return NULL;
 }
+END_TEST
 
-char *test_algos_calculate_per_base_normal_contamination(){
+START_TEST (test_algos_calculate_per_base_normal_contamination){
 	float norm = 0.5;
 	int norm_copy_no = 4;
 	int tum_copy_no = 6;
 	set_norm_contam(norm);
-	mu_assert(get_norm_contam()==norm,"Wrong normal contamination set.");
+	ck_assert_msg(get_norm_contam()==norm,"Wrong normal contamination set.");
 	long double got = algos_calculate_per_base_normal_contamination(norm_copy_no,tum_copy_no);
 	long double exp = (long double)2/(long double)5;
-	mu_assert(got==exp,"Wrong normal contamination calculated.");
-	return NULL;
+	ck_assert_msg(got==exp,"Wrong normal contamination calculated.");
 }
+END_TEST
 
 int test_finalise(){
 	genotype_t *som_tum2 = NULL;
@@ -617,10 +626,10 @@ error:
 	return -1;
 }
 
-char *test_finalise_probabilities_and_find_top_prob(){
-	mu_assert(test_finalise() == 0,"Error testing finalize method");
-	return NULL;
+START_TEST (test_finalise_probabilities_and_find_top_prob){
+	ck_assert_msg(test_finalise() == 0,"Error testing finalize method");
 }
+END_TEST
 
 int test_per_read_estep(){
 	int ref_base_idx = 1;
@@ -781,6 +790,7 @@ int test_per_read_estep(){
 	if(het_snp_genotypes) free(het_snp_genotypes);
 	if(hom_snp_genotypes) free(hom_snp_genotypes);
 	if(somatic_genotypes) free(somatic_genotypes);
+    if(het_norm_genotypes) free(het_norm_genotypes);
 	if(ref_norm) free(ref_norm);
 	if(ref_tum) free(ref_tum);
 	if(som_tum) free(som_tum);
@@ -792,6 +802,7 @@ int test_per_read_estep(){
 	if(het) free(het);
 	if(hom) free(hom);
 	if(som) free(som);
+    if(het_norms) free(het_norms);
 	if(genos) free(genos);
 	if(norm_read) free(norm_read);
 	if(tum_read) free(tum_read);
@@ -800,6 +811,7 @@ error:
 	if(het_snp_genotypes) free(het_snp_genotypes);
 	if(hom_snp_genotypes) free(hom_snp_genotypes);
 	if(somatic_genotypes) free(somatic_genotypes);
+    if(het_norm_genotypes) free(het_norm_genotypes);
 	if(ref_norm) free(ref_norm);
 	if(ref_tum) free(ref_tum);
 	if(som_tum) free(som_tum);
@@ -807,6 +819,7 @@ error:
 	if(het_tum) free(het_tum);
 	if(hom_norm) free(hom_norm);
 	if(hom_tum) free(hom_tum);
+    if(het_norms) free(het_norms);
 	if(ref) free(ref);
 	if(het) free(het);
 	if(hom) free(hom);
@@ -817,13 +830,13 @@ error:
 	return -1;
 }
 
-char *test_algos_run_per_read_estep_maths(){
+START_TEST (test_algos_run_per_read_estep_maths){
 	float ref_bias = 0.95;
 	set_ref_bias(ref_bias);
-	mu_assert(get_ref_bias()==ref_bias,"Wrong reference bias set.");
-	mu_assert(test_per_read_estep()==0,"Error testing per read estep.");
-	return NULL;
+	ck_assert_msg(get_ref_bias()==ref_bias,"Wrong reference bias set.");
+	ck_assert_msg(test_per_read_estep()==0,"Error testing per read estep.");
 }
+END_TEST
 
 int test_estep_pos(){
 	int ref_base_idx = 1;
@@ -1017,6 +1030,7 @@ int test_estep_pos(){
 	if(het_snp_genotypes) free(het_snp_genotypes);
 	if(hom_snp_genotypes) free(hom_snp_genotypes);
 	if(somatic_genotypes) free(somatic_genotypes);
+    if(het_norm_genotypes) free(het_norm_genotypes);
 	if(ref_norm) free(ref_norm);
 	if(ref_tum) free(ref_tum);
 	if(som_tum) free(som_tum);
@@ -1028,6 +1042,7 @@ int test_estep_pos(){
 	if(het) free(het);
 	if(hom) free(hom);
 	if(som) free(som);
+    if(het_norms) free(het_norms);
 	if(genos) free(genos);
 	if(norm_read) free(norm_read);
 	if(tum_read) free(tum_read);
@@ -1037,6 +1052,7 @@ error:
 	if(het_snp_genotypes) free(het_snp_genotypes);
 	if(hom_snp_genotypes) free(hom_snp_genotypes);
 	if(somatic_genotypes) free(somatic_genotypes);
+    if(het_norm_genotypes) free(het_norm_genotypes);
 	if(ref_norm) free(ref_norm);
 	if(ref_tum) free(ref_tum);
 	if(som_tum) free(som_tum);
@@ -1048,6 +1064,7 @@ error:
 	if(het) free(het);
 	if(hom) free(hom);
 	if(som) free(som);
+    if(het_norms) free(het_norms);
 	if(genos) free(genos);
 	if(norm_read) free(norm_read);
 	if(tum_read) free(tum_read);
@@ -1055,21 +1072,21 @@ error:
 	return -1;
 }
 
-char *test_algos_run_per_position_estep_maths(){
+START_TEST (test_algos_run_per_position_estep_maths){
 	float ref_bias = 0.95;
 	float snp_prob = 0.001;
 	float mut_prob = 0.00006;
 	set_ref_bias(ref_bias);
-	mu_assert(get_ref_bias()==ref_bias,"Wrong reference bias set.");
+	ck_assert_msg(get_ref_bias()==ref_bias,"Wrong reference bias set.");
 	set_prior_mut_prob(mut_prob);
-	mu_assert(get_prior_mut_prob()==mut_prob,"Wrong mut prior set.");
+	ck_assert_msg(get_prior_mut_prob()==mut_prob,"Wrong mut prior set.");
 	set_prior_snp_prob(snp_prob);
-	mu_assert(get_prior_snp_prob()==snp_prob,"Wrong SNP prior set.");
-	mu_assert(test_estep_pos()==0,"Error testing per position estep.");
-	return NULL;
+	ck_assert_msg(get_prior_snp_prob()==snp_prob,"Wrong SNP prior set.");
+	ck_assert_msg(test_estep_pos()==0,"Error testing per position estep.");
 }
+END_TEST
 
-char *test_algos_check_var_position_alleles(){
+START_TEST (test_algos_check_var_position_alleles){
 	char *type = "TEST_SOMATIC";
 	char *chr_name = "TEST_CHR";
 	int ref_pos = 10;
@@ -1084,8 +1101,8 @@ char *test_algos_check_var_position_alleles(){
 
 	genotype_store_t *genos = malloc(sizeof(genotype_store_t));
 	estep_position_t *pos = malloc(sizeof(estep_position_t));
-	check_mem(genos);
-	check_mem(pos);
+	ck_assert_msg(genos!=NULL,"Error in memory assignment.");
+	ck_assert_msg(pos!=NULL,"Error in memory assignment.");
 
 
 	char ref_base = 'C';
@@ -1099,9 +1116,9 @@ char *test_algos_check_var_position_alleles(){
 	pos->ref_base = "C";
 
 	ref = malloc(sizeof(combined_genotype_t));
-	check_mem(ref);
+	ck_assert_msg(ref!=NULL,"Error in memory assignment.");
 	som = malloc(sizeof(combined_genotype_t));
-	check_mem(som);
+	ck_assert_msg(som!=NULL,"Error in memory assignment.");
 
 	ref_norm = genotype_init_genotype();
 	genotype_set_base_count(ref_norm, ref_base, 2);
@@ -1153,18 +1170,18 @@ char *test_algos_check_var_position_alleles(){
 	pos->sec_geno = ref;
 
 	int result = algos_check_var_position_alleles(pos, chr_name, type,0);
-	mu_assert(result == 1,"Somatic, homozygous counts check 1");
-	mu_assert(pos->top_geno->prob==top_prob,"Top probability unchanged");
-	mu_assert(pos->sec_geno->prob==sec_prob,"Second probability unchanged");
+	ck_assert_msg(result == 1,"Somatic, homozygous counts check 1");
+	ck_assert_msg(pos->top_geno->prob==top_prob,"Top probability unchanged");
+	ck_assert_msg(pos->sec_geno->prob==sec_prob,"Second probability unchanged");
 
 
 	//We just reverse top and second genos to check top genotype is normal.
 	pos->top_geno = ref;
 	pos->sec_geno = som;
 	result = algos_check_var_position_alleles(pos, chr_name, type,0);
-	mu_assert(result == 1,"Somatic, homozygous counts check 2");
-	mu_assert(pos->top_geno->prob==top_prob,"Top probability changed as normal top genotype");
-	mu_assert(pos->sec_geno->prob==sec_prob,"Second probability changed as normal top genotype");
+	ck_assert_msg(result == 1,"Somatic, homozygous counts check 2");
+	ck_assert_msg(pos->top_geno->prob==top_prob,"Top probability changed as normal top genotype");
+	ck_assert_msg(pos->sec_geno->prob==sec_prob,"Second probability changed as normal top genotype");
 
 
 	//TODO top geno and second geno swap
@@ -1187,36 +1204,48 @@ char *test_algos_check_var_position_alleles(){
 
 	result = algos_check_var_position_alleles(pos, chr_name, type,0);
 
-	mu_assert(result == 1,"Somatic, homozygous counts check 3");
-	mu_assert(pos->top_geno->prob==sec_prob,"Top probability changed as erroneous top genotype");
-	mu_assert(pos->sec_geno->prob==top_prob,"Second probability changed as erroneous top genotype");
+	ck_assert_msg(result == 1,"Somatic, homozygous counts check 3");
+	ck_assert_msg(pos->top_geno->prob==sec_prob,"Top probability changed as erroneous top genotype");
+	ck_assert_msg(pos->sec_geno->prob==top_prob,"Second probability changed as erroneous top genotype");
 
 	//TODO complete failure.
 	pos->top_geno = ref;
 	pos->sec_geno = ref;
 
 	result = algos_check_var_position_alleles(pos, chr_name, type,0);
-	mu_assert(result == 0,"Genotype check fail");
-	return NULL;
-error:
-	return "Failed mem check";
+	ck_assert_msg(result == 0,"Genotype check fail");
+    free(ref_norm);
+    free(ref_tum);
+    free(som_tum);
+    free(alt_som_tum);
+    free(genos);
+    free(som);
+    free(ref);
+    free(pos);
 }
+END_TEST
 
-char *all_tests() {
-   mu_suite_start();
-   mu_run_test(test_algos_mstep_read_position);
-   mu_run_test(test_algos_mstep_read_position_cram);
-   mu_run_test(test_algos_mstep_read_position_two);
-   mu_run_test(test_algos_mstep_read_position_two_cram);
-   mu_run_test(test_finalise_probabilities_and_find_top_prob);
-   mu_run_test(test_algos_calculate_per_base_normal_contamination);
-   mu_run_test(test_algos_run_per_read_estep_maths);
-   mu_run_test(test_algos_run_per_position_estep_maths);
-   mu_run_test(test_algos_estep_read_position_real_data_no_analysis);
-   mu_run_test(test_algos_estep_read_position);
-   mu_run_test(test_algos_estep_read_position_cram);
-   mu_run_test(test_algos_check_var_position_alleles);
-   return NULL;
+Suite * check_algos_tests_suite(void){
+    Suite *s;
+    TCase *tc_algos;
+
+    s = suite_create("algos_tests");
+
+    /* Core test case */
+    tc_algos = tcase_create("algos testing");
+    tcase_add_test(tc_algos, test_algos_mstep_read_position);
+    tcase_add_test(tc_algos, test_algos_mstep_read_position_cram);
+    tcase_add_test(tc_algos, test_algos_mstep_read_position_two);
+    tcase_add_test(tc_algos, test_algos_mstep_read_position_two_cram);
+    tcase_add_test(tc_algos, test_finalise_probabilities_and_find_top_prob);
+    tcase_add_test(tc_algos, test_algos_calculate_per_base_normal_contamination);
+    tcase_add_test(tc_algos, test_algos_run_per_read_estep_maths);
+    tcase_add_test(tc_algos, test_algos_run_per_position_estep_maths);
+    tcase_add_test(tc_algos, test_algos_estep_read_position_real_data_no_analysis);
+    tcase_add_test(tc_algos, test_algos_estep_read_position);
+    tcase_add_test(tc_algos, test_algos_estep_read_position_cram);
+    tcase_add_test(tc_algos, test_algos_check_var_position_alleles);
+
+    suite_add_tcase (s, tc_algos);
+    return s;
 }
-
-RUN_TESTS(all_tests);

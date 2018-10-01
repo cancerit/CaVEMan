@@ -80,6 +80,7 @@ INIT_DIR=`pwd`
     grep MemTotal /proc/meminfo
     set +x
     echo; echo
+
 LIBZ_VER=`echo '#include <zlib.h>' | cpp -H -o /dev/null |& head -1 | cut -d' ' -f 2 | xargs grep -e '#define ZLIB_VERSION' | cut -d ' ' -f 3 | perl -pe 's/["\n]//g'`
 echo $LIBZ_VER
 if version_gt $LIBZ_VER $REQUIRED_MIN_LIBZ ; then
@@ -125,11 +126,16 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
-  mkdir -p $INIT_DIR/c/bin &&
-  make clean &&
-  make -j$CPU &&
-  cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
-  cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
+  export HTSTMP="$INIT_DIR/hts_tmp"
+  echo $HTSTMP
+  mkdir -p $HTSTMP
+  ln -fs $HTSLIB/libhts.a hts_tmp/libhts.a
+  autoreconf -i
+  ./configure CPPFLAGS=-I$HTSLIB/ LDFLAGS=-L$HTSTMP --prefix="$INST_PATH"
+  make 
+  make check
+  make install
+  rm -rf  hts_tmp
   touch $SETUP_DIR/caveman.success
 fi
 

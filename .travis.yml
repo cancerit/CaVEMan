@@ -6,6 +6,14 @@ dist: trusty
 
 language: c
 
+addons:
+ apt:
+  packages:
+   - build-essential
+   - autoconf
+   - pkg-config
+   - check
+
 install: true
 
 compiler:

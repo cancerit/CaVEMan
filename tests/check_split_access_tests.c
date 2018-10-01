@@ -30,23 +30,49 @@
 *
 */
 
-#ifndef _output_h
-#define _output_h
+#include <stdlib.h>
+#include <check.h>
+#include <split_access.h>
+#include <string.h>
+#include "check_split_access_tests.h"
 
-#include <algos.h>
+char *test_split_file = "../testData/split.test";
 
-int output_vcf_variant_position(estep_position_t *pos, gzFile out, char *chrom);
-int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_loc,
-													char *assembly, char *species, char *norm_prot, char *tum_prot,
-													char *norm_plat, char *tum_plat, List *contig_list, 
-                                                    uint64_t total_contig_length);
-char *output_generate_info_lines();
-char *output_generate_format_lines();
-char *output_generate_reference_contig_lines(char *bam_file, char *assembly, char *species, 
-                                                List *contig_list, uint64_t total_contig_length);
-int output_append_position_to_no_analysis(char *chr_name, int start_one_base, int stop);
-int output_flush_no_analysis(char *chr_name);
-void output_set_no_analysis_file(FILE *file);
-void output_set_no_analysis_section_list(List *sections);
+START_TEST(test_split_access_get_section_from_index){
+		//(char *file_loc, char *chr, int *start_zero_based, int *stop, int index){
+	int index = 1;
+	char *chr = malloc(sizeof(char) * 20);
+	int start = 0;
+	int stop = 0;
+	split_access_get_section_from_index(test_split_file,chr,&start,&stop,index);
+	ck_assert_msg(strcmp(chr,"1")==0,"Incorrect chromsome retrieved.\n");
+	ck_assert_msg(start==0,"Incorrect start retrieved.\n");
+	ck_assert_msg(stop==10000,"Incorrect stop retrieved.\n");
+	index = 2;
+	free(chr);
+	chr = malloc(sizeof(char) * 20);
+	start = 0;
+	stop = 0;
+	split_access_get_section_from_index(test_split_file,chr,&start,&stop,index);
+	ck_assert_msg(strcmp(chr,"4")==0,"Incorrect chromsome retrieved 2.\n");
+	ck_assert_msg(start==11,"Incorrect start retrieved 2.\n");
+	ck_assert_msg(stop==30000,"Incorrect stop retrieved 2.\n");
+    free(chr);
+}
+END_TEST
 
-#endif
+Suite * check_split_access_tests_suite(void){
+    Suite *s;
+    TCase *tc_split_access;
+
+    s = suite_create("split_access_tests");
+
+    /* Core test case */
+    tc_split_access = tcase_create("split access testing");
+
+    tcase_add_test(tc_split_access, test_split_access_get_section_from_index);
+
+    suite_add_tcase (s, tc_split_access);
+
+    return s;
+}

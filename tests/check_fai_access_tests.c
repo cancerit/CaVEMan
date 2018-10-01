@@ -30,59 +30,58 @@
 *
 */
 
-#include "minunit.h"
+#include <stdlib.h>
+#include <check.h>
 #include <fai_access.h>
+#include "check_fai_access_tests.h"
 
-char *fai_test_file = "testData/genome.fa.fai";
-char *fa_test_file = "testData/genome.fa";
+char *fai_test_file = "../testData/genome.fa.fai";
+char *fa_test_file = "../testData/genome.fa";
 
-char *test_fai_access_get_name_from_index(){
+START_TEST(test_fai_access_get_name_from_index){
 	int index = 2;
 	char *exp_chr = "II";
 	int exp_length = 15279345;
 	char *chr = malloc(sizeof(char) * 50);
 	int length_fetched = 0;
 	fai_access_get_name_from_index(index, fai_test_file, chr, &length_fetched);
-	mu_assert(strcmp(chr,exp_chr)==0,"Wrong chromosome retrieved from fai file.");
-	mu_assert(length_fetched == exp_length,"Wrong length retrieved from fai file.");
+	ck_assert_msg(strcmp(chr,exp_chr)==0,"Wrong chromosome retrieved from fai file.");
+	ck_assert_msg(length_fetched == exp_length,"Wrong length retrieved from fai file.");
 	exp_chr = "I";
 	index = 1;
 	exp_length = 15072423;
 	fai_access_get_name_from_index(index, fai_test_file, chr, &length_fetched);
-	mu_assert(strcmp(chr,exp_chr)==0,"Wrong chromosome retrieved from fai file.");
-	mu_assert(length_fetched == exp_length,"Wrong length retrieved from fai file.");
+	ck_assert_msg(strcmp(chr,exp_chr)==0,"Wrong chromosome retrieved from fai file.");
+	ck_assert_msg(length_fetched == exp_length,"Wrong length retrieved from fai file.");
 	free(chr);
-	return NULL;
 }
+END_TEST
 
-char *test_fai_access_get_ref_seqeuence_for_pos(){
+START_TEST(test_fai_access_get_ref_seqeuence_for_pos){
 	int from = 5000;
 	int to = 1510;
 	char *seq_name = "I";
 	char *exp_seq = "AAACTGGTTCA";
 	char *seq = fai_access_get_ref_seqeuence_for_pos(fa_test_file,seq_name,from,to);
-	mu_assert(seq != NULL,"NULL sequence returned.\n");
-	mu_assert(strcmp(seq,exp_seq),"Sequence retrieved doesn't match expected.");
+	ck_assert_msg(seq != NULL,"NULL sequence returned.\n");
+	ck_assert_msg(strcmp(seq,exp_seq),"Sequence retrieved doesn't match expected.");
 	free(seq);
-	return NULL;
+}
+END_TEST
+
+Suite * check_fai_access_tests_suite(void){
+    Suite *s;
+    TCase *tc_fai_access;
+
+    s = suite_create("fai_access_tests");
+
+    /* Core test case */
+    tc_fai_access = tcase_create("fai access testing");
+    tcase_add_test(tc_fai_access, test_fai_access_get_name_from_index);
+    tcase_add_test(tc_fai_access, test_fai_access_get_ref_seqeuence_for_pos);
+
+    suite_add_tcase (s, tc_fai_access);
+
+    return s;
 }
 
-test_fai_access_get_count_length_all_contigs(){
-    int count = 0;
-    int total_len = 0;
-    int res = fai_access_get_count_length_all_contigs(fai_test_file, &count, &total_len);
-    mu_assert(res == 0, "Error readion fai file for contigs and lengths.");
-    mu_assert(count == 2, "Wrong number of contigs counted");
-    mu_assert(total_len == 3, "Wrong length of total contigs estabished");
-    return NULL;
-}
-
-char *all_tests() {
-   mu_suite_start();
-   mu_run_test(test_fai_access_get_name_from_index);
-   mu_run_test(test_fai_access_get_ref_seqeuence_for_pos);
-   mu_run_test(test_fai_access_get_count_length_all_contigs);
-   return NULL;
-}
-
-RUN_TESTS(all_tests);

@@ -37,7 +37,6 @@
 #include "htslib/faidx.h"
 
 int fai_access_get_name_from_index(int idx, char *index_file_name, char *chr_name, int *length);
-int fai_access_get_count_length_all_contigs(char *fa_loc, int *count, int *total_len);
 char *fai_access_get_ref_seqeuence_for_pos(char *fai_loc,char *char_nom,int start_one_based,int stop);
 
 #endif
