@@ -13,6 +13,7 @@ addons:
    - autoconf
    - pkg-config
    - check
+   - subunit
 
 install: true
 
