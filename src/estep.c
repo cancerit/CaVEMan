@@ -525,7 +525,7 @@ int estep_main(int argc, char *argv[]){
                             List_count(bam_contigs) 
                             * 
                             (strlen(contig_str) + strlen(assembly) + strlen(species))
-                        ) + total_contigs_length;
+                        ) + total_contigs_length + 1;
     if (buf_sz < default_zbuffer){
         buf_sz = default_zbuffer;
     }

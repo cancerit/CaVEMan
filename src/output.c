@@ -37,6 +37,7 @@
 #include <bam_access.h>
 #include <ignore_reg_access.h>
 #include <genotype.h>
+#include <math.h>
 #include <stdio.h>
 #include <time.h>
 #include <dbg.h>
@@ -81,6 +82,7 @@ static const char *VCF_INFO_TOP_GENO_PROB = "ID=TP,Number=1,Type=Float,Descripti
 static const char *VCF_INFO_SEC_GENO = "ID=SG,Number=1,Type=String,Description=\"2nd most probable genotype as called by CaVEMan\"";
 static const char *VCF_INFO_SEC_GENO_PROB = "ID=SP,Number=1,Type=Float,Description=\"Probability of 2nd most probable genotype as called by CaVEMan\"";
 static const char *VCF_INFO_DBNSP_ID = "ID=DS,Number=.,Type=String,Description=\"DBSnp ID of known SNP\"";
+static const char *VCF_CONTIG_TEMPLATE = "##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n";
 
 FILE *no_analysis = NULL;
 int no_analysis_cache_size = 500;
@@ -204,9 +206,9 @@ char *output_generate_reference_contig_lines(char *bam_file, char *assembly, cha
 	strcpy(contigs,"");
 	LIST_FOREACH(contig_list, first,next,cur){
 		ref_seq_t *ref = (ref_seq_t *)cur->value;
-		char contig_str[4000];
-		int check_sprintf = sprintf(contig_str,"##contig=<ID=%s,length=%d,assembly=%s,species=%s>\n",
-                                                                            ref->name,ref->length,ref->ass,ref->spp);
+		int length = (strlen(VCF_CONTIG_TEMPLATE) + (floor(log10(abs(ref->length))) + 1) + strlen(ref->name) + strlen(ref->ass) + strlen(ref->spp))+1;
+		char contig_str[length];
+		int check_sprintf = sprintf(contig_str,VCF_CONTIG_TEMPLATE,ref->name,ref->length,ref->ass,ref->spp);
         check(check_sprintf>0,"Error writing contig string.");
 		strcat(contigs,contig_str);
 	}
