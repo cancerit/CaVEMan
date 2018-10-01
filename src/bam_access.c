@@ -363,13 +363,13 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 	char ** ptr = NULL;
 	List *conts = List_create();
 	char *tmp_line = NULL;
-    *total_contigs_length = 0;
+  *total_contigs_length = 0;
 	htsFile *bam = hts_open(bam_file, "r");
 	check(bam != 0,"Failed to open bam file to read contigs: %s.",bam_file);
 	bam_hdr_t *header = sam_hdr_read(bam);
 	char *head_txt = header->text;
 	ptr = malloc(sizeof(char **));
-    check_mem(ptr);
+  check_mem(ptr);
 	line = strtok_r(head_txt,"\n",ptr);
 	while(line != NULL){
 		//First check it's a sequence line
@@ -388,7 +388,6 @@ List *bam_access_get_contigs_from_bam(char *bam_file, char *assembly, char *spec
 				char *dummy = malloc(sizeof(char) * 100);
 				check_mem(dummy);
 				bam_access_parse_sq_line(tmp_line,dummy,dummy,ref->name,&(ref->length));
-                fprintf(stderr,"*********%s\t%lu\n",ref->name,ref->length);
                 *total_contigs_length +=    ( //Funky maths to get the legnth of the integer in chars
                                                 (floor(log10(abs(ref->length))) + 1)
                                                 +
@@ -722,7 +721,6 @@ int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop,
 	char sta[20];
 	region = malloc(sizeof(chr_name)+sizeof(":")+sizeof("-")+(sizeof(sta)*2));
 	sprintf(region,"%s:%d-%d",chr_name,start,stop);
-	fprintf(stderr,"REGION: %s\n",region);
   b = bam_init1();
   iter = sam_itr_querys(fh->idx, fh->head, region);
   int result;
