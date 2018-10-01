@@ -52,6 +52,7 @@ char *output_mut_tum_cram = "../testData/testing_mt.cram";
 char *out_test_vcf = "../testData/test_out.vcf.gz";
 char *output_test_fai_out = NULL;
 char *contig_str = "##contig=<ID=,length=,assembly=,species=>\n";
+static uint32_t default_zbuffer = 1024*1024;
 
 START_TEST(test_output_generate_info_lines){
 	char *result = output_generate_info_lines();
@@ -334,7 +335,6 @@ START_TEST(test_output_to_file){
 END_TEST
 
 START_TEST(test_output_header_to_file){
-	gzFile out = gzopen(out_test_vcf,"wb1");
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -347,9 +347,9 @@ START_TEST(test_output_header_to_file){
     //char *species = "HUMAN";
     char *assembly = NULL;
     char *species = NULL;
-    int total_contig_length = 0;
-    List *contig_list = bam_access_get_contigs_from_bam(output_mut_tum, assembly, species, &total_contig_length);
-    fprintf(stderr,"total_contig_length %d\n");
+    int tot_cont_length = 0;
+    List *contig_list = bam_access_get_contigs_from_bam(output_mut_tum, 
+										assembly, species, &tot_cont_length);
     uint64_t buf_sz =   (
                             List_count(contig_list) 
                             * 
@@ -358,7 +358,14 @@ START_TEST(test_output_header_to_file){
                                 + strlen(((ref_seq_t *)(contig_list->first->value))->ass) 
                                 + strlen(((ref_seq_t *)(contig_list->first->value))->spp)
                             )
-                        ) + total_contig_length;
+                        ) + tot_cont_length + 1;
+	if (buf_sz < default_zbuffer){
+        buf_sz = default_zbuffer;
+    }
+	gzFile out = gzopen(out_test_vcf,"wb1");
+	int buf_res = gzbuffer(out, buf_sz);
+    ck_assert_msg(buf_res!=-1, "Error setting gzbuffer for file %s size to (%lu)", out_test_vcf, buf_sz);
+	
 	int chk = output_vcf_header(out, output_mut_tum, output_mut_norm, output_test_fai_out, assembly, species, norm_protocol, 
                                                 tum_protocol, norm_plat, tum_plat, contig_list, buf_sz);
 	ck_assert_msg(chk==0,"Error running output header method.");
@@ -366,7 +373,7 @@ START_TEST(test_output_header_to_file){
 	gzclose(out);
 
 	out = gzopen(out_test_vcf,"rb");
-	char exp[20000];
+	char exp[10000];
 	strcpy(exp,"");
 	strcat(exp,"##fileformat=VCFv4.1\n");
 	//fileDate=20120104
@@ -411,6 +418,7 @@ START_TEST(test_output_header_to_file){
 	strcat(exp,	"##contig=<ID=MT,length=16569,assembly=37,species=HUMAN>\n");
 
 	strcat(exp,output_generate_info_lines());
+
 	strcat(exp,output_generate_format_lines());
 
 	strcat(exp,"##SAMPLE=<ID=NORMAL,Description=\"Normal\",Accession=.,Platform=HiSeq,Protocol=WGS,SampleName=NORMALb,Source=.>\n");
@@ -427,16 +435,35 @@ START_TEST(test_output_header_to_file){
 		strcat(got,line);
 		count++;
 	}
-	if(strcmp(exp,got)!=0){
+	int compare_result = strcmp(exp,got);
+	if(compare_result != 0){
 		fprintf(stderr,"exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
 	}
-	ck_assert_msg(strcmp(exp,got)==0,"Header in file doesn't match.");
+	ck_assert_msg(compare_result == 0,"Header in file doesn't match.");
 	gzclose(out);
 	unlink(out_test_vcf);
 
 	chk=0;
 
+	contig_list = bam_access_get_contigs_from_bam(output_mut_tum, 
+										assembly, species, &tot_cont_length);
+    buf_sz =   (
+                            List_count(contig_list) 
+                            * 
+                            (
+                                strlen(contig_str) 
+                                + strlen(((ref_seq_t *)(contig_list->first->value))->ass) 
+                                + strlen(((ref_seq_t *)(contig_list->first->value))->spp)
+                            )
+                        ) + tot_cont_length + 1;
+	if (buf_sz < default_zbuffer){
+        buf_sz = default_zbuffer;
+    }
+
 	out = gzopen(out_test_vcf,"wb1");
+	buf_res = gzbuffer(out, buf_sz);
+    ck_assert_msg(buf_res!=-1, "Error setting gzbuffer for file %s size to (%lu)", out_test_vcf, buf_sz);
+	
 
 	char *norm_plat2 = malloc(sizeof(char)*50);
 	char *tum_plat2 = malloc(sizeof(char)*50);
@@ -518,8 +545,7 @@ START_TEST(test_output_header_to_file){
 }
 END_TEST
 
-START_TEST(test_output_header_to_file_cram){
-	gzFile out = gzopen(out_test_vcf,"wb1");
+START_TEST(test_output_header_to_file_cram){	
 	char *norm_protocol = "WGS";
 	char *tum_protocol = "WXS";
 	char *norm_plat,*tum_plat;
@@ -539,10 +565,13 @@ START_TEST(test_output_header_to_file_cram){
                                 + strlen(((ref_seq_t *)(contig_list->first->value))->ass) 
                                 + strlen(((ref_seq_t *)(contig_list->first->value))->spp)
                             )
-                        ) + total_contig_length;
-
-
-
+                        ) + total_contig_length + 1;
+	if (buf_sz < default_zbuffer){
+        buf_sz = default_zbuffer;
+    }
+	gzFile out = gzopen(out_test_vcf,"wb1");
+	int buf_res = gzbuffer(out, buf_sz);
+    ck_assert_msg(buf_res!=-1, "Error setting gzbuffer for file %s size to (%lu)", out_test_vcf, buf_sz);
 	int chk = output_vcf_header(out, output_mut_tum_cram, output_mut_norm_cram, output_test_fai_out,
 								assembly, species, norm_protocol, tum_protocol, norm_plat, tum_plat,
                                 contig_list, buf_sz);
@@ -612,16 +641,32 @@ START_TEST(test_output_header_to_file_cram){
 		strcat(got,line);
 		count++;
 	}
-	if(strcmp(exp,got)!=0){
-		printf("exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
+	int compare_result = strcmp(exp,got);
+	if(compare_result != 0){
+		fprintf(stderr,"exp:\n%s\n\n\ngot:\n%s\n\n",exp,got);
 	}
-	ck_assert_msg(strcmp(exp,got)==0,"Header in file doesn't match.");
+	ck_assert_msg(compare_result == 0,"Header in file doesn't match.");
 	gzclose(out);
 	unlink(out_test_vcf);
 
 	chk=0;
 
+	contig_list = bam_access_get_contigs_from_bam(output_mut_tum_cram, assembly, species, &total_contig_length);
+    buf_sz =   (
+                            List_count(contig_list) 
+                            * 
+                            (
+                                strlen(contig_str) 
+                                + strlen(((ref_seq_t *)(contig_list->first->value))->ass) 
+                                + strlen(((ref_seq_t *)(contig_list->first->value))->spp)
+                            )
+                        ) + total_contig_length + 1;
+	if (buf_sz < default_zbuffer){
+        buf_sz = default_zbuffer;
+    }
 	out = gzopen(out_test_vcf,"wb1");
+	buf_res = gzbuffer(out, buf_sz);
+    ck_assert_msg(buf_res!=-1, "Error setting gzbuffer for file %s size to (%lu)", out_test_vcf, buf_sz);
 
 	char *norm_plat2 = malloc(sizeof(char)*50);
 	char *tum_plat2 = malloc(sizeof(char)*50);

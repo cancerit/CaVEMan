@@ -316,7 +316,6 @@ START_TEST (test_bam_access_get_contigs_from_bam){
     char *spp = NULL;
 	List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, assembly, spp, &test);
 	ck_assert_int_eq(List_count(contigs),25);
-    fprintf(stderr,"exp: %d\tgot: %d\n",exp_contig_length, test);
     ck_assert_msg(strcmp(((ref_seq_t *)(contigs->first->value))->ass,"37")==0,"assembly not correct. Exp: %s\tgot: %s","37",assembly);
     ck_assert_msg(strcmp(((ref_seq_t *)(contigs->first->value))->spp,"HUMAN")==0,"species not correct. Exp: %s\tgot: %s","37",assembly);
     ck_assert_int_eq(test,exp_contig_length);
@@ -327,7 +326,6 @@ START_TEST (test_bam_access_get_contigs_from_bam_cram){
     int test = 0;
 	List *contigs = bam_access_get_contigs_from_bam(test_mt_cram, NULL, NULL, &test);
 	ck_assert_int_eq(List_count(contigs),25);
-    fprintf(stderr,"exp: %d\tgot: %d\n",exp_contig_length, test);
     ck_assert_int_eq(test,exp_contig_length);
 }
 END_TEST
@@ -336,7 +334,6 @@ START_TEST (test_bam_access_get_contigs_from_bam_no_spp){
     int test = 0;
 	List *contigs = bam_access_get_contigs_from_bam(test_mt_bam, "ASSEMBLY", "SPP", &test);
 	ck_assert_int_eq(List_count(contigs),25);
-    fprintf(stderr,"exp: %d\tgot: %d\n",exp_contig_length, test);
     ck_assert_int_eq(test,exp_contig_length);
 }
 END_TEST
@@ -345,7 +342,6 @@ START_TEST (test_bam_access_get_contigs_from_bam_no_spp_cram){
     int test = 0;
 	List *contigs = bam_access_get_contigs_from_bam(test_mt_cram, "ASSEMBLY", "SPP", &test);
 	ck_assert_int_eq(List_count(contigs),25);
-    fprintf(stderr,"exp: %d\tgot: %d\n",exp_contig_length, test);
     ck_assert_int_eq(test,exp_contig_length);
 }
 END_TEST
