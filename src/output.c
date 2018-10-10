@@ -298,7 +298,7 @@ int output_vcf_header(gzFile out, char *tum_bam, char *norm_bam, char *ref_seq_l
 	//Add reference sequence headers
 	contigs = output_generate_reference_contig_lines(tum_bam, assembly, species);
 	check(contigs != NULL,"Error fetching contigs from bam file.");
-	write = gzprintf(out,"%s",contigs);
+	write = gzputs(out,contigs);
 	check(write==sizeof(char)*strlen(contigs),"Error (%d) writing contigs.",write);
 
 	//INFO lines
