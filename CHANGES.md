@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.8
+
+* Use gzputs instead of gzprintf when writing reference contig lines to avoid buffer overflow
+
 ## 1.13.7
 
 * Modify means by which zlib version is detected.
