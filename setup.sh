@@ -25,7 +25,12 @@ SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.3.2/htslib
 
 REQUIRED_MIN_LIBZ="1.2.3.4"
 
-function version_gt() { test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1"; }
+function version_eq_gt() {
+    if [ "$1" = "$2" ]; then
+        return 0
+    fi
+    test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
+}
 
 get_distro () {
   EXT=""
@@ -82,7 +87,7 @@ INIT_DIR=`pwd`
     echo; echo
 LIBZ_VER=`echo '#include <zlib.h>' | cpp -H -o /dev/null |& head -1 | cut -d' ' -f 2 | xargs grep -e '#define ZLIB_VERSION' | cut -d ' ' -f 3 | perl -pe 's/["\n]//g'`
 echo $LIBZ_VER
-if version_gt $LIBZ_VER $REQUIRED_MIN_LIBZ ; then
+if version_eq_gt $LIBZ_VER $REQUIRED_MIN_LIBZ ; then
 	echo "Found acceptable libz version $LIBZ_VER."
 	echo "Continuing install"
 else
