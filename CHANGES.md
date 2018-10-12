@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.9
+
+* Fix version check to allow equal to or greater than comparisons
+
 ## 1.13.8
 
 * Use gzputs instead of gzprintf when writing reference contig lines to avoid buffer overflow
