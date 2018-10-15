@@ -13,7 +13,7 @@ addons:
    - autoconf
    - pkg-config
    - check
-   - subunit
+   - libsubunit-dev
 
 install: true
 
