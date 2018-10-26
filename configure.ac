@@ -14,10 +14,11 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
+PKG_CHECK_MODULES([check], [])
+
 # Checks for libraries.
 # Ensure zlib is available
 AC_SEARCH_LIBS(gzbuffer, z, [], [AC_ERROR([zlib containing gzbuffer is required])])
-AC_SEARCH_LIBS([tcase_create], [check_pic check], [], [AC_ERROR([check library is required])])
 AC_SEARCH_LIBS(subunit_test_start, subunit)
 
 PKG_CHECK_MODULES([zlib], [zlib > 1.2.3.3])
@@ -40,16 +41,6 @@ AC_PROG_CXX
 
 # Checks for pthread
 AX_PTHREAD
-
-AC_CANONICAL_HOST
-
-case $host_os in
-	*linux*)
-		HOST_OS=linux
-		;;
-	*) ;;
-esac
-AM_CONDITIONAL([HOST_LINUX],[test x$HOST_OS = xlinux])
 
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([getcwd memset mkdir realpath rmdir strrchr])

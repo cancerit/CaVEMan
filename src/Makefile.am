@@ -1,3 +1,6 @@
+## Process this file with automake to generate a Makefile.in
+AUTOMAKE_OPTIONS = subdir-objects
+
 # what flags you want to pass to the C compiler & linker
 CFLAGS = -Wall -g -O3 -DCAVEMAN_VERSION='"${VERSION}"' -DTEST_REF='"$(TEST_REF)"' -rdynamic
 
@@ -40,5 +43,5 @@ run_all_tests_SOURCES = ../tests/run_all_tests.c \
         genotype.c algos.c output.c setup.c split.c \
         mstep.c merge.c estep.c
 run_all_tests_CFLAGS = -I../tests $(PTHREAD_CFLAGS)
-run_all_tests_LDADD = -lhts -lpthread -lz -lm -ldl -lrt $(PTHREAD_LDFLAGS)
+run_all_tests_LDADD = -lcheck -lhts -lpthread -lz -lm -ldl -lrt $(PTHREAD_LDFLAGS)
 
