@@ -42,7 +42,8 @@ run_all_tests_SOURCES = ../tests/run_all_tests.c \
 run_all_tests_CFLAGS = -I../tests $(PTHREAD_CFLAGS)
 run_all_tests_LDADD = -lhts -lpthread -lz -lm -ldl -lrt $(PTHREAD_LDFLAGS)
 
-# if HOST_LINUX
-# run_all_tests_LDADD += -lrt -lsubunit
-# endif
+
+if HOST_LINUX
+run_all_tests_LDADD += -lrt -lsubunit
+endif
 

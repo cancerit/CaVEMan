@@ -41,6 +41,16 @@ AC_PROG_CXX
 # Checks for pthread
 AX_PTHREAD
 
+AC_CANONICAL_HOST
+
+case $host_os in
+	*linux*)
+		HOST_OS=linux
+		;;
+	*) ;;
+esac
+AM_CONDITIONAL([HOST_LINUX],[test x$HOST_OS = xlinux])
+
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([getcwd memset mkdir realpath rmdir strrchr])
 

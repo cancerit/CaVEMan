@@ -49,13 +49,7 @@ CaVEMan is designed to run in a compute farm/clustre environment.
 
 CaVEMan depends on [htslib], by default [htslib] is installed temporarily and linked for you by [setup.sh](/setup.sh)
 
-CaVEMan also requires the following libraries to be installed
-
-- build-essential
-- autoconf
-- pkg-config
-- check 
-- [zlib](https://zlib.net/) > 1.2.3.4
+CaVEMan also requires some libraries prior to install. See [INSTALL.md](INSTALL.md) for details.
 
 ## Prerequisites to running CaVEMan
 
