@@ -13,6 +13,7 @@ addons:
    - autoconf
    - pkg-config
    - check
+   - zlib1g-dev
    - libsubunit-dev
 
 install: true

@@ -2,8 +2,7 @@
 
 | Master                                                                                                              | Dev                                                                                                              |
 | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [![Build Status](https://travis-ci.org/cancerit/CaVEMan.svg?branch=master)](https://travis-ci.org/cancerit/CaVEMan) | [![Build Status](https://travis-ci.org/cancerit/CaVEMan.svg?branch=dev)](https://travis-ci.org/cancerit/CaVEMan) |
-
+| [![Build Status][travis-master-badge]][caveman-travis] | [![Build Status][travis-dev-badge]][caveman-travis] |
 
 A C implementation of the CaVEMan program. Uses an expectation maximisation
 approach to calling single base substitutions in paired data.
@@ -12,7 +11,8 @@ use of an index parameter. The split step is designed to divide the genome into
 chunks of adjustable size to optimise for runtime/memory usage requirements.
 For simple execution of CaVEMan please see [cgpCaVEManWrapper](https://github.com/cancerit/cgpCaVEManWrapper)
 
----- 
+----
+
 <!-- TOC depthFrom:2 -->
 
 - [Installation](#installation)
@@ -261,3 +261,6 @@ identical to a statement that reads ‘Copyright (c) 2005, 2006, 2007, 2008,
 
 <!-- References -->
 [htslib]: https://github.com/samtools/htslib/releases/download/1.3/htslib-1.3.tar.bz2
+[travis-master-badge]: https://travis-ci.org/cancerit/CaVEMan.svg?branch=master
+[travis-dev-badge]: https://travis-ci.org/cancerit/CaVEMan.svg?branch=dev
+[caveman-travis]: https://travis-ci.org/cancerit/CaVEMan
