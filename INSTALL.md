@@ -10,20 +10,21 @@
 ## Debian
 
 ```bash
-
+sudo apt-get update
+sudo apt-get install -y \
+    build-essential \
+    autoconf \
+    pkg-config \
+    zlib1g-dev \
+    check
 ```
 
 ## RHEL/CentOS
 
 ```bash
-
-```
-
-
-```
-- build-essential
-- autoconf
-- pkg-config
-- check 
-- [zlib](https://zlib.net/) > 1.2.3.4
+yum groupinstall -y "Development Tools"
+yum install -y \
+    bzip2 \
+    zlib-devel \
+    check-devel
 ```
