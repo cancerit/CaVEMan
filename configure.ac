@@ -16,10 +16,14 @@ AC_PROG_MAKE_SET
 
 # Checks for libraries.
 # Ensure zlib is available
+AC_SEARCH_LIBS(gzbuffer, z, [], [AC_ERROR([zlib containing gzbuffer is required])])
+AC_SEARCH_LIBS([tcase_create], [check_pic check])
+AC_SEARCH_LIBS(subunit_test_start, subunit)
+
 PKG_CHECK_MODULES([zlib], [zlib > 1.2.3.3])
-AC_CHECK_LIB([z],[gzbuffer])
+
 # Checks for header files.
-AC_CHECK_HEADERS([fenv.h float.h inttypes.h limits.h stdint.h stdlib.h string.h unistd.h zlib.h math.h htslib/sam.h])
+AC_CHECK_HEADERS([fenv.h float.h inttypes.h limits.h stdint.h stdlib.h string.h unistd.h zlib.h math.h htslib/sam.h check.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT32_T
