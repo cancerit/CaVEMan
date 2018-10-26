@@ -14,8 +14,6 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
-PKG_CHECK_MODULES([check], [])
-
 # Checks for libraries.
 # Ensure zlib is available
 AC_SEARCH_LIBS(gzbuffer, z, [], [AC_ERROR([zlib containing gzbuffer is required])])
