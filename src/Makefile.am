@@ -40,7 +40,7 @@ run_all_tests_SOURCES = ../tests/run_all_tests.c \
         genotype.c algos.c output.c setup.c split.c \
         mstep.c merge.c estep.c
 run_all_tests_CFLAGS = -I../tests $(PTHREAD_CFLAGS)
-run_all_tests_LDADD = -lcheck -lhts -lpthread -lz -lm -ldl -lrt $(PTHREAD_LDFLAGS)
+run_all_tests_LDADD = -lhts -lpthread -lz -lm -ldl -lrt $(PTHREAD_LDFLAGS)
 
 # if HOST_LINUX
 # run_all_tests_LDADD += -lrt -lsubunit

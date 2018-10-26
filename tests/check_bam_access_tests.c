@@ -110,7 +110,7 @@ START_TEST (test_list_algos_List_insert_sorted){
     ck_assert_int_eq(List_count(li), 7);
 	unsigned long int i=1;
 	LIST_FOREACH(li, first, next, cur) {
-        ck_assert_uint_eq(((read_pos_t *)cur->value)->ref_pos,i);
+        ck_assert(((read_pos_t *)cur->value)->ref_pos==i);
 		i++;
 	}
 	List_destroy(li);
