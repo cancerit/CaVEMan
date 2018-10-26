@@ -17,6 +17,7 @@ AC_PROG_MAKE_SET
 # Checks for libraries.
 # Ensure zlib is available
 AC_SEARCH_LIBS(gzbuffer, z, [], [AC_ERROR([zlib containing gzbuffer is required])])
+AC_SEARCH_LIBS([tcase_create], [check_pic check], [], [AC_ERROR([check library is required])])
 AC_SEARCH_LIBS(subunit_test_start, subunit)
 
 PKG_CHECK_MODULES([zlib], [zlib > 1.2.3.3])

@@ -209,7 +209,7 @@ Where the columns are chromosome,start,stop,copynumber(integer). A separate file
 for normal and tumour. Each file should have a copy number assigned for every region requested
 to be analysed (NB, CaVEMan set CN to 2 in regions where copy number is 0).
 
-```	
+```bash
 Example:
 	1	0	20000	2
 	2	0	2500	4
