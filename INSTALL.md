@@ -22,8 +22,8 @@ sudo apt-get install -y \
 ## RHEL/CentOS
 
 ```bash
-yum groupinstall -y "Development Tools"
-yum install -y \
+sudo yum groupinstall -y "Development Tools"
+sudo yum install -y \
     bzip2 \
     zlib-devel \
     check-devel
