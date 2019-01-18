@@ -164,7 +164,7 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 			stop = to;
 		}
 		reads = bam_access_get_reads_at_this_pos(chr_name,start,stop,0,alg);
-		check(reads >= 0,"Error retrieving read positions for section %s:%d-%d.",chr_name,start,stop);
+		check(reads != NULL,"Error retrieving read positions for section %s:%d-%d.",chr_name,start,stop);
 		LIST_FOREACH(reads, first, next, cur){
 			read_pos_t *pos_t = cur->value;
 			if(pos_t->ref_pos >= start && pos_t->ref_pos <= stop){

@@ -47,6 +47,9 @@ char *mut_wt_bam = "testData/testing_wt.bam";
 char *mut_mt_bam = "testData/testing_mt.bam";
 char *mut_wt_cram="testData/testing_wt.cram";
 char *mut_mt_cram = "testData/testing_mt.cram";
+char *overlap_wt_bam = "testData/test_overlap_normal.bam";
+char *overlap_mt_bam = "testData/test_overlap_tumour.bam";
+char *overlap_fa_file = "testData/overlap.fa.fai";
 char *test_fai_out = TEST_REF;
 
 char *test_bam_access_openbams_close_bams(){
@@ -153,6 +156,27 @@ char *test_bam_access_get_count_for_region_cram(){
 	mu_assert(count_got==86,"Incorrect number of reads returned in second lookup.");
 	bam_access_closebams();
 	return NULL;
+}
+
+/*
+Write tests using 
+overlap_wt_bam
+overlap_mt_bam
+Location 1:41107485-41107485
+Has overlapping reads
+*/
+char *test_bam_access_get_reads_at_this_pos_overlap(){
+    bam_access_openbams(overlap_wt_bam,overlap_wt_bam,overlap_fa_file);
+    char *chr_name = "1:41107485-41107485";
+	int start = 41107485;
+	int stop = 41107485;
+    alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(overlap_wt_bam,overlap_mt_bam);
+	List *got = bam_access_get_reads_at_this_pos(chr_name, start, stop,1,test_bean);
+    fprintf(stderr,"***Got %d reads from ",List_count(got));
+    mu_assert(List_count(got)==2,"Wrong number of reads fetched from bam file.");
+	bam_access_closebams();
+
+
 }
 
 char *test_bam_access_get_reads_at_this_pos(){
@@ -448,6 +472,7 @@ char *all_tests() {
    mu_run_test(test_bam_access_populate_file_index_cram);
    mu_run_test(test_bam_access_get_hts_itr);
    mu_run_test(test_bam_access_get_hts_itr_cram);
+   //mu_run_test(test_bam_access_get_reads_at_this_pos_overlap);
    return NULL;
 }
 
