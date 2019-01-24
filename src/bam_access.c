@@ -640,9 +640,9 @@ int bam_access_check_bam_flags(const bam1_t *b){
 		return 0;
 	}
   if(include_se == 0){ // If we're looking for proper pairs only
-    if(! (b->core.flag & BAM_FPROPER_PAIR)) continue;
-    if((b->core.flag & BAM_FREVERSE) && (b->core.flag & BAM_FMREVERSE)) continue;
-    if(!(b->core.flag & BAM_FREVERSE) && !(b->core.flag & BAM_FMREVERSE)) continue;
+    if(! (b->core.flag & BAM_FPROPER_PAIR)) return 0;
+    if((b->core.flag & BAM_FREVERSE) && (b->core.flag & BAM_FMREVERSE)) return 0;
+    if(!(b->core.flag & BAM_FREVERSE) && !(b->core.flag & BAM_FMREVERSE))  return 0;
   }
 	//printf("XT DATA: %c\n",xt);
 	//Now we check aux data for XT:M flags (the SW mapped marker from BWA)
