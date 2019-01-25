@@ -52,7 +52,7 @@ void List_destroy(List *list){
 void List_clear(List *list){
 	assert(list != NULL);
 	LIST_FOREACH(list, first, next, cur){
-		free(cur->value);
+		if(cur->value) free(cur->value);
 	}
 }
 

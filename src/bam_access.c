@@ -35,6 +35,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include <List.h>
 #include <List_algos.h>
 #include <dbg.h>
@@ -42,7 +43,13 @@
 #include <time.h>
 #include "khash.h"
 
+//New hash to store readname -> strand -> base
+KHASH_SET_INIT_STR(rdnom)
 KHASH_MAP_INIT_STR(strh,uint8_t)
+KHASH_MAP_INIT_INT(rpos, read_pos_t *)
+KHASH_MAP_INIT_INT(strd, uint8_t)
+KHASH_MAP_INIT_STR(rdnom_strd, khash_t(strd) *)
+KHASH_MAP_INIT_STR(rdnom_rp, khash_t(rpos) *)
 
 static file_holder *norm = NULL;
 static file_holder *tum = NULL;
@@ -95,6 +102,21 @@ static int pileup_blank(void *data, bam1_t *b) {
   return 0;
 }
 
+void bam_access_copy_read_pos(read_pos_t *old, read_pos_t *new){
+    assert(old != NULL && new != NULL);
+    new->ref_pos = old->ref_pos;
+	new->rd_len = old->rd_len;
+	new->normal = old->normal;
+	new->read_order = old->read_order;
+	new->strand = old->strand;
+	new->called_base = old->called_base;
+	new->rd_pos = old->rd_pos;
+	new->base_qual = old->base_qual;
+	new->map_qual = old->map_qual;
+	new->lane_i = old->lane_i;
+    return;
+}
+
 int bam_access_get_avg_readlength_from_bam(htsFile *sf){
   assert(sf != NULL);
   int read_count = 0;
@@ -117,7 +139,7 @@ int bam_access_get_avg_readlength_from_bam(htsFile *sf){
   return (int)(read_length_sum/read_count);
 }
 
-int pos_counts_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int strand){
+int pos_counts_callback_old(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int strand){
   file_holder *norm  = (file_holder *) data;
 	khash_t(strh) *h;
 	khiter_t k;
@@ -170,6 +192,156 @@ int pos_counts_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1
 error:
 	kh_destroy(strh, h);
   return 1;
+}
+
+int pos_counts_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int strand){
+    file_holder *norm  = (file_holder *) data;
+    int *local_counts = NULL;
+    khash_t(rdnom_strd) *rdnom_h;
+	khiter_t k;
+	rdnom_h = kh_init(rdnom_strd);
+
+    int i=0;
+    for(i=0;i<n_plp;i++){
+
+        const bam_pileup1_t *p = pil + i;
+        bam1_t *algn = p->b;
+
+        int rd_name_missing;
+        char *readname = bam_get_qname(p->b);
+        //Get the index of the base at this position in this read
+        uint8_t cbase = seq_nt16_int[bam_seqi(bam_get_seq(algn), p->qpos)];
+
+        // Check whether this is a valid position
+        if(!(p->is_del) && bam_get_qual(algn)[p->qpos] >= min_base_qual && cbase < 4 ) {
+            k = kh_put(rdnom_strd, rdnom_h, readname, &rd_name_missing);
+            khash_t(strd) *strd_h;
+            //Check to see if this readname is already a key
+            if(rd_name_missing){ // If the readname key doesn't yet exist
+                strd_h = kh_init(strd);
+                kh_value(rdnom_h, k) = strd_h;
+            } else {
+                //Retrieve the existing strand hash stored under the readname key
+                k = kh_get(rdnom_strd, rdnom_h, readname);
+                strd_h = kh_val(rdnom_h, k);
+            }
+
+            //Check that the strand doesn't already exist for this readname
+            //In theory it is never possible for the strand to occur twice
+            int strand_missing;
+            int is_rev = bam_is_rev(algn);
+            k = kh_put(strd, strd_h, is_rev, &strand_missing);
+            check(strand_missing==1, "Repeated strand found for theis read %s.", readname);
+            if(strand == 1 && is_rev == 1) cbase += 4; //Store a reverse strand count index
+            kh_value(strd_h, k) = cbase; //Set the index to the value of this base
+        }// End of checking if this is a valid base to use in the read
+
+    }//End of iteration through each pileup opject
+
+    //Initialise the base counts array. Local and stored
+    int loc = (pos + 1) - norm->beg;
+    if(norm->base_counts[loc] == NULL || norm->base_counts[loc] == 0){
+        if(strand == 1 ){
+            norm->base_counts[loc] = calloc(8,sizeof(int));
+        }else{
+            norm->base_counts[loc] = calloc(4,sizeof(int));
+        }
+        check_mem(norm->base_counts[loc]);
+    }
+    local_counts = calloc(4,sizeof(int));
+    check_mem(local_counts);
+
+    khash_t(strd) *strd_h;
+    // Now we iterate through every read group hash entry 
+    // Destroy the sub hashes as we go so cleanup is easier.
+    kh_foreach_value(rdnom_h, strd_h, {
+        int strand_fwd_missing = 0;
+        int strand_rev_missing = 0;
+        khiter_t k_fwd;
+        khiter_t k_rev;
+
+        //Check for forward strand
+        k_fwd = kh_get(strd, strd_h, 0);
+        strand_fwd_missing = (k_fwd == kh_end(strd_h));
+        //Check for reverse strand
+        k_rev = kh_get(strd, strd_h, 1);
+        strand_rev_missing = (k_rev == kh_end(strd_h));
+
+        //If we only have one or other strand
+        if(strand_fwd_missing){
+            uint8_t index = kh_val(strd_h, k_rev);
+            //Add to base counts
+            norm->base_counts[loc][index]++;
+        } else if (strand_rev_missing){
+            uint8_t index = kh_val(strd_h, k_fwd);
+            //Add to base counts
+            norm->base_counts[loc][index]++;
+        } else { //We have both strands present at this position.
+            uint8_t index_fwd = kh_val(strd_h, k_fwd);
+            uint8_t index_rev = kh_val(strd_h, k_rev);
+            uint8_t rev_corrected = index_rev;
+            if(index_rev > 3){
+                rev_corrected = index_rev - 4;
+            }
+            //If the two bases differ we add both to the counts
+            if(rev_corrected != index_fwd){
+                norm->base_counts[loc][index_rev]++;
+                norm->base_counts[loc][index_fwd]++;
+            }else{
+                //Otherwise we add only one instance. Orientation decided later
+                local_counts[index_fwd]++;
+            }
+
+        } //End of checking which strands we have for each readname
+    }
+    ); // End of kh_foreach. Iteration through each readname hash keys
+
+    //Now we iterate through the local base counts and add according to what we have
+    int x=0;
+    for(x=0; x<4; x++){
+
+        //While we have local_counts
+        while(local_counts[x] > 0){
+            if(strand == 1){ // If we have stranded counting
+                //If the fwd strand is higher than the rev
+                if(norm->base_counts[loc][x] > norm->base_counts[loc][x+4]){
+                    norm->base_counts[loc][x+4]++;
+                }else{
+                    norm->base_counts[loc][4]++;
+                }
+            }else{ // not looking at stranded counting so we can ignore the fwd/rev
+                norm->base_counts[loc][4]++;
+            }
+            local_counts[x]--;
+        } // End of while we have local counts for this base
+
+    } //End of iteration through each 
+
+    //Iterate through the readname hash and clearup all hashes as values
+    for (k = 0; k < kh_end(rdnom_h); ++k){
+        if (kh_exist(rdnom_h, k)){
+            kh_destroy(strd, kh_val(rdnom_h, k));
+        }
+    }
+    //Cleanup the readname hash
+
+    free(local_counts);
+    kh_destroy(rdnom_strd, rdnom_h);
+    return 0;
+
+error:
+    if(local_counts) free(local_counts);
+    //Cleanup all hashes
+    if(rdnom_h){
+        for (k = 0; k < kh_end(rdnom_h); ++k){
+            if (kh_exist(rdnom_h, k)){
+                kh_destroy(strd, kh_val(rdnom_h, k));
+            }
+        }
+        kh_destroy(rdnom_strd, rdnom_h);
+    }
+
+    return 1;
 }
 
 file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *chr, uint32_t start, uint32_t end, int strand){
@@ -227,6 +399,8 @@ file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *c
 			|| (b->core.flag & BAM_FQCFAIL)
 			|| (b->core.flag & BAM_FSUPPLEMENTARY)
 			|| (b->core.flag & BAM_FDUP) ) continue;
+    //Additional check for paired end orientation of reads (for this fix we asume paire end)
+    if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) continue;
     bam_plp_push(buf, b);
     while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
       if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
@@ -266,8 +440,6 @@ error:
 		}
 		free(norm->base_counts);
 	}
-	if(norm) free(norm);
-
 	return NULL;
 }
 
@@ -463,9 +635,13 @@ int bam_access_check_bam_flags(const bam1_t *b){
 	//Proper pair and mate unmapped
 	if(include_se == 0
 	      && !((b->core.flag & BAM_FPROPER_PAIR)
-	              && !(b->core.flag & BAM_FMUNMAP))){
+	    && !(b->core.flag & BAM_FMUNMAP))){
 		return 0;
 	}
+  if(include_se == 0){ // If we're looking for proper pairs only
+    if(! (b->core.flag & BAM_FPROPER_PAIR)) return 0;
+    if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) return 0;
+  }
 	//printf("XT DATA: %c\n",xt);
 	//Now we check aux data for XT:M flags (the SW mapped marker from BWA)
 	if(include_sw == 0){
@@ -530,7 +706,7 @@ int bam_access_compare_read_pos_t(const void *in_a, const void *in_b){
 	return 0;
 }
 
-int reads_at_pos_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int sorted, int isnorm){
+int reads_at_pos_callback_old(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int sorted, int isnorm){
   file_holder* bams = (file_holder* )data;
 	khash_t(strh) *h;
 	khiter_t k;
@@ -598,6 +774,411 @@ error:
   return 1;
 }
 
+int reads_at_pos_callback(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int sorted, int isnorm){
+    file_holder* bams = (file_holder* ) data;
+    int *local_counts = NULL;
+    char *nom = NULL;
+    khash_t(rdnom_rp) *h_rd_nom;
+    khiter_t k;
+    local_counts = calloc(8,sizeof(int));
+    check_mem(local_counts);
+    nom = malloc(sizeof(char) * 350);
+    check_mem(nom);
+    h_rd_nom = kh_init(rdnom_rp);
+    char *readname = NULL;
+
+    int i=0;
+    for(i=0;i<n_plp;i++){
+        const bam_pileup1_t *p = pil + i;
+        char *readname = bam_get_qname(p->b);
+        int qual = bam_get_qual(p->b)[p->qpos];
+        uint8_t c = bam_seqi(bam_get_seq(p->b), p->qpos);
+
+        //Check if this is a useable position
+        if(!(p->is_del) && qual >= min_base_qual && seq_nt16_int[c] < 4){
+            //Populate all the read position information
+            read_pos_t *rp = malloc(sizeof(struct read_pos_t));
+            check_mem(rp);
+            rp->rd_len = bam_cigar2qlen(p->b->core.n_cigar,bam_get_cigar(p->b));
+            rp->ref_pos = pos+1;
+            rp->rd_pos = p->qpos+1;
+            rp->called_base = c;
+            rp->map_qual = p->b->core.qual;
+            rp->base_qual = qual;
+            //Check strandedness
+            if(p->b->core.flag & BAM_FREVERSE){
+                rp->rd_pos = (rp->rd_len - rp->rd_pos) + 1;
+                rp->strand = 1;
+            }else{
+                rp->strand = 0;
+            }
+            //Check read order
+            if(p->b->core.flag & BAM_FREAD1){
+                rp->read_order = 0;
+            }else if(p->b->core.flag & BAM_FREAD2){
+                rp->read_order = 1;
+            }
+            nom = strcpy(nom,bam_aux2Z(bam_aux_get(p->b,"RG")));
+            nom = strcat(nom,"_");
+            nom = strcat(nom,norm_char);
+            int lane_i = alg_bean_get_index_for_str_arr(bams->bean->lane,nom);
+            check(lane_i>=0,"Error calculating lane index %s.",nom);
+            rp->lane_i = lane_i;
+            rp->normal = isnorm;
+
+            // Now check to see if the readname already exists in the hash
+            int rd_name_missing;
+            khash_t(rpos) *h_strd;
+            k = kh_put(rdnom_rp, h_rd_nom, readname, &rd_name_missing);
+            if(rd_name_missing){
+                h_strd = kh_init(rpos);
+                kh_value(h_rd_nom, k) = h_strd;
+            }else{
+                k = kh_get(rdnom_rp, h_rd_nom, readname);
+                h_strd = kh_val(h_rd_nom, k);
+            }
+
+            // We have the strand subhash. 
+            // Check to see if we already have a strand entry (should never happen)
+            int strand_missing;
+            k = kh_put(rpos, h_strd, rp->strand, &strand_missing);
+            check(strand_missing==1, "Error, strand was already found for this readname %s.", readname);
+            kh_value(h_strd, k) = rp; // Add the read position to the subhash
+
+        } // End of if this is a usable position
+
+    }//End of iteration through each pileup object
+
+    khash_t(rpos) *h_strd;
+    kh_foreach_value(h_rd_nom, h_strd, {
+        int strand_fwd_missing = 0;
+        int strand_rev_missing = 0;
+        khiter_t k_fwd;
+        khiter_t k_rev;
+
+        k_fwd = kh_get(rpos, h_strd, 0);
+        strand_fwd_missing = (k_fwd == kh_end(h_strd));
+        k_rev = kh_get(rpos, h_strd, 1);
+        strand_rev_missing = (k_rev == kh_end(h_strd));
+
+        // If either of the strands are missing we can automatically include them
+        if (strand_fwd_missing) {
+            read_pos_t *rp_rev = malloc(sizeof(struct read_pos_t));
+            check_mem(rp_rev);
+            bam_access_copy_read_pos(kh_val(h_strd,k_rev), rp_rev);
+            kh_val(h_strd,k_rev) = NULL;
+            uint8_t c_idx = seq_nt16_int[rp_rev->called_base];
+            c_idx = c_idx+4;
+            local_counts[c_idx]++;
+            if(sorted==1){
+                List_insert_sorted(bams->reads, rp_rev, (List_compare)bam_access_compare_read_pos_t);
+            }else{
+                List_push(bams->reads,rp_rev);
+            }       
+        } else if (strand_rev_missing) {
+            read_pos_t *rp_fwd = malloc(sizeof(struct read_pos_t));
+            check_mem(rp_fwd);
+            bam_access_copy_read_pos(kh_val(h_strd,k_fwd), rp_fwd);
+            kh_val(h_strd,k_fwd) = NULL;
+            uint8_t c_idx = seq_nt16_int[rp_fwd->called_base];
+            local_counts[c_idx]++;
+            if(sorted==1){
+                List_insert_sorted(bams->reads, rp_fwd, (List_compare)bam_access_compare_read_pos_t);
+            }else{
+                List_push(bams->reads, rp_fwd);
+            }
+        } else { //If both strands exist at this position and the bases differ we use both
+            if(kh_val(h_strd, k_fwd)->called_base != kh_val(h_strd, k_rev)->called_base){ //If the bases differ
+                read_pos_t *rp_fwd = malloc(sizeof(struct read_pos_t));
+                check_mem(rp_fwd);
+                bam_access_copy_read_pos(kh_val(h_strd, k_fwd), rp_fwd);
+                kh_val(h_strd,k_fwd) = NULL;
+                uint8_t c_idx_zero = seq_nt16_int[rp_fwd->called_base];
+                read_pos_t *rp_rev = malloc(sizeof(struct read_pos_t));
+                check_mem(rp_rev);
+                bam_access_copy_read_pos(kh_val(h_strd, k_rev), rp_rev);
+                kh_val(h_strd,k_rev) = NULL;
+                uint8_t c_idx_one = seq_nt16_int[rp_rev->called_base];
+
+                if(sorted==1){
+                    List_insert_sorted(bams->reads, rp_fwd, (List_compare)bam_access_compare_read_pos_t);
+                    List_insert_sorted(bams->reads, rp_rev, (List_compare)bam_access_compare_read_pos_t);
+                }else{
+                    List_push(bams->reads,rp_fwd);
+                    List_push(bams->reads,rp_rev);
+                }
+                local_counts[c_idx_zero]++;
+                local_counts[c_idx_one+4]++;
+            }
+
+        } // End of if there are missing strands
+    }
+    ); // End of iteration through each readname
+
+    // Second iteration, we use only those readnames with both strands and the same base
+    kh_foreach_value(h_rd_nom, h_strd, {
+        int strand_fwd_missing = 0;
+        int strand_rev_missing = 0;
+        khiter_t k_fwd;
+        khiter_t k_rev;
+
+        k_fwd = kh_get(rpos, h_strd, 0);
+        strand_fwd_missing = (k_fwd == kh_end(h_strd));
+        k_rev = kh_get(rpos, h_strd, 1);
+        strand_rev_missing = (k_rev == kh_end(h_strd));
+
+        if(strand_rev_missing == 0 && strand_fwd_missing == 0){
+
+            if(kh_val(h_strd, k_rev) && kh_val(h_strd, k_fwd)){
+                
+                read_pos_t *rp_fwd = malloc(sizeof(struct read_pos_t));
+                check_mem(rp_fwd);
+                bam_access_copy_read_pos(kh_val(h_strd,k_fwd), rp_fwd);
+                kh_val(h_strd,k_fwd) = NULL;
+                uint8_t c_idx_fwd = seq_nt16_int[rp_fwd->called_base];
+
+                read_pos_t *rp_rev = malloc(sizeof(struct read_pos_t));
+                check_mem(rp_rev);
+                bam_access_copy_read_pos(kh_val(h_strd,k_rev), rp_rev);
+                kh_val(h_strd,k_rev) = NULL;
+                uint8_t c_idx_rev = seq_nt16_int[rp_rev->called_base];
+                if(c_idx_rev == c_idx_fwd){
+                    c_idx_rev = c_idx_rev + 4;
+                    if(local_counts[c_idx_rev] < local_counts[c_idx_fwd]){
+                        if(sorted==1){
+                            List_insert_sorted(bams->reads, rp_rev, (List_compare)bam_access_compare_read_pos_t);
+                        }else{
+                            List_push(bams->reads,rp_rev);
+                        }
+                        local_counts[c_idx_rev]++;
+                    }else{
+                        if(sorted==1){
+                            List_insert_sorted(bams->reads, rp_fwd, (List_compare)bam_access_compare_read_pos_t);
+                        }else{
+                            List_push(bams->reads,rp_fwd);
+                        }
+                        local_counts[c_idx_fwd]++;
+                    }
+                }//End of ensuring the two bases match
+            }
+        }
+
+
+    }); // End of second iteration through readnames
+    free(readname);
+    free(nom);
+    free(local_counts);
+    //Readname hash and subhashes
+    if(h_rd_nom){
+        for (k = 0; k < kh_end(h_rd_nom); ++k){
+            if (kh_exist(h_rd_nom, k)){
+                kh_destroy(rpos, kh_val(h_rd_nom, k));
+            }
+        }
+        kh_destroy(rdnom_rp, h_rd_nom);
+    }
+    
+    return 0;
+error:    
+    if(readname) free(readname);
+    if(local_counts) free(local_counts);
+    if(nom) free(nom);
+    //Readname hash and subhashes
+    if(h_rd_nom){
+        for (k = 0; k < kh_end(h_rd_nom); ++k){
+            if (kh_exist(h_rd_nom, k)){
+                kh_destroy(rpos, kh_val(h_rd_nom, k));
+            }
+        }
+        kh_destroy(rdnom_rp, h_rd_nom);
+    }
+    return 1;
+}
+
+int reads_at_pos_callback_olap_old(uint32_t tid, uint32_t pos, int n_plp, const bam_pileup1_t *pil, void *data, int sorted, int isnorm){
+    file_holder* bams = (file_holder* ) data;
+    int *local_counts = NULL;
+    char *nom = NULL;
+    khash_t(rdnom_rp) *h_rd_nom;
+	khiter_t k_rd_nom_iter;
+    khash_t(rpos) *h_strd;
+    khiter_t k_strd_iter;
+    h_rd_nom = kh_init(rdnom_rp);
+    local_counts = calloc(8,sizeof(int));
+    check_mem(local_counts);
+    nom = malloc(sizeof(char) * 350);
+    check_mem(nom);
+    int i=0;
+    for(i=0;i<n_plp;i++){
+        const bam_pileup1_t *p = pil + i;
+        int qual = bam_get_qual(p->b)[p->qpos];
+        uint8_t c = bam_seqi(bam_get_seq(p->b), p->qpos);
+        int rd_name_missing;
+        if(!(p->is_del) && qual >= min_base_qual && seq_nt16_int[c] < 4){
+            fprintf(stderr,"%s\n", bam_get_qname(p->b));
+            //Build a new read pos struct and add to the map.
+            read_pos_t *rp = malloc(sizeof(struct read_pos_t));
+            check_mem(rp);
+            rp->rd_len = bam_cigar2qlen(p->b->core.n_cigar,bam_get_cigar(p->b));
+            rp->ref_pos = pos+1;
+            rp->rd_pos = p->qpos+1;
+            rp->called_base = c;
+            rp->map_qual = p->b->core.qual;
+            rp->base_qual = qual;
+            //Check strandedness
+            if(p->b->core.flag & BAM_FREVERSE){
+                rp->rd_pos = (rp->rd_len - rp->rd_pos) + 1;
+                rp->strand = 1;
+            }else{
+                rp->strand = 0;
+            }
+            //Check read order
+            if(p->b->core.flag & BAM_FREAD1){
+                rp->read_order = 0;
+            }else if(p->b->core.flag & BAM_FREAD2){
+                rp->read_order = 1;
+            }
+            nom = strcpy(nom,bam_aux2Z(bam_aux_get(p->b,"RG")));
+            nom = strcat(nom,"_");
+            nom = strcat(nom,norm_char);
+            int lane_i = alg_bean_get_index_for_str_arr(bams->bean->lane,nom);
+            check(lane_i>=0,"Error calculating lane index %s.",nom);
+            rp->lane_i = lane_i;
+            rp->normal = isnorm;
+            //Logic to put this into the readname map
+            k_rd_nom_iter = kh_put(rdnom_rp, h_rd_nom, bam_get_qname(p->b), &rd_name_missing);
+            //Check to see if we already have an entry for this readname
+            if(rd_name_missing){ // If the readname hash doesn't exist
+                h_strd = kh_init(rpos);
+                kh_value(h_rd_nom, k_rd_nom_iter) = h_strd;
+            }else{ //Otherwise fetch the strand hash
+                k_rd_nom_iter = kh_get(rdnom_rp, h_rd_nom, bam_get_qname(p->b));
+                h_strd = kh_val(h_rd_nom,k_rd_nom_iter);
+            }
+
+            //Check to see if we already have a strand entry (should never happen)
+            int strand_missing;
+            k_strd_iter = kh_put(rpos, h_strd, rp->strand, &strand_missing);
+            if(!strand_missing){
+                sentinel("Found strand already present for this read");
+            }
+            kh_value(h_strd, k_strd_iter) = rp;
+        } //If this is a usable base
+    } // End of iteration through each pileup object
+    //Iterate through each readname hashkey and only use the ones hitting a single strand
+    kh_foreach_value(h_rd_nom, h_strd, {
+        int strand_zero_is_missing = 0;
+        int strand_one_is_missing = 0;
+
+        k_strd_iter = kh_get(rpos, h_strd, 0);
+        strand_zero_is_missing = (k_strd_iter == kh_end(h_strd));
+        k_strd_iter = kh_get(rpos, h_strd, 1);
+        strand_one_is_missing = (k_strd_iter == kh_end(h_strd));
+
+        if(strand_zero_is_missing){ //If we've only covered one or other of the strands...
+            //Get strand one rp object
+            k_rd_nom_iter = kh_get(strd, h_strd, 1);
+            read_pos_t *rp_one = kh_val(h_strd,k_rd_nom_iter);       
+            uint8_t c_idx = seq_nt16_int[rp_one->called_base];
+            c_idx = c_idx+4;
+            local_counts[c_idx]++;
+            if(sorted==1){
+                List_insert_sorted(bams->reads, rp_one, (List_compare)bam_access_compare_read_pos_t);
+            }else{
+                List_push(bams->reads,rp_one);
+            }
+        } else if(strand_one_is_missing) {
+            //Get strand zero rp object
+            k_rd_nom_iter = kh_get(strd, h_strd, 0);
+            read_pos_t *rp_zero = kh_val(h_strd,k_rd_nom_iter);
+            uint8_t c_idx = seq_nt16_int[rp_zero->called_base];
+            local_counts[c_idx]++;
+
+            if(sorted==1){
+                List_insert_sorted(bams->reads, rp_zero, (List_compare)bam_access_compare_read_pos_t);
+            }else{
+                List_push(bams->reads,rp_zero);
+            }
+        } else {// Only use both strands if the bases are different in this section
+            k_rd_nom_iter = kh_get(strd, h_strd, 1);
+            read_pos_t *rp_one = kh_val(h_strd,k_rd_nom_iter);       
+            uint8_t c_idx_one = seq_nt16_int[rp_one->called_base];
+            c_idx_one = c_idx_one+4;
+
+            k_rd_nom_iter = kh_get(strd, h_strd, 0);
+            read_pos_t *rp_zero = kh_val(h_strd,k_rd_nom_iter);
+            uint8_t c_idx_zero = seq_nt16_int[rp_zero->called_base];
+
+            if(rp_zero->called_base != rp_one->called_base){
+                if(sorted==1){
+                    List_insert_sorted(bams->reads, rp_zero, (List_compare)bam_access_compare_read_pos_t);
+                    List_insert_sorted(bams->reads, rp_one, (List_compare)bam_access_compare_read_pos_t);
+                }else{
+                    List_push(bams->reads,rp_zero);
+                    List_push(bams->reads,rp_one);
+                }
+                local_counts[c_idx_zero]++;
+                local_counts[c_idx_one]++;
+            }
+        }
+    });
+
+
+    //Second iteration, only using those entries where we have both strands, in combination
+    // with the counts we have built up.
+    kh_foreach_value(h_rd_nom, h_strd, {
+        int strand_zero_is_missing = 0;
+        int strand_one_is_missing = 0;
+
+        khiter_t k_strd_iter_zero = kh_get(strd, h_strd, 0);
+        strand_zero_is_missing = (k_strd_iter_zero == kh_end(h_strd));
+        khiter_t k_strd_iter_one = kh_get(strd, h_strd, 1);
+        strand_one_is_missing = (k_strd_iter_one == kh_end(h_strd));
+        if(strand_zero_is_missing == 0 && strand_one_is_missing == 0){ //If we've covered both strands...
+            k_strd_iter_zero = kh_get(strd, h_strd, 1);
+            read_pos_t *rp_one = kh_val(h_strd,k_strd_iter_zero);   
+            uint8_t c_idx_one = seq_nt16_int[rp_one->called_base];
+            c_idx_one = c_idx_one+4;
+            k_strd_iter_zero = kh_get(strd, h_strd, 0);
+            read_pos_t *rp_zero = kh_val(h_strd,k_strd_iter_zero);
+            uint8_t c_idx_zero = seq_nt16_int[rp_zero->called_base];
+            //If the bases are the same
+            if(rp_zero->called_base == rp_one->called_base){
+                if(local_counts[c_idx_one] < local_counts[c_idx_zero]){
+                    if(sorted==1){
+                        List_insert_sorted(bams->reads, rp_one, (List_compare)bam_access_compare_read_pos_t);
+                    }else{
+                        List_push(bams->reads,rp_one);
+                    }
+                    local_counts[c_idx_one]++;
+                } else {
+                    if(sorted==1){
+                        List_insert_sorted(bams->reads, rp_zero, (List_compare)bam_access_compare_read_pos_t);
+                    }else{
+                        List_push(bams->reads,rp_zero);
+                    }
+                    local_counts[c_idx_zero]++;
+                }
+            }
+        }
+    });
+    fprintf(stderr, "TEST8\n");
+    free(nom);
+    free(local_counts);
+    fprintf(stderr, "TEST9\n");
+    kh_destroy(rpos, h_strd);
+    fprintf(stderr, "TEST10\n");
+    kh_destroy(rdnom_rp, h_rd_nom);
+    fprintf(stderr, "TEST11\n");
+    return 0;
+error:
+    if(nom) free(nom);
+    if(local_counts) free(local_counts);
+	kh_destroy(rpos, h_strd);
+    kh_destroy(rdnom_rp, h_rd_nom);
+    return 1;
+}
+
 List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, uint32_t stop, uint8_t sorted, alg_bean_t *bean, file_holder* bams, uint8_t normal){
 	//Pileup and populate the list with valid reads.
 	char *region = NULL;
@@ -625,28 +1206,38 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
   const bam_pileup1_t *pil;
   while ((result = sam_itr_next(bams->in, iter, b)) >= 0) {
     if(b->core.qual == 0
-          || (b->core.flag & BAM_FUNMAP)
-          || (b->core.flag & BAM_FSECONDARY)
-          || (b->core.flag & BAM_FQCFAIL)
-          || (b->core.flag & BAM_FSUPPLEMENTARY)){
-		    continue;
+        || (b->core.flag & BAM_FUNMAP)
+        || (b->core.flag & BAM_FSECONDARY)
+        || (b->core.flag & BAM_FQCFAIL)
+        || (b->core.flag & BAM_FSUPPLEMENTARY)){
+      continue;
 		}
 		if((include_dup == 0 && (b->core.flag & BAM_FDUP))){
 		  continue;
 	  }
-	  if(!(include_se == 0 && (b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
-		  continue;
-	  }
-	  if(include_sw == 0){
-		  uint8_t *xt_data = bam_aux_get(b,"XT");
-	 	  if(xt_data != NULL && bam_aux2A(xt_data) == 'M'){
-			  continue;
-		  }
-	  }
+    if(!(include_se == 0 
+          && (b->core.flag & BAM_FPROPER_PAIR) 
+          && !(b->core.flag & BAM_FMUNMAP))
+      ){
+      continue;
+    }
+    if(include_se == 0){ // If we're looking for proper pairs only
+      if(! (b->core.flag & BAM_FPROPER_PAIR)) continue;
+      if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) continue;
+    }
+    if(include_sw == 0){
+      uint8_t *xt_data = bam_aux_get(b,"XT");
+      if(xt_data != NULL && bam_aux2A(xt_data) == 'M'){
+        continue;
+      }
+    }
 	  count++;
     bam_plp_push(buf, b);
     while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
-      if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
+      if(!((pos+1) >= norm->beg &&
+                    (pos+1) <= norm->end)){
+          continue;
+      }
       int res = reads_at_pos_callback(tid, pos, n_plp, pil, bams, sorted, isnorm);
       check(res==0,"Error running callback");
     }
@@ -658,7 +1249,9 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
 
 
   while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
-    if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
+    if(!((pos+1) >= norm->beg 
+        && (pos+1) <= norm->end)) continue;
+
     int res = reads_at_pos_callback(tid, pos, n_plp, pil, bams, sorted, isnorm);
     check(res==0,"Error running callback");
   }//End of iterating through pileups
@@ -727,6 +1320,10 @@ int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop,
     //Proper pair and mate unmapped
     if(!(include_se == 0 && (b->core.flag & BAM_FPROPER_PAIR) && !(b->core.flag & BAM_FMUNMAP))){
       continue;
+    }
+    if(include_se == 0){ // If we're looking for proper pairs only
+      if(! (b->core.flag & BAM_FPROPER_PAIR)) continue;
+      if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) continue;
     }
     //printf("XT DATA: %c\n",xt);
     //Now we check aux data for XT:M flags (the SW mapped marker from BWA)
