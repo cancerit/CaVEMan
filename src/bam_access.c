@@ -400,8 +400,7 @@ file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *c
 			|| (b->core.flag & BAM_FSUPPLEMENTARY)
 			|| (b->core.flag & BAM_FDUP) ) continue;
     //Additional check for paired end orientation of reads (for this fix we asume paire end)
-    if((b->core.flag & BAM_FREVERSE) && (b->core.flag & BAM_FMREVERSE)) continue;
-    if(!(b->core.flag & BAM_FREVERSE) && !(b->core.flag & BAM_FMREVERSE)) continue;
+    if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) continue;
     bam_plp_push(buf, b);
     while ( (pil=bam_plp_next(buf, &tid, &pos, &n_plp)) > 0) {
       if(!((pos+1) >= norm->beg && (pos+1) <= norm->end)) continue;
@@ -641,8 +640,7 @@ int bam_access_check_bam_flags(const bam1_t *b){
 	}
   if(include_se == 0){ // If we're looking for proper pairs only
     if(! (b->core.flag & BAM_FPROPER_PAIR)) return 0;
-    if((b->core.flag & BAM_FREVERSE) && (b->core.flag & BAM_FMREVERSE)) return 0;
-    if(!(b->core.flag & BAM_FREVERSE) && !(b->core.flag & BAM_FMREVERSE))  return 0;
+    if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) return 0;
   }
 	//printf("XT DATA: %c\n",xt);
 	//Now we check aux data for XT:M flags (the SW mapped marker from BWA)
@@ -1225,8 +1223,7 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
     }
     if(include_se == 0){ // If we're looking for proper pairs only
       if(! (b->core.flag & BAM_FPROPER_PAIR)) continue;
-      if((b->core.flag & BAM_FREVERSE) && (b->core.flag & BAM_FMREVERSE)) continue;
-      if(!(b->core.flag & BAM_FREVERSE) && !(b->core.flag & BAM_FMREVERSE)) continue;
+      if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) continue;
     }
     if(include_sw == 0){
       uint8_t *xt_data = bam_aux_get(b,"XT");
