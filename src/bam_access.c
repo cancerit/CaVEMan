@@ -1323,8 +1323,7 @@ int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop,
     }
     if(include_se == 0){ // If we're looking for proper pairs only
       if(! (b->core.flag & BAM_FPROPER_PAIR)) continue;
-      if((b->core.flag & BAM_FREVERSE) && (b->core.flag & BAM_FMREVERSE)) continue;
-      if(!(b->core.flag & BAM_FREVERSE) && !(b->core.flag & BAM_FMREVERSE)) continue;
+      if(!(b->core.flag & BAM_FREVERSE) == !(b->core.flag & BAM_FMREVERSE)) continue;
     }
     //printf("XT DATA: %c\n",xt);
     //Now we check aux data for XT:M flags (the SW mapped marker from BWA)
