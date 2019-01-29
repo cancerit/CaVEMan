@@ -1,5 +1,9 @@
 # CHANGES
 
+## NEXT
+
+* Making species and assembly required commandline arguments in the estep
+
 ## 1.13.10
 
 ### Behaviour change
