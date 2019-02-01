@@ -95,7 +95,9 @@ char *valid_protocols[3] = {"WGS","WXS","RNA"};
 
 void estep_print_usage (int exit_code){
 	printf ("Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
-	printf("-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)\n\n");
+	printf("-i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)\n");
+  printf("-v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do not contain AS and SP information.\n");
+	printf("-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.\n\n");
 	printf("Optional\n");
 	printf("-f  --config-file [file]                         Path to the config file produced by setup. [default:'%s']\n",config_file);
 	printf("-m  --min-base-qual [int]                        Minimum base quality for inclusion of a read position [default:%d]\n",min_bq);
@@ -111,8 +113,6 @@ void estep_print_usage (int exit_code){
 	printf("-s  --debug                                      Adds an extra output to a debug file. Every base analysed has an output\n");
 	printf("-g  --cov-file [file]                            File location of the covariate array. [default:'%s']\n",covariate_file);
 	printf("-o  --prob-file [file]                           File location of the prob array. [default:'%s']\n",probs_file);
-	printf("-v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do not contain AS and SP information.\n");
-	printf("-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.\n");
 	printf("-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:%d].\n",normal_copy_number);
 	printf("-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:%d].\n",tumour_copy_number);
 	printf("-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WXS|RNA) [default:%s].\n",norm_prot);
@@ -341,6 +341,16 @@ int estep_setup_options(int argc, char *argv[]){
 		printf("Tumour protocol '%s' is invalid should be one of (WGS|WXS|RNA).",tum_prot);
 		estep_print_usage(1);
    }
+
+  if(!assembly){
+    printf("species-assembly is not set.",norm_prot);
+		estep_print_usage(1);
+  }
+
+  if(!species){
+    printf("species is not set.",norm_prot);
+		estep_print_usage(1);
+  }
 
    set_max_tum_cvg(estep_max_tumour_coverage);
 
