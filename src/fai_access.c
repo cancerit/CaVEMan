@@ -65,32 +65,40 @@ error:
 }
 
 int fai_access_get_count_length_all_contigs(char *fa_loc, int *count, int *total_len){
-    char *chr_name = NULL;
-    int length = 0;
-    assert(fa_loc != NULL);
-    //Open fai file
-    chr_name = malloc(sizeof(char *));
-	FILE *fai = fopen(fa_loc, "r");
-	check(fai != NULL,"Invalid line read\n");
-	//read each chromosome
-    *count = 0;
-    *total_len = 0;
-    char rd[1000];
-	while(fgets(rd, 1000, fai) != NULL){
-		check(rd != NULL,"Invalid line read\n");
+  FILE *faifp = NULL;
+  int length = 0;
+  assert(fa_loc != NULL);
+  //Open fai file
+  faifp = fopen(fa_loc, "r");
+  check(faifp != NULL,"Error trying to open fa.fai file for reading '%s'\n", fa_loc);
+  //read each chromosome
+  *count = 0;
+  *total_len = 0;
+  char rd[1000];
+	while(fgets(rd, 1000, faifp) != NULL){
+    check(rd != NULL,"Invalid line read\n");
+    check(rd[0] != '\0',"Invalid line read\n");
+    //split on tab and iterate, using the sections required (columns 0 and 1)
+    char *tok;
+		tok = strtok(rd,"\t");
+    int loc_count = 0;
+    while(tok != NULL){
+      if(loc_count==0){ //Contig name
         *count = *count+1;
-		int chk = sscanf(rd,"%s\t%d\t%*d\t%*d\t%*d",chr_name,&length);
-		check(chk == 2,"Wrong number of entries (%d) found in fasta index file line %s",chk,rd);
-        *total_len += strlen(chr_name);
-	}
-    free (chr_name);
-	//close file
-	check(fclose(fai)==0,"Error closing fai file.");
-	return 0;
+        *total_len += strlen(tok);
+      }else{
+        break;
+      }
+      tok = strtok(NULL,"\t");
+      loc_count++;
+    } //End of iteration through tokenised string  
+  }//End of iteration through each line in the file.
+  int res = fclose(faifp);
+  check(res==0,"Error closing fai file.");
+  return 0;
 error:
-	if(fai)	fclose(fai);
-    if(chr_name) free(chr_name);
-	return -1;
+  if(faifp)	fclose(faifp);
+  return -1;
 }
 
 char *fai_access_get_ref_seqeuence_for_pos(char *fa_loc,char *char_nom,int start_one_based,int stop){

@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.11
+
+* Modify `fai_access_get_count_length_all_contigs` to use `strtok` rather than sscanf.
+
 ## 1.13.10
 
 ### Behaviour change
