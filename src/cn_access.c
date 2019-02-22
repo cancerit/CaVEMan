@@ -57,7 +57,7 @@ int cn_access_populate_cn(char *file_loc,uint8_t is_normal){
 	List *li = List_create();
 	int cop = 0;
 	char rd[250];
-	while(fgets(rd, 200, cn_file) != NULL){
+	while(fgets(rd, 250, cn_file) != NULL){
 		check(rd != NULL,"Invalid line read in ignored region file.");
 		char *chr_nom = malloc(sizeof(char *));
 		int beg,end;
