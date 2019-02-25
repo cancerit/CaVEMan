@@ -78,7 +78,7 @@ List *split_access_get_all_split_sections(char *file_loc){
 
 	while ( fgets(line,sizeof(line),file) != NULL ){
 		i++;
-		chr = malloc(sizeof(char) * 50);
+		chr = malloc(sizeof(char) * 250);
 		check_mem(chr);
 		int start_zero_based = 0;
 		int stop = 0;
