@@ -59,7 +59,7 @@ int cn_access_populate_cn(char *file_loc,uint8_t is_normal){
 	char rd[250];
 	while(fgets(rd, 250, cn_file) != NULL){
 		check(rd != NULL,"Invalid line read in ignored region file.");
-		char *chr_nom = malloc(sizeof(char *));
+		char *chr_nom = malloc(sizeof(char) * 250);
 		int beg,end;
 		int chk = sscanf(rd,"%s\t%d\t%d\t%d",chr_nom,&beg,&end,&cop);
 		check(chk == 4,"Incorrect line parsed from copy number file.\n");
