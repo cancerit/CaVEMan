@@ -91,7 +91,7 @@ static char *tum_prot = "WGS";
 static int max_copy_number = 10;
 static uint32_t default_zbuffer = 1024*1024;
 static char *contig_str = "##contig=<ID=,length=,assembly=,species=>\n";
-char *valid_protocols[3] = {"WGS","WXS","RNA"};
+char *valid_protocols[3] = {"WGS","WXS","RNA-Seq","RNA","AMPLICON","TARGETED"};
 
 void estep_print_usage (int exit_code){
 	printf ("Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");

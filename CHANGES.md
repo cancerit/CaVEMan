@@ -1,5 +1,10 @@
 # CHANGES
 
+## 1.13.13
+
+* Add AMPLICON and TARGETED to accepted protocol list. Change RNA-seq, but also keep RNA.
+* https://www.ebi.ac.uk/ena/submit/reads-library-strategy
+
 ## 1.13.12
 
 * Correct bad malloc on sscanf.
