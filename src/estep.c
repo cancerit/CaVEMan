@@ -91,7 +91,7 @@ static char *tum_prot = "WGS";
 static int max_copy_number = 10;
 static uint32_t default_zbuffer = 1024*1024;
 static char *contig_str = "##contig=<ID=,length=,assembly=,species=>\n";
-char *valid_protocols[3] = {"WGS","WXS","RNA"};
+char *valid_protocols[3] = {"WGS","WXS","RNA","RNA-Seq","AMPLICON","TARGETED"};
 
 void estep_print_usage (int exit_code){
 	printf ("Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
@@ -115,8 +115,8 @@ void estep_print_usage (int exit_code){
 	printf("-w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.\n");
 	printf("-n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:%d].\n",normal_copy_number);
 	printf("-t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:%d].\n",tumour_copy_number);
-	printf("-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WXS|RNA) [default:%s].\n",norm_prot);
-	printf("-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WXS|RNA) [default:%s].\n",tum_prot);
+	printf("-l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WXS|RNA|RNA-Seq|AMPLICON|TARGETED) [default:%s].\n",norm_prot);
+	printf("-r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WXS|RNA|RNA-Seq|AMPLICON|TARGETED) [default:%s].\n",tum_prot);
 	printf("-P  --normal-platform [string]                   Normal platform. Overrides the values retrieved from bam header.\n");
 	printf("-T  --tumour-platform [string]                   Tumour platform. Overrides the values retrieved from bam header.\n");
 	printf("-M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the offending region will be set to this value. [default:%d].\n",max_copy_number);
