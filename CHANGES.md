@@ -4,6 +4,10 @@
 
 * Making species and assembly required commandline arguments in the estep
 
+## 1.13.14
+
+* Fix array length index, check loop length and error messages related to 1.13.13.
+
 ## 1.13.13
 
 * Add AMPLICON and TARGETED to accepted protocol list. Change RNA-seq, but also keep RNA.
