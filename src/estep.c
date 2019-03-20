@@ -91,7 +91,7 @@ static char *tum_prot = "WGS";
 static int max_copy_number = 10;
 static uint32_t default_zbuffer = 1024*1024;
 static char *contig_str = "##contig=<ID=,length=,assembly=,species=>\n";
-char *valid_protocols[3] = {"WGS","WXS","RNA","RNA-Seq","AMPLICON","TARGETED"};
+char *valid_protocols[6] = {"WGS","WXS","RNA","RNA-Seq","AMPLICON","TARGETED"};
 
 void estep_print_usage (int exit_code){
 	printf ("Usage: caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]\n\n");
@@ -323,7 +323,7 @@ int estep_setup_options(int argc, char *argv[]){
 	 int i=0;
 	 int norm_prot_check=0;
 	 int tum_prot_check=0;
-	 for(i=0;i<3;i++){
+	 for(i=0;i<6;i++){
 		if(strcmp(norm_prot,valid_protocols[i])==0){
 			norm_prot_check=1;
 		}
@@ -333,12 +333,12 @@ int estep_setup_options(int argc, char *argv[]){
 	 }
 
    if(norm_prot_check==0){
-		printf("Normal protocol '%s' is invalid should be one of (WGS|WXS|RNA).",norm_prot);
+		printf("Normal protocol '%s' is invalid should be one of (WGS|RNA|RNA-Seq|AMPLICON|TARGETED).\n",norm_prot);
 		estep_print_usage(1);
    }
 
    if(tum_prot_check==0){
-		printf("Tumour protocol '%s' is invalid should be one of (WGS|WXS|RNA).",tum_prot);
+		printf("Tumour protocol '%s' is invalid should be one of (WGS|RNA|RNA-Seq|AMPLICON|TARGETED).\n",tum_prot);
 		estep_print_usage(1);
    }
 
