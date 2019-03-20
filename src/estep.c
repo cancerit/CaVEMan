@@ -333,12 +333,12 @@ int estep_setup_options(int argc, char *argv[]){
 	 }
 
    if(norm_prot_check==0){
-		printf("Normal protocol '%s' is invalid should be one of (WGS|WXS|RNA).",norm_prot);
+		printf("Normal protocol '%s' is invalid should be one of (WGS|RNA|RNA-Seq|AMPLICON|TARGETED).\n",norm_prot);
 		estep_print_usage(1);
    }
 
    if(tum_prot_check==0){
-		printf("Tumour protocol '%s' is invalid should be one of (WGS|WXS|RNA).",tum_prot);
+		printf("Tumour protocol '%s' is invalid should be one of (WGS|RNA|RNA-Seq|AMPLICON|TARGETED).\n",tum_prot);
 		estep_print_usage(1);
    }
 
