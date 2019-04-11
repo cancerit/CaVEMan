@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.15
+
+* Add checks to sam_hts_iter to ensure result is checked for errors
+
 ## 1.13.14
 
 * Fix array length index, check loop length and error messages related to 1.13.13.
