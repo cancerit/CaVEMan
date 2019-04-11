@@ -2,7 +2,7 @@
 
 ## 1.13.15
 
-* Add checks to sam_hts_iter to ensure result is checked for errors
+* Add checks to sam_iter_next to ensure result is checked for errors
 
 ## 1.13.14
 
