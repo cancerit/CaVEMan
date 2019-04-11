@@ -1243,7 +1243,7 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
     }
 
   }//End of while iterator to populate pileup
-
+  check(result >= -1, "Error detected (%d) when trying to iterate through region.",result);
   sam_itr_destroy(iter);
 	bam_plp_push(buf,0); // finalize pileup
 
@@ -1336,6 +1336,10 @@ int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop,
     counter++;
 
   }//End of iteration through reads in this region
+  if(result < -1){
+    sentinel("Error detected (%d) when trying to iterate through region.",result);
+  }
+
   sam_itr_destroy(iter);
   bam_destroy1(b);
   free(region);
