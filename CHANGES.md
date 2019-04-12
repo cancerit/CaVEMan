@@ -4,6 +4,10 @@
 
 * Making species and assembly required commandline arguments in the estep
 
+## 1.13.15
+
+* Add checks to sam_iter_next to ensure result is checked for errors
+
 ## 1.13.14
 
 * Fix array length index, check loop length and error messages related to 1.13.13.
