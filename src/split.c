@@ -278,6 +278,7 @@ int split_main(int argc, char *argv[]){
 
 			while(curr_n_pos<=curr_t_pos && iter_n_status>=0 && iter_t_status>=0 && rd_count<=max_read_count){ //While the positions aren't equal and tumour has reads left. Normal jumps ahead
 				iter_n_status = sam_itr_next(sf_norm,iter_norm,norm_read);
+        check(iter_n_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_n_status);
 				curr_n_pos = norm_read->core.pos;
 				if(iter_n_status>=0 && bam_access_check_bam_flags(norm_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_n_pos,ignore_regs,ignore_reg_count) == NULL){
 					rd_count++;
@@ -286,6 +287,7 @@ int split_main(int argc, char *argv[]){
 
 			while(curr_t_pos<=curr_n_pos && iter_t_status>=0 && iter_n_status>=0){ //While the positions aren't equal and normal has reads left
 				iter_t_status = sam_itr_next(sf_tum,iter_tum,tum_read);
+        check(iter_t_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_t_status);
 				curr_t_pos = tum_read->core.pos;
 				if(iter_t_status>=0 && bam_access_check_bam_flags(tum_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_t_pos,ignore_regs,ignore_reg_count) == NULL){
 					rd_count++;
@@ -296,6 +298,7 @@ int split_main(int argc, char *argv[]){
 			if(iter_n_status<0 && iter_t_status>=0){ //No more normal reads
 				while(iter_t_status>=0 && rd_count<=max_read_count){
 					iter_t_status = sam_itr_next(sf_tum,iter_tum,tum_read);
+          check(iter_t_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_t_status);
 					curr_t_pos = tum_read->core.pos;
 					if(iter_t_status>=0 && bam_access_check_bam_flags(tum_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_t_pos,ignore_regs,ignore_reg_count) == NULL){
 				 		rd_count++;
@@ -306,6 +309,7 @@ int split_main(int argc, char *argv[]){
 			if(iter_t_status<0 && iter_n_status>=0){ //No more tumour reads
 				while(iter_n_status>=0 && rd_count<=max_read_count){
 					iter_n_status = sam_itr_next(sf_norm,iter_norm,norm_read);
+          check(iter_n_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_n_status);
 					curr_n_pos = norm_read->core.pos;
 					if(iter_n_status>=0 && bam_access_check_bam_flags(norm_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_n_pos,ignore_regs,ignore_reg_count) == NULL){
 						rd_count++;

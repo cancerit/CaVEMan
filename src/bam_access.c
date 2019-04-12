@@ -408,9 +408,7 @@ file_holder *bam_access_get_by_position_counts_stranded(char *norm_file, char *c
       check(res==0,"Error running pileup callback");
     }//End of while we have pileup reads
   }
-  if(result != -1){
-    fprintf(stderr,"SAMTOOLS ERROR %d\n",result);
-  }
+  check(result >= -1, "Error detected (%d) when trying to iterate through region.",result);
 	bam_plp_push(buf,0); // finalize pileup
   sam_itr_destroy(iter);
   //Now for the pileup method
@@ -1243,7 +1241,7 @@ List *bam_access_get_sorted_reads_at_this_pos(char *chr_name, uint32_t start, ui
     }
 
   }//End of while iterator to populate pileup
-
+  check(result >= -1, "Error detected (%d) when trying to iterate through region.",result);
   sam_itr_destroy(iter);
 	bam_plp_push(buf,0); // finalize pileup
 
@@ -1336,10 +1334,17 @@ int bam_access_get_count_with_bam(char *chr_name, uint32_t start, uint32_t stop,
     counter++;
 
   }//End of iteration through reads in this region
+  check(result >= -1, "Error detected (%d) when trying to iterate through region.",result);
   sam_itr_destroy(iter);
   bam_destroy1(b);
   free(region);
   return counter;
+
+error:
+  if(iter) sam_itr_destroy(iter);
+  if(b) bam_destroy1(b);
+  if(region) free(region);
+  return -1;
 }
 
 void bam_access_include_sw(int inc){
