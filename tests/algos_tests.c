@@ -421,7 +421,9 @@ int test_finalise(){
 	check_mem(pos);
 
 	char ref_base = 'C';
+    int ref_base_idx = 1;
 	char mut_base = 'T';
+    int mut_base_idx = 3;
 
 	int het_count = 1;
 	int hom_count = 1;
@@ -439,20 +441,27 @@ int test_finalise(){
 
 	ref_norm = genotype_init_genotype();
 	genotype_set_base_count(ref_norm, ref_base, 2);
+    ref_norm->var_base_idx = ref_base_idx;
 	ref_tum = genotype_init_genotype();
 	genotype_set_base_count(ref_tum, ref_base, 2);
+    ref_tum->var_base_idx = ref_base_idx;
 	som_tum = genotype_init_genotype();
 	genotype_set_base_count(som_tum, mut_base, 2);
+    som_tum->var_base_idx = mut_base_idx;
 	het_norm = genotype_init_genotype();
 	genotype_set_base_count(het_norm, ref_base, 1);
 	genotype_set_base_count(het_norm, mut_base, 1);
+    het_norm->var_base_idx = mut_base_idx;
 	het_tum = genotype_init_genotype();
 	genotype_set_base_count(het_tum, ref_base, 1);
 	genotype_set_base_count(het_tum, mut_base, 1);
+    het_tum->var_base_idx = mut_base_idx;
 	hom_norm = genotype_init_genotype();
 	genotype_set_base_count(hom_norm, mut_base, 2);
+    hom_norm->var_base_idx = mut_base_idx;
 	hom_tum = genotype_init_genotype();
 	genotype_set_base_count(hom_tum, mut_base, 2);
+    hom_tum->var_base_idx = mut_base_idx;
 
 	ref->norm_geno = ref_norm;
 	ref->tum_geno = ref_tum;
@@ -558,6 +567,7 @@ int test_finalise(){
 
 	pos->total_snp_prob=0;
 	pos->total_mut_prob=0;
+    pos->total_mut_allele_prob=0;
 
 	finalise_probabilities_and_find_top_prob(pos,norm_factor_max);
 

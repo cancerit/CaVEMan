@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2018 Genome Research Ltd.
+* Copyright (c) 2014-2019 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -403,11 +403,11 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 
 	//We find the normalisation factor via the log-sum-exp method to avoid underflow, then we can calculate the final probabilities
 	long double norm_factor = calculateLogSumExpNormFactor(pos,norm_factor_max);
-	//printf("NORM FACTOR: %5.1Le\n",norm_factor);
 	//Iterate through every genotype and normalise it. Adding it to a list.
 	int iter = 0;
 	long double somatic_sum = 0.0;
 	long double snp_sum = 0.0;
+    long double allele_somatic_sum[4] = {0.0, 0.0, 0.0, 0.0};
 	for(iter=0;iter<pos->genos->total_max;iter++){
 		//somatics
 		if(iter<pos->genos->somatic_count){
@@ -422,6 +422,9 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 			}else if(sec_geno==NULL || pos->genos->somatic_genotypes[iter]->prob > sec_geno->prob){
 				sec_geno = pos->genos->somatic_genotypes[iter];
 			}
+            allele_somatic_sum[pos->genos->somatic_genotypes[iter]->tum_geno->var_base_idx] = 
+                allele_somatic_sum[pos->genos->somatic_genotypes[iter]->tum_geno->var_base_idx] +
+                pos->genos->somatic_genotypes[iter]->prob;
 		}
 
 		//het snps
@@ -470,6 +473,7 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 	//Round the total probabilities to make sure we're not losing ones that round to the cutoff value.s
 	pos->total_snp_prob = snp_sum;
 	pos->total_mut_prob = somatic_sum;
+    pos->total_mut_allele_prob = allele_somatic_sum[top_geno->tum_geno->var_base_idx];
 	return;
 }
 

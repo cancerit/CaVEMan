@@ -56,7 +56,8 @@ char *test_output_generate_info_lines(){
 	strcat(exp,"##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Total Depth\">\n");
 	strcat(exp,"##INFO=<ID=MP,Number=1,Type=Float,Description=\"Sum of CaVEMan somatic genotype probabilities\">\n");
 	strcat(exp,"##INFO=<ID=GP,Number=1,Type=Float,Description=\"Sum of CaVEMan germline genotype probabilities\">\n");
-	strcat(exp,"##INFO=<ID=TG,Number=1,Type=String,Description=\"Most probable genotype as called by CaVEMan\">\n");
+    strcat(exp,"##INFO=<ID=SP,Number=1,Type=Float,Description=\"Sum of CaVEMan somatic genotype containing the called mutant allele probabilities\">\n");
+    strcat(exp,"##INFO=<ID=TG,Number=1,Type=String,Description=\"Most probable genotype as called by CaVEMan\">\n");
 	strcat(exp,"##INFO=<ID=TP,Number=1,Type=Float,Description=\"Probability of most probable genotype as called by CaVEMan\">\n");
 	strcat(exp,"##INFO=<ID=SG,Number=1,Type=String,Description=\"2nd most probable genotype as called by CaVEMan\">\n");
 	strcat(exp,"##INFO=<ID=SP,Number=1,Type=Float,Description=\"Probability of 2nd most probable genotype as called by CaVEMan\">\n");
@@ -243,6 +244,7 @@ int test_output_to_file_int(){
 
 	pos->total_snp_prob = 0.076589;
 	pos->total_mut_prob = 0.93678;
+    pos->total_mut_allele_prob = 0.93577;
 	pos->top_geno = som;
 	pos->sec_geno = ref;
 
@@ -253,7 +255,7 @@ int test_output_to_file_int(){
 
 	gzclose(out);
 
-	char *exp = "Y\t10\t.\tC\tT\t.\t.\tDP=136;MP=9.4e-01;GP=7.7e-02;TG=CC/TT;TP=9.5e-01;SG=CC/CC;SP=4.8e-02\tGT:FAZ:FCZ:FGZ:FTZ:RAZ:RCZ:RGZ:RTZ:PM\t0|0:1:2:3:4:5:6:7:8:3.3e-01\t1|1:9:10:11:12:13:14:15:16:2.8e-01\n";
+	char *exp = "Y\t10\t.\tC\tT\t.\t.\tDP=136;MP=9.4e-01;GP=7.7e-02;SP=9.4e-01;TG=CC/TT;TP=9.5e-01;SG=CC/CC;SP=4.8e-02\tGT:FAZ:FCZ:FGZ:FTZ:RAZ:RCZ:RGZ:RTZ:PM\t0|0:1:2:3:4:5:6:7:8:3.3e-01\t1|1:9:10:11:12:13:14:15:16:2.8e-01\n";
 	out = gzopen(out_test_vcf,"rb");
 	char line[5000];
 	int count = 0;

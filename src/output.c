@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2018 Genome Research Ltd.
+* Copyright (c) 2014-2019 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -76,6 +76,7 @@ static const char *VCF_FORMAT_GENOTYPE = "ID=GT,Number=1,Type=String,Description
 static const char *VCF_INFO_TOTAL_DEPTH = "ID=DP,Number=1,Type=Integer,Description=\"Total Depth\"";
 static const char *VCF_INFO_MUT_PROB_SUM = "ID=MP,Number=1,Type=Float,Description=\"Sum of CaVEMan somatic genotype probabilities\"";
 static const char *VCF_INFO_SNP_PROB_SUM = "ID=GP,Number=1,Type=Float,Description=\"Sum of CaVEMan germline genotype probabilities\"";
+static const char *VCF_INFO_VAR_ALL_PROB_SUM = "ID=SP,Number=1,Type=Float,Description=\"Sum of CaVEMan somatic genotype containing the called mutant allele probabilities\"";
 static const char *VCF_INFO_TOP_GENO = "ID=TG,Number=1,Type=String,Description=\"Most probable genotype as called by CaVEMan\"";
 static const char *VCF_INFO_TOP_GENO_PROB = "ID=TP,Number=1,Type=Float,Description=\"Probability of most probable genotype as called by CaVEMan\"";
 static const char *VCF_INFO_SEC_GENO = "ID=SG,Number=1,Type=String,Description=\"2nd most probable genotype as called by CaVEMan\"";
@@ -129,6 +130,9 @@ int output_vcf_variant_position(estep_position_t *pos, gzFile out, char *chrom){
 	//total germline prob
 	write = gzprintf(out,"GP=%5.1Le;",pos->total_snp_prob);
 	check(write>0,"Error writing info line snp_prob.");
+    //Total somatic probability for variant allele changes only
+    write = gzprintf(out,"SP=%5.1Le;",pos->total_mut_allele_prob);
+	check(write>0,"Error writing info line var allele total prob.");
 	//Top genotype and second genotype info
 	top_ref = genotype_get_genotype_t_as_string(pos->top_geno->norm_geno);
 	top_tum = genotype_get_genotype_t_as_string(pos->top_geno->tum_geno);
@@ -218,10 +222,11 @@ error:
 
 char *output_generate_info_lines(){
 	char *info = malloc(sizeof(char) * 5000);
-	sprintf(info,"##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n",
+	sprintf(info,"##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n##%s=<%s>\n",
 		VCF_INFO_KEY,VCF_INFO_TOTAL_DEPTH,
 		VCF_INFO_KEY,VCF_INFO_MUT_PROB_SUM,
 		VCF_INFO_KEY,VCF_INFO_SNP_PROB_SUM,
+        VCF_INFO_KEY,VCF_INFO_VAR_ALL_PROB_SUM,
 		VCF_INFO_KEY,VCF_INFO_TOP_GENO,
 		VCF_INFO_KEY,VCF_INFO_TOP_GENO_PROB,
 		VCF_INFO_KEY,VCF_INFO_SEC_GENO,

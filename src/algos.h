@@ -1,5 +1,5 @@
 /**   LICENSE
-* Copyright (c) 2014-2018 Genome Research Ltd.
+* Copyright (c) 2014-2019 Genome Research Ltd.
 *
 * Author: Cancer Genome Project cgpit@sanger.ac.uk
 *
@@ -49,6 +49,7 @@ typedef struct estep_position_t{
 	long double base_norm_contam;
 	long double total_snp_prob;
 	long double total_mut_prob;
+    long double total_mut_allele_prob;
 	genotype_t *norm_fwd_cvg;
 	genotype_t *norm_rev_cvg;
 	genotype_t *tum_fwd_cvg;
