@@ -161,18 +161,37 @@ error:
 
 List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end, struct seq_region_t **regions, int entry_count){
 	List *li = ignore_reg_access_get_ign_reg_contained(start,end,regions,entry_count);
-	check(li != NULL,"Error fetching contained ignore regions.");
+    check(li != NULL,"Error fetching contained ignore regions.");
+    // Test for start overlap
+    seq_region_t *start_overlap = ignore_reg_access_get_ign_reg_overlap(start, regions, entry_count);
+
+    //Test for end overlap
+    seq_region_t *stop_overlap = ignore_reg_access_get_ign_reg_overlap(end, regions, entry_count);
+
+	
 
 	List *reg_for_analysis = List_create();
 	seq_region_t *range = malloc(sizeof(struct seq_region_t));
-	range->beg = start;
+    if(start_overlap != NULL){
+        range->beg = start_overlap->end+1;
+    }else{
+	    range->beg = start;
+    }
 	LIST_FOREACH(li, first, next, cur){
 		range->end = ((seq_region_t *) cur->value)->beg - 1;
 		List_push(reg_for_analysis,range);
 		range = malloc(sizeof(struct seq_region_t));
 		range->beg = ((seq_region_t *) cur->value)->end + 1;
 	}
-	range->end = end;
+	
+    if(stop_overlap != NULL){
+        if(stop_overlap->end+1 > end){
+            sentinel("Error in resolving ignored regions. End %d was lower than the end of the region %d\n",end,stop_overlap->end+1);
+        }
+        range->end = stop_overlap->end+1;
+    }else{
+        range->end = end;
+    }
 	List_push(reg_for_analysis,range);
 	List_clear_destroy(li);
 	return reg_for_analysis;
