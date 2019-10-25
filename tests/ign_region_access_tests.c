@@ -95,6 +95,10 @@ char *test_ignore_reg_access_get_ign_reg_contained(){
 	contained = ignore_reg_access_get_ign_reg_contained(10,5700,ignore_regs,ignore_reg_count);
 	mu_assert(List_count(contained)==2,"Incorrect number of regions found.\n")
 	List_clear_destroy(contained);
+    //Try with a beginning overlap - not contained
+    contained = ignore_reg_access_get_ign_reg_contained(14,5700,ignore_regs,ignore_reg_count);
+	mu_assert(List_count(contained)==1,"Incorrect number of regions found.\n")
+	List_clear_destroy(contained);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count, ignore_regs);
 	return NULL;
 }
@@ -115,7 +119,27 @@ char *test_ignore_reg_access_resolve_ignores_to_analysis_sections(){
 	mu_assert(((seq_region_t *)sects->last->value)->beg == 5679,"Incorrect first section start.\n");
 	mu_assert(((seq_region_t *)sects->last->value)->end == 5679,"Incorrect first section stop.\n");
 	List_clear_destroy(sects);
+
+    //Try with a start overlap (1 inside the region)
+    sects = ignore_reg_access_resolve_ignores_to_analysis_sections(14,5800,ignore_regs,ignore_reg_count);
+    mu_assert(List_count(sects)==2,"Incorrect number of sections resolved.\n");
+	mu_assert(((seq_region_t *)sects->first->value)->beg == 5679,"Incorrect first section start.\n");
+	mu_assert(((seq_region_t *)sects->first->value)->end == 5679,"Incorrect first section stop.\n");
+	mu_assert(((seq_region_t *)sects->last->value)->beg == 5700,"Incorrect first section start.\n");
+	mu_assert(((seq_region_t *)sects->last->value)->end == 5800,"Incorrect first section stop.\n");
+	List_clear_destroy(sects);
+
+    // Try with a start overlap exactly one before the start of the region as this is possible with the split logic
+    sects = ignore_reg_access_resolve_ignores_to_analysis_sections(12,5800,ignore_regs,ignore_reg_count);
+    mu_assert(List_count(sects)==3,"Incorrect number of sections resolved.\n");
+	mu_assert(((seq_region_t *)sects->first->value)->beg == 12,"Incorrect first section start.\n");
+	mu_assert(((seq_region_t *)sects->first->value)->end == 12,"Incorrect first section stop.\n");
+	mu_assert(((seq_region_t *)sects->last->value)->beg == 5700,"Incorrect first section start.\n");
+	mu_assert(((seq_region_t *)sects->last->value)->end == 5800,"Incorrect first section stop.\n");
+	List_clear_destroy(sects);
 	ignore_reg_access_destroy_seq_region_t_arr(ignore_reg_count, ignore_regs);
+
+
 	return NULL;
 }
 
