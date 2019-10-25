@@ -66,6 +66,21 @@ error:
 	return -1;
 }
 
+seq_region_t *ignore_reg_access_get_ign_reg_inside(int pos, struct seq_region_t **regions, int entry_count){
+	int i=0;
+	for(i=0; i<entry_count; i++){
+		if(regions[i]->beg < pos && regions[i]->end > pos){
+			seq_region_t *reg_copy = malloc(sizeof(struct seq_region_t));
+			check_mem(reg_copy);
+			reg_copy->beg = regions[i]->beg;
+			reg_copy->end = regions[i]->end;
+			return reg_copy;
+		}
+	}
+error:
+	return NULL;
+}
+
 seq_region_t *ignore_reg_access_get_ign_reg_overlap(int pos, struct seq_region_t **regions, int entry_count){
 	int i=0;
 	for(i=0; i<entry_count; i++){
@@ -163,12 +178,10 @@ List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end,
 	List *li = ignore_reg_access_get_ign_reg_contained(start,end,regions,entry_count);
     check(li != NULL,"Error fetching contained ignore regions.");
     // Test for start overlap
-    seq_region_t *start_overlap = ignore_reg_access_get_ign_reg_overlap(start, regions, entry_count);
+    seq_region_t *start_overlap = ignore_reg_access_get_ign_reg_inside(start, regions, entry_count);
 
     //Test for end overlap
-    seq_region_t *stop_overlap = ignore_reg_access_get_ign_reg_overlap(end, regions, entry_count);
-
-	
+    seq_region_t *stop_overlap = ignore_reg_access_get_ign_reg_inside(end, regions, entry_count);
 
 	List *reg_for_analysis = List_create();
 	seq_region_t *range = malloc(sizeof(struct seq_region_t));
@@ -177,6 +190,7 @@ List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end,
     }else{
 	    range->beg = start;
     }
+
 	LIST_FOREACH(li, first, next, cur){
 		range->end = ((seq_region_t *) cur->value)->beg - 1;
 		List_push(reg_for_analysis,range);
