@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.13.16
+
+* Correct occasional memory blowout caused by split step not excluding an ignore region.
+
 ## 1.13.15
 
 * Add checks to sam_iter_next to ensure result is checked for errors
