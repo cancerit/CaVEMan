@@ -62,6 +62,7 @@ char *test_snp_out = "testData/snp.vcf.gz";
 char *test_mut_out = "testData/mut.vcf.gz";
 char *test_dbg_out = "testData/dbg.vcf.gz";
 char *test_no_anal_out = "testData/no_analysis.bed";
+char split_loc_test[] = "testData/splitList";
 
 char *test_algos_mstep_read_position(){
 	//algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, int from, int to, char *ref_base);
@@ -70,9 +71,11 @@ char *test_algos_mstep_read_position(){
 	uint64_t ********arr = covs_access_generate_cov_array_given_dimensions(List_count(alg->read_order),List_count(alg->strand),List_count(alg->lane),
 				List_count(alg->rd_pos),List_count(alg->map_qual),List_count(alg->base_qual),List_count(alg->ref_base),List_count(alg->call_base));
 	mu_assert(arr != NULL,"Array not properly created.\n");
+    
 	char *chr = "22";
 	int from = 17619559;
 	int to = 17619559;
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, chr);
 	char *ref_base = "A";
 	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
 	//check we have a count of 2 in the expected place...
@@ -93,6 +96,7 @@ char *test_algos_mstep_read_position_cram(){
 	char *chr = "22";
 	int from = 17619559;
 	int to = 17619559;
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, chr);
 	char *ref_base = "A";
 	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
 	//check we have a count of 2 in the expected place...
@@ -114,6 +118,7 @@ char *test_algos_mstep_read_position_two(){
 	char *chr = "2";
 	int from = 38000243;
 	int to = 38000243;
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, chr);
 	char *ref_base = "G";
 	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
 
@@ -153,6 +158,7 @@ char *test_algos_mstep_read_position_two_cram(){
 	char *chr = "2";
 	int from = 38000243;
 	int to = 38000243;
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, chr);
 	char *ref_base = "G";
 	algos_mstep_read_position(alg, arr, chr, from, to, ref_base, 50000);
 
@@ -200,6 +206,7 @@ int estep_no_analysis(){
 	check(no_anal_out!=NULL,"Error opening file.");
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, "1");
 	int estep = algos_estep_read_position(alg, probs,"1", 192462250, 192462300, ref_base, mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	output_flush_no_analysis("1");
 	check(estep==0,"Error running estep.");
@@ -252,6 +259,7 @@ int estep_no_analysis_cram(){
 	check(no_anal_out!=NULL,"Error opening file.");
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, "1");
 	int estep = algos_estep_read_position(alg, probs,"1", 192462250, 192462300, ref_base, mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	output_flush_no_analysis("1");
 	check(estep==0,"Error running estep.");
@@ -304,6 +312,7 @@ char *test_algos_estep_read_position(){
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, "1");
 	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	mu_assert(estep==0,"Error running estep.");
 	gzclose(snp_out);
@@ -350,6 +359,7 @@ char *test_algos_estep_read_position_cram(){
 	FILE *no_anal_out = fopen(test_no_anal_out,"w");
 	output_set_no_analysis_file(no_anal_out);
 	output_set_no_analysis_section_list(List_create());
+    int chk = alg_bean_add_read_length_arrs(alg, split_loc_test, "1");
 	int estep = algos_estep_read_position(alg, probs,"1", 192462357, 192462357, "C", mut_wt_cn, mut_mt_cn, snp_out, mut_out, dbg_out, 50000);
 	mu_assert(estep==0,"Error running estep.");
 	gzclose(snp_out);

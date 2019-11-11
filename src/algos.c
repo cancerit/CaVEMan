@@ -150,7 +150,15 @@ void set_max_tum_cvg(int i){
 	max_tum_cvg = i;
 }
 
-int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size){
+// inline long double expl(long double x){
+//     x = (long double)1.0 + x / (long double)1024;
+//     x *= x; x *= x; x *= x; x *= x;
+//     x *= x; x *= x; x *= x; x *= x;
+//     x *= x; x *= x;
+//     return x;
+// }
+
+int algos_mstep_read_position(alg_bean_t *alg, uint64_t ********covs, char *chr_name, uint32_t from, uint32_t to, char *ref_base, int split_size){
 	//Fetch all reads for this pos? Or a struct for a single read at that position?
 	List *reads = NULL;
 	char *cbase = NULL;
@@ -174,7 +182,7 @@ int algos_mstep_read_position(alg_bean_t *alg,uint64_t ********covs, char *chr_n
 															|| (ref_b_up == 'G') || (ref_b_up = 'T')) ){
 					//int lane_i = alg_bean_get_index_for_str_arr(alg->lane,pos_t->lane);
 					//check(lane_i>=0,"Error calculating lane index.");
-					int rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->rd_pos,pos_t->rd_pos,pos_t->rd_len);
+					int rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->read_len_pos,pos_t->rd_pos,pos_t->rd_len);
 					check(rpos_i>=0,"Error calculating read position index.");
 					int mq_i = alg_bean_get_index_for_intrange_arr(alg->map_qual,pos_t->map_qual);
 					check(mq_i>=0,"Error calculating map qual index.");
@@ -275,23 +283,26 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 		long double ref_base_prob = *(read->ref_base_probs[ref_base_idx]);
 		long double res = genos->ref_geno_norm_prob + ref_base_prob;
 		genos->ref_geno_norm_prob = res;
-
+        long double norm_var_base_prop;
+        long double nu_fx;
+        long double tmp_psi_var_prob_norm;
+        long double ans;
 		//iterate through from 0 to highest available of genos->hom_count, genos->het_norm_count,
 		int iter=0;
 		for(iter=0;iter<genos->norm_max;iter++){
 			//Hom snps
 
 			if(iter<genos->hom_count){
-				long double ans = genos->hom_snp_genotypes[iter]->prob + *(read->ref_base_probs[(genos->hom_snp_genotypes[iter]->norm_geno->var_base_idx)]);
+				ans = genos->hom_snp_genotypes[iter]->prob + *(read->ref_base_probs[(genos->hom_snp_genotypes[iter]->norm_geno->var_base_idx)]);
 				genos->hom_snp_genotypes[iter]->prob = ans;
 			}//End of iteration through hom snps
 
 			//Het snps
 			if(iter<genos->het_norm_count){
-				long double norm_var_base_prop = genos->het_snp_norm_genotypes[iter]->norm_geno->var_base_prop;
-				long double nu_fx = (long double)ref_b * norm_var_base_prop;
-				long double tmp_psi_var_prob_norm = nu_fx / (nu_fx + ((long double)1 - norm_var_base_prop));
-				long double ans = genos->het_snp_norm_genotypes[iter]->prob +
+				norm_var_base_prop = genos->het_snp_norm_genotypes[iter]->norm_geno->var_base_prop;
+				nu_fx = (long double)ref_b * norm_var_base_prop;
+				tmp_psi_var_prob_norm = nu_fx / (nu_fx + ((long double)1 - norm_var_base_prop));
+				ans = genos->het_snp_norm_genotypes[iter]->prob +
 												(
 													logl(
 														expl( ref_base_prob + logl((long double)1 - tmp_psi_var_prob_norm) )
@@ -307,6 +318,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 		long double ref_base_prob = *(read->ref_base_probs[ref_base_idx]);
 		long double res = genos->ref_geno_tum_prob + ref_base_prob;
 		genos->ref_geno_tum_prob = res;
+        long double ans;
 		//iterate through from 0 to highest available of genos->somatic_count, genos->hom_count, genos->het_count
 		int iter=0;
 		for(iter=0;iter<genos->tum_max;iter++){
@@ -318,7 +330,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				//Calculate read component probability.
 				long double log_tmp_psi_var_prob = logl(tmp_psi_var_prob);
 				long double log_1_minus_tmp_psi_var_prob = logl((long double)1 - tmp_psi_var_prob);
-				long double ans = genos->somatic_genotypes[iter]->prob +
+				ans = genos->somatic_genotypes[iter]->prob +
 																	logl(
 																		(
 																			expl( (ref_base_prob + log_1_minus_tmp_psi_var_prob) )
@@ -332,7 +344,7 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 
 			//Hom snps
 			if(iter<genos->hom_count){
-				long double ans = genos->hom_snp_genotypes[iter]->prob +
+				ans = genos->hom_snp_genotypes[iter]->prob +
 																			*(read->ref_base_probs[(genos->hom_snp_genotypes[iter]->tum_geno->var_base_idx)]);
 				genos->hom_snp_genotypes[iter]->prob = ans;
 			}//End of hom snps
@@ -541,7 +553,7 @@ void algos_run_per_position_estep_maths(estep_position_t *pos){
 
 int algos_get_read_specific_indices(alg_bean_t *alg, read_pos_t *pos_t, int *rpos_i, int *mq_i, int *bq_i, int *callbase_i){
 
-	*rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->rd_pos,pos_t->rd_pos,pos_t->rd_len);
+	*rpos_i = alg_bean_get_index_for_read_pos_prop_arr(alg->read_len_pos,pos_t->rd_pos,pos_t->rd_len);
 	check(*rpos_i>=0,"Error calculating read position index.");
 	*mq_i = alg_bean_get_index_for_intrange_arr(alg->map_qual,pos_t->map_qual);
 	check(*mq_i>=0,"Error calculating map qual index.");
