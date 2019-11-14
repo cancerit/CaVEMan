@@ -295,19 +295,20 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				norm_var_base_prop = genos->het_snp_norm_genotypes[iter]->norm_geno->var_base_prop;
 				nu_fx = (long double)ref_b * norm_var_base_prop;
 				tmp_psi_var_prob_norm = nu_fx / (nu_fx + ((long double)1 - norm_var_base_prop));
-				ans = genos->het_snp_norm_genotypes[iter]->prob +
+				ans = genos->het_snp_norm_genotypes[iter]->prob + (long double)
 												(
 													Math_Log_flt64(
-														Math_Expm1_flt64( (flt64_t)ref_base_prob + Math_Log_flt64(
+														Math_Exp_flt64( (flt64_t)(ref_base_prob + Math_Log_flt64(
                                                             (flt64_t)((long double)1 - tmp_psi_var_prob_norm)
                                                             )
-                                                            )
+                                                            ))
 															+
-														Math_Expm1_flt64( 
+														Math_Exp_flt64( 
                                                             (flt64_t)(
                                                                 *(read->ref_base_probs[(genos->het_snp_norm_genotypes[iter]->norm_geno->var_base_idx)]) + Math_Log_flt64((flt64_t)tmp_psi_var_prob_norm) 
                                                             )
-													)
+													    )
+                                                    )
 												);
 				genos->het_snp_norm_genotypes[iter]->prob = ans;
 			}//End of iteration through het snps
@@ -327,14 +328,14 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				long double nu_xf = (long double)ref_b *  genos->somatic_genotypes[iter]->tum_geno->var_base_prop;
 				long double tmp_psi_var_prob = nu_xf * ((long double)1 - base_norm_contam) / (nu_xf + ((long double)1 - genos->somatic_genotypes[iter]->tum_geno->var_base_prop));
 				//Calculate read component probability.
-				long double log_tmp_psi_var_prob = Math_Log_flt64((flt64_t)tmp_psi_var_prob);
-				long double log_1_minus_tmp_psi_var_prob = Math_Log_flt64((flt64_t)((long double)1 - tmp_psi_var_prob));
-				ans = genos->somatic_genotypes[iter]->prob +
+				long double log_tmp_psi_var_prob = (long double) Math_Log_flt64((flt64_t)tmp_psi_var_prob);
+				long double log_1_minus_tmp_psi_var_prob = (long double) Math_Log_flt64((flt64_t)((long double)1 - tmp_psi_var_prob));
+				ans = genos->somatic_genotypes[iter]->prob + (long double)
 																	Math_Log_flt64(
 																		(
-																			Math_Expm1_flt64( (flt64_t)((ref_base_prob + log_1_minus_tmp_psi_var_prob)) )
+																			Math_Exp_flt64( (flt64_t)((ref_base_prob + log_1_minus_tmp_psi_var_prob)) )
 																				+
-																			Math_Expm1_flt64( (flt64_t)((*(read->ref_base_probs[genos->somatic_genotypes[iter]->tum_geno->var_base_idx]) + log_tmp_psi_var_prob)) )
+																			Math_Exp_flt64( (flt64_t)((*(read->ref_base_probs[genos->somatic_genotypes[iter]->tum_geno->var_base_idx]) + log_tmp_psi_var_prob)) )
 																		)
 																	);
 				genos->somatic_genotypes[iter]->prob = ans;
@@ -362,9 +363,9 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 				long double tum_res = genos->het_snp_genotypes[iter]->prob +
 												(
 													Math_Log_flt64(
-														Math_Expm1_flt64( (flt64_t)(ref_base_prob + Math_Log_flt64((flt64_t)((long double)1 - tmp_psi_var_prob_tum)) ))
+														Math_Exp_flt64( (flt64_t)(ref_base_prob + Math_Log_flt64((flt64_t)((long double)1 - tmp_psi_var_prob_tum)) ))
 															+
-														Math_Expm1_flt64( (flt64_t)(*(read->ref_base_probs[(genos->het_snp_genotypes[iter]->norm_geno->var_base_idx)]) + Math_Log_flt64((flt64_t)tmp_psi_var_prob_tum) ))
+														Math_Exp_flt64( (flt64_t)(*(read->ref_base_probs[(genos->het_snp_genotypes[iter]->norm_geno->var_base_idx)]) + Math_Log_flt64((flt64_t)tmp_psi_var_prob_tum) ))
 													)
 												);
 
@@ -380,30 +381,30 @@ int algos_run_per_read_estep_maths(genotype_store_t *genos,read_pos_t *read, int
 }
 
 long double calculateLogSumExpNormFactor(estep_position_t *pos,long double norm_factor_max){
-	long double sum_tot = 0.0;
+	flt64_t sum_tot = 0.0;
    //Reference
-   sum_tot += Math_Expm1_flt64((flt64_t)(pos->genos->ref_genotype->prob - norm_factor_max));
+   sum_tot += Math_Exp_flt64((flt64_t)(pos->genos->ref_genotype->prob - norm_factor_max));
 
    //Somatic
    int somatic_i = 0;
    for(somatic_i = 0;somatic_i<pos->genos->somatic_count;somatic_i++){
-   	sum_tot += Math_Expm1_flt64((flt64_t)(pos->genos->somatic_genotypes[somatic_i]->prob - norm_factor_max));
+   	sum_tot += Math_Exp_flt64((flt64_t)(pos->genos->somatic_genotypes[somatic_i]->prob - norm_factor_max));
    }
 
    //het
    int het_snp_it=0;
    for(het_snp_it=0;het_snp_it<pos->genos->het_count;het_snp_it++){
-   	sum_tot += Math_Expm1_flt64((flt64_t)(pos->genos->het_snp_genotypes[het_snp_it]->prob - norm_factor_max));
+   	sum_tot += Math_Exp_flt64((flt64_t)(pos->genos->het_snp_genotypes[het_snp_it]->prob - norm_factor_max));
   }
 
    //Hom
    int hom_snp_i=0;
 	for(hom_snp_i=0;hom_snp_i<pos->genos->hom_count;hom_snp_i++){
-		sum_tot += Math_Expm1_flt64((flt64_t)(pos->genos->hom_snp_genotypes[hom_snp_i]->prob - norm_factor_max));
-	}
+		sum_tot += Math_Exp_flt64((flt64_t)(pos->genos->hom_snp_genotypes[hom_snp_i]->prob - norm_factor_max));
+    }
 
   	//Return final logged value.
-  	long double norm_factor = norm_factor_max + Math_Log_flt64((flt64_t)sum_tot);
+  	long double norm_factor = norm_factor_max + Math_Log_flt64(sum_tot);
   	return norm_factor;
 }
 
@@ -414,7 +415,6 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 
 	//We find the normalisation factor via the log-sum-exp method to avoid underflow, then we can calculate the final probabilities
 	long double norm_factor = calculateLogSumExpNormFactor(pos,norm_factor_max);
-	//printf("NORM FACTOR: %5.1Le\n",norm_factor);
 	//Iterate through every genotype and normalise it. Adding it to a list.
 	int iter = 0;
 	long double somatic_sum = 0.0;
@@ -422,8 +422,7 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 	for(iter=0;iter<pos->genos->total_max;iter++){
 		//somatics
 		if(iter<pos->genos->somatic_count){
-			pos->genos->somatic_genotypes[iter]->prob = Math_Expm1_flt64((flt64_t)(pos->genos->somatic_genotypes[iter]->prob - norm_factor));
-
+			pos->genos->somatic_genotypes[iter]->prob = (long double) (Math_Exp_flt64((flt64_t)(pos->genos->somatic_genotypes[iter]->prob - norm_factor)));
 			somatic_sum += pos->genos->somatic_genotypes[iter]->prob;
 			if(top_geno==NULL){
 				top_geno = pos->genos->somatic_genotypes[iter];
@@ -437,7 +436,7 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 
 		//het snps
 		if(iter<pos->genos->het_count){
-			pos->genos->het_snp_genotypes[iter]->prob = Math_Expm1_flt64((flt64_t)(pos->genos->het_snp_genotypes[iter]->prob - norm_factor));
+			pos->genos->het_snp_genotypes[iter]->prob = (long double) (Math_Exp_flt64((flt64_t)(pos->genos->het_snp_genotypes[iter]->prob - norm_factor)));
 
 			snp_sum += pos->genos->het_snp_genotypes[iter]->prob;
 			if(pos->genos->het_snp_genotypes[iter]->prob > top_geno->prob){
@@ -450,7 +449,7 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 
 		//hom snps
 		if(iter<pos->genos->hom_count){
-			pos->genos->hom_snp_genotypes[iter]->prob = Math_Expm1_flt64((flt64_t)(pos->genos->hom_snp_genotypes[iter]->prob - norm_factor));
+			pos->genos->hom_snp_genotypes[iter]->prob = (long double) (Math_Exp_flt64((flt64_t)(pos->genos->hom_snp_genotypes[iter]->prob - norm_factor)));
 
 			snp_sum += pos->genos->hom_snp_genotypes[iter]->prob;
 			if(pos->genos->hom_snp_genotypes[iter]->prob > top_geno->prob){
@@ -464,7 +463,7 @@ void finalise_probabilities_and_find_top_prob(estep_position_t *pos,long double 
 
 
 	//normalise the reference genotype probability.
-	pos->genos->ref_genotype->prob = Math_Expm1_flt64((flt64_t)(pos->genos->ref_genotype->prob - norm_factor));
+	pos->genos->ref_genotype->prob = (long double) (Math_Exp_flt64((flt64_t)(pos->genos->ref_genotype->prob - norm_factor)));
 
 	if(pos->genos->ref_genotype->prob > top_geno->prob){
 		sec_geno = top_geno;
