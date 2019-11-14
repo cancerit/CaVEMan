@@ -38,6 +38,7 @@
 #include <bam_access.h>
 #include <stdint.h>
 #include "zlib.h"
+#include "Math.h"
 
 typedef struct estep_position_t{
 	uint8_t norm_cn;
