@@ -32,6 +32,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <libgen.h>
 #include <dbg.h>
 #include <alg_bean.h>
 #include <bam_access.h>
