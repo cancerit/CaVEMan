@@ -24,7 +24,7 @@ See INSTALL.TXT
 * Reference.fasta and index
 * A one based bed style format file of regions to ignore during analysis (see specified format).
 * [zlib](https://zlib.net/) >= 1.2.3.5
-* [linasm](http://linasm.sourceforge.net/index.php)
+* [linasm](http://linasm.sourceforge.net/index.php) >= 1.13
 
 ## Optional inputs (will result in more accurate calls)
 
