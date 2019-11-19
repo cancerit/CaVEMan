@@ -1,6 +1,6 @@
 # CHANGES
 
-## NEXT
+## 1.14.0
 
 * Making species and assembly required commandline arguments in the estep
 * Change method by which read position index is resolved. Results in time saving.
