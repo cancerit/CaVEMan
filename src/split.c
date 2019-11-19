@@ -44,6 +44,10 @@
 #include <bam_access.h>
 #include <config_file_access.h>
 #include <cn_access.h>
+#include "khash.h"
+
+//New hash to store unique readlengths
+KHASH_MAP_INIT_INT(rdlenkhash, uint8_t)
 
 static int includeSW = 0;
 static int includeSingleEnd = 0;
@@ -166,7 +170,12 @@ int split_main(int argc, char *argv[]){
     bam1_t *norm_read = NULL;
     bam1_t *tum_read = NULL;
     seq_region_t **ignore_regs = NULL;
+    FILE *alg_bean_file = NULL;
+    alg_bean_t *alg = NULL;
+    char *read_len_pos_arr_file = NULL;
+    khash_t(rdlenkhash) *rdlen_h;
     int ignore_reg_count = 0;
+    FILE *output_rp = NULL;
 
     int is_err = split_setup_options(argc,argv);
     check(is_err==0,"Error parsing options");
@@ -198,7 +207,7 @@ int split_main(int argc, char *argv[]){
      //Open a file to write sections, named according to CHR.
     char *fname = malloc(strlen(chr_name) + strlen(list_loc) + 3);
     check_mem(fname);
-   //Create filename here through name concatenation.
+    //Create filename here through name concatenation.
     strcpy(fname,list_loc);
     strcat(fname,".");
     strcat(fname,chr_name);
@@ -219,6 +228,10 @@ int split_main(int argc, char *argv[]){
 
     //Check there's not a whole chromosome block.
     if(!(ignore_reg_count == 1 && ignore_regs[0]->beg == 1 && ignore_regs[0]->end >= chr_length)){
+        //Initialise readlength hash
+        rdlen_h = kh_init(rdlenkhash);
+        check(rdlen_h != NULL,"Memory allocation error when initialising hash kh_init(rdlenkhash).");
+
         //No chromosome block, so carry on.
         uint32_t start = 1;
         uint32_t stop = chr_length;
@@ -271,15 +284,20 @@ int split_main(int argc, char *argv[]){
         uint32_t curr_n_pos = 0;
         uint32_t curr_t_pos = 0;
 
-
+        khiter_t k;
         //Have both iterators, now need to iterate through each in sync so we don't get ahead of the stops.
         while(iter_n_status>=0 || iter_t_status>=0){ //Keep iterating until both iterators are out of reads.
-
             while(curr_n_pos<=curr_t_pos && iter_n_status>=0 && iter_t_status>=0 && rd_count<=max_read_count){ //While the positions aren't equal and tumour has reads left. Normal jumps ahead
                 iter_n_status = sam_itr_next(sf_norm,iter_norm,norm_read);
                 check(iter_n_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_n_status);
                 curr_n_pos = norm_read->core.pos;
                 if(iter_n_status>=0 && bam_access_check_bam_flags(norm_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_n_pos,ignore_regs,ignore_reg_count) == NULL){
+                    int read_len = norm_read->core.l_qseq;
+                    int rd_len_missing;
+                    k = kh_put(rdlenkhash, rdlen_h, read_len, &rd_len_missing);
+                    if(rd_len_missing){ // If the readname key doesn't yet exist
+                        kh_value(rdlen_h, k) = read_len;
+                    }
                     rd_count++;
                 }
             }//End of this iteration through normal reads
@@ -289,6 +307,12 @@ int split_main(int argc, char *argv[]){
                 check(iter_t_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_t_status);
                 curr_t_pos = tum_read->core.pos;
                 if(iter_t_status>=0 && bam_access_check_bam_flags(tum_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_t_pos,ignore_regs,ignore_reg_count) == NULL){
+                    int read_len = tum_read->core.l_qseq;
+                    int rd_len_missing;
+                    k = kh_put(rdlenkhash, rdlen_h, read_len, &rd_len_missing);
+                    if(rd_len_missing){ // If the readname key doesn't yet exist
+                        kh_value(rdlen_h, k) = read_len;
+                    }
                     rd_count++;
                 }
             }//End of this iteration through tumour reads
@@ -300,7 +324,13 @@ int split_main(int argc, char *argv[]){
                     check(iter_t_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_t_status);
                     curr_t_pos = tum_read->core.pos;
                     if(iter_t_status>=0 && bam_access_check_bam_flags(tum_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_t_pos,ignore_regs,ignore_reg_count) == NULL){
-                         rd_count++;
+                        int read_len = tum_read->core.l_qseq;
+                        int rd_len_missing;
+                        k = kh_put(rdlenkhash, rdlen_h, read_len, &rd_len_missing);
+                        if(rd_len_missing){ // If the readname key doesn't yet exist
+                            kh_value(rdlen_h, k) = read_len;
+                        }
+                        rd_count++;
                     }
                 }
             }//End of iteration through tumour reads where only tumour reads remain
@@ -311,6 +341,12 @@ int split_main(int argc, char *argv[]){
                     check(iter_n_status>=-1,"Error detected (%d) when trying to iterate through region.",iter_n_status);
                     curr_n_pos = norm_read->core.pos;
                     if(iter_n_status>=0 && bam_access_check_bam_flags(norm_read) == 1 && ignore_reg_access_get_ign_reg_overlap(curr_n_pos,ignore_regs,ignore_reg_count) == NULL){
+                        int read_len = norm_read->core.l_qseq;
+                        int rd_len_missing;
+                        k = kh_put(rdlenkhash, rdlen_h, read_len, &rd_len_missing);
+                        if(rd_len_missing){ // If the readname key doesn't yet exist
+                            kh_value(rdlen_h, k) = read_len;
+                        }
                         rd_count++;
                     }
                 }
@@ -337,7 +373,51 @@ int split_main(int argc, char *argv[]){
 
         }//End of moving through both normal and tumour iterators
 
+        //Read in alg_bean
+        //Read in the alg bean
+        alg_bean_file = fopen(alg_bean_loc,"r");
+        check(alg_bean_file != 0 ,"Error trying to open alg_bean file: %s.",alg_bean_loc);
+        alg = alg_bean_read_file(alg_bean_file);
+        check(alg != NULL,"Error reading alg_bean from file.");
+        check(fclose(alg_bean_file)==0,"Error closing alg bean file.");
+
+        //Iterate through readlen hashkeys and output a format giving all readlength options for readpos boundaries
+        //This can be read in by mstep and estep
+
+        //Open a file to write sections, named according to CHR.
+        char *read_len_pos_arr_file = malloc(strlen(chr_name) + strlen(list_loc) + 6);
+        check_mem(read_len_pos_arr_file);
+        //Create filename here through name concatenation.
+        char *dupdir;
+        dupdir = strdup(list_loc);
+        strcpy(read_len_pos_arr_file,dirname(dupdir));
+        strcat(read_len_pos_arr_file,"/readpos.");
+        strcat(read_len_pos_arr_file,chr_name);
+        output_rp = fopen(read_len_pos_arr_file,"w");
+        check(output_rp != NULL, "Error opening file %s for write.",read_len_pos_arr_file);
+        free(read_len_pos_arr_file);
+
+        for (k = kh_begin(rdlen_h); k != kh_end(rdlen_h); ++k){  // traverse
+            // test if a bucket contains data
+            if (kh_exist(rdlen_h, k)){
+                //Convert alg bean read length proportions to a 'by readlength' set of ranges
+                int len = kh_value(rdlen_h, k);
+                List *lengths = alg_bean_get_position_list_from_read_pos_proportion_arr(alg->rd_pos,len);
+                //Output readlength splits and read length itself to file
+                fprintf(output_rp,"%d\t",len);
+                LIST_FOREACH(lengths, first, next, cur){
+                    alg_bean_intrange *range =  (alg_bean_intrange *) cur->value;
+                    fprintf(output_rp,"%d-%d;",range->from,range->to);
+                }
+                fprintf(output_rp,"\n");
+                List_clear_destroy(lengths);
+            }
+        }
+        fclose(output_rp);
+        
+
         //No more reads left so we must print the last section.
+        kh_destroy(rdlenkhash, rdlen_h);
         split_access_print_section(output,chr_name,sect_start,chr_length);
         bam_destroy1(norm_read);
         bam_destroy1(tum_read);
@@ -352,6 +432,8 @@ int split_main(int argc, char *argv[]){
 
     return 0;
 error:
+    if(rdlen_h) kh_destroy(rdlenkhash, rdlen_h);
+    if(output_rp) fclose(output_rp);
     if(norm_read) bam_destroy1(norm_read);
     if(tum_read) bam_destroy1(tum_read);
     if(sf_norm) hts_close(sf_norm);

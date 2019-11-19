@@ -35,6 +35,10 @@
 
 #include <stdio.h>
 #include <List.h>
+#include "khash.h"
+
+//New hash to store unique readlengths
+KHASH_MAP_INIT_INT(readlenpos, List *)
 
 typedef struct alg_bean_intrange{
 	int from;
@@ -58,6 +62,7 @@ typedef struct alg_bean_t{
 	 int call_base_size;
 	 List *strand;
 	 int strand_size;
+     khash_t(readlenpos) *read_len_pos;
 } alg_bean_t;
 
 int alg_bean_create_default_file(FILE *file, char *norm, char *tum);
@@ -72,7 +77,10 @@ List *alg_bean_hard_copy_char_list(List *new_list, List *old);
 int alg_bean_get_index_for_str_arr(List *list,char *value);
 int alg_bean_get_index_for_intrange_arr(List *list,int value);
 int alg_bean_get_index_for_char_arr(List *list,char *value);
-int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len);
+// int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len);
+int alg_bean_get_index_for_read_pos_prop_arr(void *_hash, int pos,int rd_len);
+int alg_bean_add_read_length_arrs(alg_bean_t *bean, char* list_loc, char* contig);
+List *alg_bean_get_position_list_from_read_pos_proportion_arr(List *list,int rd_len);
 
 #define CEIL(a, b) (((a) / (b)) + (((a) % (b)) > 0 ? 1 : 0))
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))

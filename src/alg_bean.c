@@ -32,6 +32,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <libgen.h>
 #include <dbg.h>
 #include <alg_bean.h>
 #include <bam_access.h>
@@ -166,11 +167,11 @@ int alg_bean_get_index_for_char_arr(List *list,char *val){
 	return -1;
 }
 
-int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len){
-	List *lengths = List_create();
-	int i=0;
-	int last_stop = 1;
-	LIST_FOREACH(list, first, next, cur){
+List *alg_bean_get_position_list_from_read_pos_proportion_arr(List *list,int rd_len){
+    List *lengths = List_create();
+    int last_stop = 1;
+    int i=0;
+    LIST_FOREACH(list, first, next, cur){
 		float pct = *((float *)cur->value);
 		int lng = (((float)rd_len/(float)100) * pct);
 		alg_bean_intrange *range = malloc(sizeof(alg_bean_intrange));
@@ -182,11 +183,60 @@ int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len){
 		range->to = (range->from) + lng;
 		last_stop = range->to;
 		List_push(lengths,range);
-		i++;
+        i++;
 	}
-	int result = alg_bean_get_index_for_intrange_arr(lengths,pos);
-	List_clear_destroy(lengths);
-	return result;
+    return lengths;
+}
+
+int alg_bean_get_index_for_read_pos_prop_arr(void *_hash, int pos,int rd_len){
+    List *lengths = NULL;
+    khiter_t k;
+    khash_t(readlenpos) *h_rd_len = (khash_t(readlenpos)*) _hash;
+    k = kh_get(readlenpos, h_rd_len, rd_len);
+    lengths = kh_value(h_rd_len, k);
+    return alg_bean_get_index_for_intrange_arr(lengths, pos);
+}
+
+int alg_bean_add_read_length_arrs(alg_bean_t *bean, char* list_loc, char* contig){
+    FILE *output_rp = NULL;
+    khash_t(readlenpos) *h_rd_len;
+    char *dircpy = NULL;
+    //Create map, key is readlength, List of sections is value.
+    char *read_len_pos_arr_file = malloc(strlen(contig) + strlen(list_loc) + 6);
+    check_mem(read_len_pos_arr_file);
+    //Create filename here through name concatenation.
+    dircpy = strdup(list_loc);
+    strcpy(read_len_pos_arr_file,dirname(dircpy));
+    strcat(read_len_pos_arr_file,"/readpos.");
+    strcat(read_len_pos_arr_file,contig);
+    output_rp = fopen(read_len_pos_arr_file,"r");
+    check(output_rp != NULL, "Error opening file %s for write.",read_len_pos_arr_file);
+    free(read_len_pos_arr_file);
+
+    h_rd_len = kh_init(readlenpos);
+    char line[500];
+    int rd_len_missing = 0;
+    khiter_t k;
+    while ( fgets(line,sizeof(line),output_rp) != NULL ){
+        //75      1-2;3-38;39-56;57-66;67-76;
+        int len;
+        char list_txt [4950];
+        int chk = sscanf(line,"%d\t%s",&len,list_txt);
+        List *lenrange = alg_bean_parse_int_range(list_txt);
+        k = kh_put(readlenpos, h_rd_len, len, &rd_len_missing);
+        if(rd_len_missing){
+            kh_value(h_rd_len, k) = lenrange;
+        }
+    }
+    fclose(output_rp);
+
+    bean->read_len_pos = h_rd_len;
+    free(dircpy);
+    return 0;
+error:
+    if(dircpy) free(dircpy);
+	if(output_rp) fclose(output_rp);
+	return -1;
 }
 
 List *alg_bean_parse_str_list(char *txt){
