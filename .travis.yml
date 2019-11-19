@@ -12,12 +12,14 @@ compiler:
   - gcc
 
 before_script:
+  - WORKDIR=`pwd`
   - wget https://sourceforge.net/projects/linasm/files/linasm-1.13%28stable%29.tar.gz/download -O /tmp/linasm.tar.gz 
   - mkdir /tmp/linasm
   - tar --strip-components 1 -C /tmp/linasm -xzf /tmp/linasm.tar.gz
   - cd /tmp/linasm
   - make
   - sudo make install
+  - cd $WORKDIR
 
 script:
   - ./setup.sh ~/wtsi-opt
