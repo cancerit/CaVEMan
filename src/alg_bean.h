@@ -77,7 +77,6 @@ List *alg_bean_hard_copy_char_list(List *new_list, List *old);
 int alg_bean_get_index_for_str_arr(List *list,char *value);
 int alg_bean_get_index_for_intrange_arr(List *list,int value);
 int alg_bean_get_index_for_char_arr(List *list,char *value);
-// int alg_bean_get_index_for_read_pos_prop_arr(List *list,int pos,int rd_len);
 int alg_bean_get_index_for_read_pos_prop_arr(void *_hash, int pos,int rd_len);
 int alg_bean_add_read_length_arrs(alg_bean_t *bean, char* list_loc, char* contig);
 List *alg_bean_get_position_list_from_read_pos_proportion_arr(List *list,int rd_len);
