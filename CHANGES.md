@@ -1,5 +1,12 @@
 # CHANGES
 
+## 1.14.0
+
+* Making species and assembly required commandline arguments in the estep
+* Change method by which read position index is resolved. Results in time saving.
+* linasm is now required [linasm](http://linasm.sourceforge.net/index.php)
+* New log and exp functions from [linasm](http://linasm.sourceforge.net/index.php)
+
 ## 1.13.16
 
 * Correct occasional memory blowout caused by split step not excluding an ignore region.

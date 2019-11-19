@@ -204,6 +204,9 @@ int mstep_main(int argc, char *argv[]){
 	//Iterate through each base in the section and create the genome profile.
 	//an array to store the data full of zeroes.
 
+    int chk = alg_bean_add_read_length_arrs(alg, list_loc, chr_name);
+    check(chk==0,"Error reading alg_bean read length arrays from file.");
+
 	//Read order (1st/2nd)
 	//Strand +/-
 	//Lane

@@ -3,7 +3,9 @@ System Requirements
 
 caveman is designed to run in a compute farm/clustre environment.
 caveman depends on:
-  htslib 1.3 <https://github.com/samtools/htslib/releases/download/1.3/htslib-1.3.tar.bz2>
+  htslib >=1.3 <https://github.com/samtools/htslib/releases/download/1.3/htslib-1.3.tar.bz2>
+  zlib >=1.2.3.5 <https://www.zlib.net/>
+  linasm >=1.13 <http://linasm.sourceforge.net/>
 
 
 Compilation

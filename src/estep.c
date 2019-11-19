@@ -553,6 +553,8 @@ int estep_main(int argc, char *argv[]){
 		check(chk_write==0,"Error writing header to dbg file.");
 	}
 
+    chk = alg_bean_add_read_length_arrs(alg, list_loc, chr_name);
+    check(chk==0,"Error reading alg_bean read length arrays from file.");
 
 	//Iterate through analysis sections
 	//Iterate through sections.

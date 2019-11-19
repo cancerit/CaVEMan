@@ -279,26 +279,6 @@ char *test_alg_bean_get_index_for_char_arr_cram(){
 	return NULL;
 }
 
-char *test_alg_bean_get_index_for_read_pos_prop_arr(){
-	test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
-	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,2,75)==0,"Wrong index returned for RD pos check 1.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,3,75)==1,"Wrong index returned for RD pos check 2.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,4,150)==0,"Wrong index returned for RD pos check 3.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,5,150)==1,"Wrong index returned for RD pos check 4.\n");
-	return NULL;
-}
-
-char *test_alg_bean_get_index_for_read_pos_prop_arr_cram(){
-	test_bean = alg_bean_generate_default_alg_bean(norm_file_cram,tum_file_cram);
-	//Expect the following results:
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,2,75)==0,"Wrong index returned for RD pos check 1.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,3,75)==1,"Wrong index returned for RD pos check 2.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,4,150)==0,"Wrong index returned for RD pos check 3.\n");
-	mu_assert(alg_bean_get_index_for_read_pos_prop_arr(test_bean->rd_pos,5,150)==1,"Wrong index returned for RD pos check 4.\n");
-	return NULL;
-}
-
 char *test_alg_bean_generate_default_alg_bean(){
 	alg_bean_t *test_bean = alg_bean_generate_default_alg_bean(norm_file,tum_file);
 	mu_assert(test_bean != NULL, "Couldn't retrieve default alg_bean.\n");
@@ -348,8 +328,6 @@ char *all_tests() {
   mu_run_test(test_alg_bean_get_index_for_intrange_arr_cram);
   mu_run_test(test_alg_bean_get_index_for_char_arr);
   mu_run_test(test_alg_bean_get_index_for_char_arr_cram);
-  mu_run_test(test_alg_bean_get_index_for_read_pos_prop_arr);
-  mu_run_test(test_alg_bean_get_index_for_read_pos_prop_arr_cram);
   mu_run_test(test_alg_bean_hard_copy_char_list);
   mu_run_test(test_alg_bean_hard_copy_char_list_cram);
   return NULL;
