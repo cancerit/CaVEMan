@@ -14,7 +14,7 @@ compiler:
 before_script:
   - wget https://sourceforge.net/projects/linasm/files/linasm-1.13%28stable%29.tar.gz/download -O linasm.tar.gz 
   - tar -xzf linasm.tar.gz
-  - pushd linasm-1.13\(stable\) && make && sudo make install --prefix=/usr && popd
+  - pushd linasm-1.13\(stable\) && make && sudo make install prefix=/usr && popd
   - export PATH=/usr/bin:$PATH
   - export C_INCLUDE_PATH=/usr/include/:$C_INCLUDE_PATH
   - export LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
