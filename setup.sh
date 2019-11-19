@@ -125,6 +125,8 @@ fi
 
 export HTSLIB="$SETUP_DIR/htslib"
 
+set -e
+
 echo -n "Building CaVEMan ..."
 if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
