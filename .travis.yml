@@ -17,7 +17,7 @@ before_script:
   - tar --strip-components 1 -C /tmp/linasm -xzf /tmp/linasm.tar.gz
   - cd /tmp/linasm
   - make
-  - make install
+  - sudo make install
 
 script:
   - ./setup.sh ~/wtsi-opt
