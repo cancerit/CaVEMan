@@ -15,7 +15,7 @@ install:
   - wget https://sourceforge.net/projects/linasm/files/linasm-1.13%28stable%29.tar.gz/download -O linasm.tar.gz 
   - tar -xzf linasm.tar.gz
   - ls ./
-  - pushd /tmp/linasm-1.13\(stable\)/ && make && sudo make install && popd
+  - pushd linasm-1.13\(stable\) && make && sudo make install && popd
 
 script:
   - ./setup.sh ~/wtsi-opt
