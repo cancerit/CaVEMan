@@ -14,6 +14,7 @@ compiler:
 install:
   - wget https://sourceforge.net/projects/linasm/files/linasm-1.13%28stable%29.tar.gz/download -O /tmp/linasm.tar.gz 
   - tar -xzf /tmp/linasm.tar.gz
+  - ls /tmp
   - pushd /tmp/linasm-1.13\(stable\)/ && make && sudo make install && popd
 
 script:
