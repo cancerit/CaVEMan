@@ -62,7 +62,7 @@ int cn_access_populate_cn(char *file_loc,uint8_t is_normal){
 		char *chr_nom = malloc(sizeof(char) * 250);
 		int beg,end;
 		int chk = sscanf(rd,"%s\t%d\t%d\t%d",chr_nom,&beg,&end,&cop);
-		check(chk == 4,"Incorrect line parsed from copy number file.\n");
+		check(chk == 4,"Unusable line '%s' parsed from copy number file '%s'.\n",rd,file_loc);
 		seq_region_t *reg = malloc(sizeof(struct seq_region_t));
 		reg->chr_name = chr_nom;
 		reg->beg = beg;
