@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.14.1
+
+* Adding more useful error message to cn_access file reading method
+
 ## 1.14.0
 
 * Making species and assembly required commandline arguments in the estep
