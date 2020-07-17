@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.14.2
+
+* Fixed bug in fai_access test
+
 ## 1.14.1
 
 * Adding more useful error message to cn_access file reading method

@@ -57,12 +57,12 @@ char *test_fai_access_get_name_from_index(){
 
 char *test_fai_access_get_ref_seqeuence_for_pos(){
 	int from = 5000;
-	int to = 1510;
+	int to = 5010;
 	char *seq_name = "I";
 	char *exp_seq = "AAACTGGTTCA";
 	char *seq = fai_access_get_ref_seqeuence_for_pos(fa_test_file,seq_name,from,to);
 	mu_assert(seq != NULL,"NULL sequence returned.\n");
-	mu_assert(strcmp(seq,exp_seq),"Sequence retrieved doesn't match expected.");
+	mu_assert(! strcmp(seq,exp_seq),"Sequence retrieved doesn't match expected.");
 	free(seq);
 	return NULL;
 }
