@@ -21,7 +21,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
 
-SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.3.2/htslib-1.3.2.tar.bz2"
+SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.10.2/htslib-1.10.2.tar.bz2"
 
 REQUIRED_MIN_LIBZ="1.2.3.4"
 
