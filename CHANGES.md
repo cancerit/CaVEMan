@@ -1,8 +1,9 @@
 # CHANGES
 
-## 1.14.2
+## 1.15.0
 
 * Fixed bug in fai_access test
+* Updated htslib to 1.10.2
 
 ## 1.14.1
 
