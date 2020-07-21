@@ -45,6 +45,7 @@
 #include <config_file_access.h>
 #include <cn_access.h>
 #include "khash.h"
+#include <libgen.h>
 
 //New hash to store unique readlengths
 KHASH_MAP_INIT_INT(rdlenkhash, uint8_t)
