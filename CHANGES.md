@@ -4,6 +4,7 @@
 
 * Fixed bug in fai_access test
 * Updated htslib to 1.10.2
+* Added missing libgen.h header
 
 ## 1.14.1
 
