@@ -316,7 +316,6 @@ List *gen_panel_get_list_of_samples_and_locs(){
 		sampchar = strtok(NULL,",");
 		List_push(samples,this_samp);
 	}
-	free(sampchar);
 
 	bamchar = strtok(bam_file_locs,",");
 	LIST_FOREACH(samples, first, next, cur){
