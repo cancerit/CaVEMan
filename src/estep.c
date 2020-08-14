@@ -68,6 +68,7 @@ static char *tum_plat = NULL;
 static float min_mut_prob = 0.8;
 static float min_snp_prob = 0.95;
 static float norm_contam = 0.1;
+static float tum_contam = 0.0;
 static float ref_bias = 0.95;
 static float prior_mut_prob = 0.000006;
 static float prior_snp_prob = 0.0001;
@@ -102,6 +103,7 @@ void estep_print_usage (int exit_code){
 	printf("-c  --prior-mut-probability [float]              Prior somatic probability [default:%f]\n",prior_mut_prob);
 	printf("-d  --prior-snp-probability [float]              Prior germline mutant probability [default:%f]\n",prior_snp_prob);
 	printf("-k  --normal-contamination [float]               Normal contamination of tumour [default:%f]\n",norm_contam);
+    printf("-z  --tumour-contamination [float]               Tumour contamination of normal [default:%f]\n",tum_contam);
 	printf("-b  --reference-bias [float]                     Reference bias [default:%f]\n",ref_bias);
 	printf("-p  --mut-probability-cutoff [float]             Minimum probability call for a somatic mutant position to be output [default:%f]\n",min_mut_prob);
 	printf("-q  --snp-probability-cutoff [float]             Minimum probability call for a germline mutant position to be output [default:%f]\n",min_snp_prob);
@@ -421,6 +423,7 @@ int estep_main(int argc, char *argv[]){
 	set_min_mut_prob(min_mut_prob);
 	set_min_snp_prob(min_snp_prob);
 	set_norm_contam(norm_contam);
+    set_tum_contam(tum_contam);
 	set_ref_bias(ref_bias);
 	set_prior_mut_prob(prior_mut_prob);
  	set_prior_snp_prob(prior_snp_prob);
