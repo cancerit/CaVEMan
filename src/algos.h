@@ -50,6 +50,8 @@ typedef struct estep_position_t{
 	long double base_norm_contam;
 	long double total_snp_prob;
 	long double total_mut_prob;
+    long double acf_normal;
+    long double acf_tumour;
 	genotype_t *norm_fwd_cvg;
 	genotype_t *norm_rev_cvg;
 	genotype_t *tum_fwd_cvg;
@@ -74,6 +76,7 @@ void set_snp_warnings();
 void set_min_mut_prob(float f);
 void set_min_snp_prob(float f);
 void set_norm_contam(float f);
+void set_tum_contam(float f);
 void set_ref_bias(float f);
 void set_prior_mut_prob(float f);
 void set_prior_snp_prob(float f);
