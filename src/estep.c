@@ -136,6 +136,7 @@ int estep_setup_options(int argc, char *argv[]){
              	{"min-base-qual",required_argument , 0, 'm'},
              	{"index", required_argument, 0, 'i'},
              	{"normal-contamination", required_argument, 0, 'k'},
+             	{"tumour-contamination", required_argument, 0, 'z'},
              	{"prior-snp-probability", required_argument, 0, 'd'},
              	{"prior-mut-probability", required_argument, 0, 'c'},
              	{"reference-bias", required_argument, 0, 'b'},
@@ -164,7 +165,7 @@ int estep_setup_options(int argc, char *argv[]){
    int iarg = 0;
 
    //Iterate through options
-   while((iarg = getopt_long(argc, argv, "x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:P:T:r:sh",
+   while((iarg = getopt_long(argc, argv, "x:y:c:d:p:q:b:k:a:f:i:o:g:m:n:t:v:w:l:M:P:T:r:z:sh",
                             								long_opts, &index)) != -1){
    	switch(iarg){
    		case 'l':
@@ -247,6 +248,11 @@ int estep_setup_options(int argc, char *argv[]){
       		sentinel("Error parsing -k argument '%s'. Should be a float >= 0.0.",optarg);
       	}
 				break;
+
+            case 'z':
+                if(sscanf(optarg, "%f", &tum_contam) != 1){
+      		        sentinel("Error parsing -z argument '%s'. Should be a float >= 0.0.",optarg);
+      	        }
 
 			case 'd':
 				if(sscanf(optarg, "%f", &prior_snp_prob) != 1){
