@@ -266,6 +266,8 @@ int mstep_main(int argc, char *argv[]){
 	//Iterate through sections.
 	LIST_FOREACH(these_regions, first, next, cur){
 		printf("M-stepping section %s:%d-%d for mstep\n",chr_name,((seq_region_t *)cur->value)->beg,((seq_region_t *)cur->value)->end);
+        fprintf(stderr,"M-stepping region %s:%d-%d for mstep\n",chr_name,((seq_region_t *)cur->value)->beg,((seq_region_t *)cur->value)->end);
+
 		//Get the reference sequence for this section
 		ref_seq = fai_access_get_ref_seqeuence_for_pos(fa_file,chr_name,((seq_region_t *)cur->value)->beg,((seq_region_t *)cur->value)->end);
 
