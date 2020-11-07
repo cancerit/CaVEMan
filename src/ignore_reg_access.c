@@ -179,7 +179,6 @@ List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end,
         range->end = ((seq_region_t *) cur->value)->beg - 1;
         if(range->beg <= end && range->end <= end){
             List_push(reg_for_analysis,range);
-            fprintf(stderr,"Pushing region %d-%d\n",range->beg ,range->end);
         }
         range = malloc(sizeof(struct seq_region_t));
         range->beg = ((seq_region_t *) cur->value)->end + 1;
@@ -188,7 +187,6 @@ List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end,
     range->end = end;
     if(range->beg <= end && range->end <= end){
         List_push(reg_for_analysis,range);
-        fprintf(stderr,"Pushing region %d-%d\n",range->beg ,range->end);
     }
     List_clear_destroy(li);
     return reg_for_analysis;
