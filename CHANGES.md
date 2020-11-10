@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.15.1
+
+* Fixed bug in ignore region calculations where ignored regions ends at the end of a chr.
+
 ## 1.15.0
 
 * Fixed bug in fai_access test
