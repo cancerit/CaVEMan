@@ -177,13 +177,17 @@ List *ignore_reg_access_resolve_ignores_to_analysis_sections(int start, int end,
     }
     LIST_FOREACH(li, first, next, cur){
         range->end = ((seq_region_t *) cur->value)->beg - 1;
-        List_push(reg_for_analysis,range);
+        if(range->beg <= end && range->end <= end){
+            List_push(reg_for_analysis,range);
+        }
         range = malloc(sizeof(struct seq_region_t));
         range->beg = ((seq_region_t *) cur->value)->end + 1;
     }
 
     range->end = end;
-    List_push(reg_for_analysis,range);
+    if(range->beg <= end && range->end <= end){
+        List_push(reg_for_analysis,range);
+    }
     List_clear_destroy(li);
     return reg_for_analysis;
 error:
