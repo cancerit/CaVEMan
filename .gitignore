@@ -1,3 +1,4 @@
+.vstags
 /bin/
 /src/*.o
 /tests/*_tests
