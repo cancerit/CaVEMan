@@ -69,7 +69,7 @@ static char tum_cn_loc[512];
 static int idx = 0;
 
 void split_print_usage (int exit_code){
-    printf ("Usage: caveman split -i jobindex [-f path] [-c int] [-m int] [-e int] \n\n");
+    printf ("Usage: caveman split -i jobindex [-f path] [-e int] \n\n");
     printf("-i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)\n\n");
     printf("Optional\n");
     printf("-f  --config-file [file]          Path to the config file produced by setup [default:'%s'].\n",config_file);
@@ -82,8 +82,6 @@ int split_setup_options(int argc, char *argv[]){
     const struct option long_opts[] =
     {
         {"config-file", required_argument, 0, 'f'},
-        {"increment", required_argument, 0, 'c'},
-        {"max-read-count",required_argument , 0, 'm'},
         {"read-count", required_argument, 0, 'e'},
         {"index", required_argument, 0, 'i'},
         {"help", no_argument, 0, 'h'},
