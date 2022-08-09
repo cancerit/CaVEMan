@@ -213,44 +213,8 @@ process mstep {
     """
 
 }
-//    -i jobindex [-f path] [-c int] [-m int] [-e int] 
-//   split -i %d -f %s -e %d
-//   caveman split -i jobindex [-f path] [-m int] [-e int] 
 
-// -i  --index [int]                 Job index (e.g. from $LSB_JOBINDEX)
-
-// Optional
-// -f  --config-file [file]          Path to the config file produced by setup [default:'caveman.cfg.ini'].
-// -e  --read-count [int]            Guide for maximum read count in a section [default:350000]
-// -h    help                          Display this usage information.
-/*}
-
-process split_concat {
-	// # uncoverable subroutine
-	// my $options = shift;
-	// my $tmp = $options->{'tmp'};
-	// my $out = $options->{'out_file'};
-	// my $target = $options->{'target_files'};
-	// return 1 if PCAP::Threaded::success_exists(File::Spec->catdir($tmp, 'progress'), 0);
-	// my $command = sprintf('cat %s > %s',$target,$out);
-	// PCAP::Threaded::external_process_handler(File::Spec->catdir($tmp, 'logs'), $command, 0);
-
-	// return PCAP::Threaded::touch_success(File::Spec->catdir($tmp, 'progress'), 0);
-}
-
-process mstep {
-// mstep -i %d -f %s
-// caveman mstep -i jobindex [-f file] [-m int] [-a int]
-
-// -i  --index [int]                 Job index.
-
-// Optional
-// -f  --config-file [file]          Path to the config file produced by setup [default: 'caveman.cfg.ini'].
-// -a  --split_size [int]            Size of section to retrieve at a time from bam file. Allows memory footprint tuning [default:50000].
-// -m  --min-base-qual [int]         Minimum base quality for inclusion of a read position in analysis [default:11]
-// -h	help                          Display this usage information.
-
-}
+/*
 
 process merge {
 // merge -c %s -p %s -f %s
