@@ -1,0 +1,63 @@
+version: 2.1
+jobs:
+  license_chk:
+    machine:
+      # need machine as want to mount a volume
+      image: ubuntu-2004:202107-02
+    steps:
+      - checkout
+      - run:
+          name: Execute skywalking-eyes check of licenses
+          command: |
+            docker run --rm -v $(pwd):/github/workspace apache/skywalking-eyes header check
+  build:
+    environment:
+      IMAGE_NAME: quay.io/wtsicgp/cgpcavemanpostprocessing
+    docker:
+      - image: cimg/base 
+    steps:
+      - checkout
+      - compile:
+          name: Compile CaVEMan
+          command: |
+            mkdir install
+            ./setup.sh install
+      # - run:
+      #     name: Build Docker image
+      #     command: |
+      #       set -e
+      #       BRANCH_OR_TAG="${CIRCLE_TAG:-$CIRCLE_BRANCH}"
+      #       CLEAN_BRANCH=$(echo $BRANCH_OR_TAG | tr / -)
+      #       echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USER" --password-stdin
+      #       echo "$QUAYIO_PASSWORD" | docker login -u "$QUAYIO_USER" --password-stdin quay.io
+      #       docker build -t $IMAGE_NAME:$CLEAN_BRANCH .
+      #       echo 'Verify program(s) from each inherited base image - cgpbigwig'
+      #       docker run -t --rm $IMAGE_NAME:$CLEAN_BRANCH bwjoin --version
+      #       echo 'Verify program(s) from each inherited base image - pcap-core'
+      #       docker run -t --rm $IMAGE_NAME:$CLEAN_BRANCH bwa_mem.pl -version
+      #       docker run -t --rm $IMAGE_NAME:$CLEAN_BRANCH bammarkduplicates2 --version
+      #       docker run -t --rm $IMAGE_NAME:$CLEAN_BRANCH samtools --version
+      #       docker run -t --rm $IMAGE_NAME:$CLEAN_BRANCH bash -c 'bwa 2>&1 | grep Version'
+      #       echo 'Verify program(s) from this repo'
+      #       docker run -t --rm $IMAGE_NAME:$CLEAN_BRANCH cgpFlagCaVEMan.pl --version
+      #       if [ "$CIRCLE_TAG" = "$BRANCH_OR_TAG" ]; then
+      #         echo 'Pushing image'
+      #         docker push $IMAGE_NAME:$CLEAN_BRANCH
+      #       else
+      #         echo "I am not a tag so not pushing image"
+      #       fi
+workflows:
+  version: 2
+  build_test:
+    jobs:
+      # - license_chk:
+      #     filters:
+      #       tags:
+      #         only: /.+/
+      - build:
+          context:
+            - dockerhub-casmservice
+            - quayio-casmservice
+          filters:
+            tags:
+              only: /.+/
