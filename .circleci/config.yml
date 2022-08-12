@@ -14,10 +14,10 @@ jobs:
     environment:
       IMAGE_NAME: quay.io/wtsicgp/cgpcavemanpostprocessing
     docker:
-      - image: cimg/base 
+      - image: cimg/base:edge
     steps:
       - checkout
-      - compile:
+      - run:
           name: Compile CaVEMan
           command: |
             mkdir install
