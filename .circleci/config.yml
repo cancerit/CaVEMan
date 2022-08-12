@@ -18,6 +18,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install Dependencies
+          command: |
+            apt-get install -yq --no-install-recommends zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev
+      - run:
           name: Compile CaVEMan
           command: |
             mkdir install
