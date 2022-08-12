@@ -151,7 +151,7 @@ int output_vcf_variant_position(estep_position_t *pos, gzFile out, char *chrom){
 		mut_prop = (double) mut_count / (double)(genotype_get_total_base_count(pos->norm_fwd_cvg)+genotype_get_total_base_count(pos->norm_rev_cvg));
 	}
 	output_set_genotype_representations_for_genotype_t(pos->top_geno->norm_geno,pos->ref_base[0], &norm_geno_rep, &tum_geno_rep);
-	write = gzprintf(out,"%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\t",
+	write = gzprintf(out,"%d/%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\t",
 						norm_geno_rep,tum_geno_rep,
 						pos->norm_fwd_cvg->a_count,pos->norm_fwd_cvg->c_count,pos->norm_fwd_cvg->g_count,pos->norm_fwd_cvg->t_count,
 						pos->norm_rev_cvg->a_count,pos->norm_rev_cvg->c_count,pos->norm_rev_cvg->g_count,pos->norm_rev_cvg->t_count,
@@ -167,7 +167,7 @@ int output_vcf_variant_position(estep_position_t *pos, gzFile out, char *chrom){
 		mut_prop = (double) mut_count / (double)(genotype_get_total_base_count(pos->tum_fwd_cvg)+genotype_get_total_base_count(pos->tum_rev_cvg));
 	}
 	output_set_genotype_representations_for_genotype_t(pos->top_geno->tum_geno,pos->ref_base[0], &norm_geno_rep, &tum_geno_rep);
-	write = gzprintf(out,"%d|%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\n",
+	write = gzprintf(out,"%d/%d:%d:%d:%d:%d:%d:%d:%d:%d:%5.1e\n",
 						norm_geno_rep,tum_geno_rep,
 						pos->tum_fwd_cvg->a_count,pos->tum_fwd_cvg->c_count,pos->tum_fwd_cvg->g_count,pos->tum_fwd_cvg->t_count,
 						pos->tum_rev_cvg->a_count,pos->tum_rev_cvg->c_count,pos->tum_rev_cvg->g_count,pos->tum_rev_cvg->t_count,
