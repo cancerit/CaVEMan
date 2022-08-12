@@ -22,6 +22,13 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get install -yq --no-install-recommends zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev
+            curl -sSL --retry 10 https://sourceforge.net/projects/linasm/files/linasm-1.13%28stable%29.tar.gz/download > distro.tar.gz
+            rm -rf distro/*
+            mkdir distro
+            tar --strip-components 1 -C distro -xzf distro.tar.gz
+            cd distro
+            make
+            sudo make install
       - run:
           name: Compile CaVEMan
           command: |
