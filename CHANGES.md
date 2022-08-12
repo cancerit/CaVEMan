@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.15.2
+
+* Correct genotype bug since inception. Now uses / rather than | in sample genotype section (GT) of VCF.
+
 ## 1.15.1
 
 * Fixed bug in ignore region calculations where ignored regions ends at the end of a chr.
