@@ -115,7 +115,7 @@ process mstep {
     val mstepMinBaseQual
     path rposFiles
 
-  publishDir "$baseDir/results/", mode: 'symlink', pattern: 'results/*/*.covs', overwrite: true
+  publishDir "$baseDir/", mode: 'symlink', pattern: 'results/*/*.covs', overwrite: true
 
   output:
     path "results/*/*.covs", emit: mstepResults
