@@ -79,236 +79,25 @@ def helpCavemanMessage() {
     """.stripIndent()
 }
 
-def get_chr_count (genome, ignorecontigs) {
-  echo "$genome\t$ignorecontigs"
+def getUsableContigIndices(genomeFai, ignoreContigs) {
+  fai_lines = file(genomeFai).readLines()
+  def contig_fai = []
+  for (fai_line in fai_lines){
+    contig_fai.push(fai_line.split("\\s+")[0])
+  }
+  contig_fai = contig_fai.reverse()
+  def ignore_contigs_list  = file(ignoreContigs).readLines()
+  def unique_fai = (contig_fai + ignore_contigs_list ) - contig_fai.intersect( ignore_contigs_list )
+  def indices = [] 
+  for(contig in unique_fai){
+    indices.add((contig_fai.findIndexOf { "$it" == "$contig" })+1)
+  }
+  return indices
 }
 
+include { setup; split; split_concat; mstep } from './modules/caveman-core.nf'
 
-process setup {
-
-  input:
-    //setup
-    tuple path('genome.fa'), path('genome.fa.fai')
-    tuple path('mt.bam'), path('mt.bam.bai')
-    tuple path('wt.bam'), path('wt.bam.bai')
-    path ('ign.file')
-
-    //Optional setup - or empty file and blanket CN
-    val normcn
-    val tumcn
-    //tumcn
-    val configF
-    val algBeanF
-    path ('results')
-    val splitList
-    val includeSW
-    val includeSE
-    val includeDups
-
-  output:
-    //setup outputs
-    path "${configF}", emit: configFile
-    path "${algBeanF}", emit: algBeanFile
-
-  log.info """\
-  CaVEMan:setup
-  """.stripIndent()
-
-  script:
-    def applySW = includeSW != "NO_SW" ? "-w $includeSW" : ''
-    def applySE = includeSE != "NO_SE" ? "-z $includeSE" : ''
-    def applyDup = includeDups != "NO_DUPS" ? "-u $includeDups" : ''
-    def applyNCN = normcn != "NO_NCN" ? "-j $normcn" : ''
-    def applyTCN = tumcn != "NO_TCN" ? "-e $tumcn" : ''
-    """ 
-    caveman setup \
-    ${applySW} \
-    ${applySE} \
-    ${applyDup} \
-    ${applyNCN} \
-    ${applyTCN} \
-    -l $splitList \
-    -a $algBeanF \
-    -c $configF \
-    -t mt.bam \
-    -n wt.bam \
-    -r genome.fa.fai \
-    -g ign.file \
-    -f results \
-    """
-}
-
-process split {
-
-  input:
-    path configFile
-    tuple path('genome.fa'), path('genome.fa.fai')
-    tuple path('mt.bam'), path('mt.bam.bai')
-    tuple path('wt.bam'), path('wt.bam.bai')
-    path ('ign.file')
-    each index
-    val maxSplitReadNum
-    val splitList
-
-  output:
-    path "${splitList}*": emit splitFiles
-
-  log.info """\
-  CaVEMan:split
-  """.stripIndent()
-
-  script:
-    """
-    caveman split \
-    -f $configFile \
-    -i $index \
-    -e $maxSplitReadNum \
-    """
-}
-
-process split_concat {
-  input:
-    path 'splitList.*'
-    path splitList
-
-  output:
-    path $splitList, emit: mergedSplitList
-
-  log.info """\
-  CaVEMan:split_concat
-  """.stripIndent()
-
-  script:
-  """
-  cat splitList.* > $splitList
-  """
-}
-
-process mstep {
-  input:
-    path configFile
-    tuple path('genome.fa'), path('genome.fa.fai')
-    tuple path('mt.bam'), path('mt.bam.bai')
-    tuple path('wt.bam'), path('wt.bam.bai')
-    path ('ign.file')
-    each index
-    val mstepSplitSize
-    val mstepMinBaseQual
-    val splitList
-    path ('results')
-
-  output:
-
-  log.info """\
-  CaVEMan:mstep
-  """.stripIndent()
-
-  script:
-    """
-    caveman mstep \
-    -i $index \
-    -f $configFile \
-    -a $mstepSplitSize \
-    -m $mstepMinBaseQual \
-    """
-
-}
-
-/*
-
-process merge {
-// merge -c %s -p %s -f %s
-// caveman merge [-f file] [-c file] [-p file] 
-
-// Optional
-// -f  --config-file file               Path to the config file produced by setup. [default: 'caveman.cfg.ini']
-
-// -c  --covariate-file filename        Location to write merged covariate array [default: covs_arr]
-// -p  --probabilities-file filename    Location to write probability array [default: probs_arr]
-// -h	help                             Display this usage information.
-}
-
-process estep {
-// estep -i %d -k %f -g %s -o %s -v %s -w %s -f %s -l %s -r %s
-// const my $CAVEMAN_ESTEP_MUT_PRIOR_EXT => q{ -c %s};
-// const my $CAVEMAN_ESTEP_SNP_PRIOR_EXT => q{ -d %s};
-// const my $CAVEMAN_ESTEP_NPLATFORM_EXT => q{ -P %s};
-// const my $CAVEMAN_ESTEP_TPLATFORM_EXT => q{ -T %s};
-// caveman estep -i jobindex [-f file] [-m int] [-k float] [-b float] [-p float] [-q float] [-x int] [-y int] [-c float] [-d float] [-a int]
-
-// -i  --index [int]                                Job index (e.g. from $LSB_JOBINDEX)
-
-// Optional
-// -f  --config-file [file]                         Path to the config file produced by setup. [default:'caveman.cfg.ini']
-// -m  --min-base-qual [int]                        Minimum base quality for inclusion of a read position [default:11]
-// -c  --prior-mut-probability [float]              Prior somatic probability [default:0.000006]
-// -d  --prior-snp-probability [float]              Prior germline mutant probability [default:0.000100]
-// -k  --normal-contamination [float]               Normal contamination of tumour [default:0.100000]
-// -b  --reference-bias [float]                     Reference bias [default:0.950000]
-// -p  --mut-probability-cutoff [float]             Minimum probability call for a somatic mutant position to be output [default:0.800000]
-// -q  --snp-probability-cutoff [float]             Minimum probability call for a germline mutant position to be output [default:0.950000]
-// -x  --min-tum-coverage [int]                     Minimum tumour coverage for analysis of a position [default:1]
-// -y  --min-norm-coverage [int]                    Minimum normal coverage for analysis of a position [default:1]
-// -a  --split-size [int]                           Size of section to retrieve at a time from bam file. Allows memory footprint tuning [default:50000].
-// -s  --debug                                      Adds an extra output to a debug file. Every base analysed has an output
-// -g  --cov-file [file]                            File location of the covariate array. [default:'covs_arr']
-// -o  --prob-file [file]                           File location of the prob array. [default:'probs_arr']
-// -v  --species-assembly [string]                  Species assembly (eg 37/GRCh37), required if bam header SQ lines do not contain AS and SP information.
-// -w  --species [string]                           Species name (eg Human), required if bam header SQ lines do not contain AS and SP information.
-// -n  --normal-copy-number [int]                   Copy number to use when filling gaps in the normal copy number file [default:2].
-// -t  --tumour-copy-number [int]                   Copy number to use when filling gaps in the tumour copy number file [default:2].
-// -l  --normal-protocol [string]                   Normal protocol. Ideally this should match -r but not checked (WGS|WXS|RNA|RNA-Seq|AMPLICON|TARGETED) [default:WGS].
-// -r  --tumour-protocol [string]                   Tumour protocol. Ideally this should match -l but not checked (WGS|WXS|RNA|RNA-Seq|AMPLICON|TARGETED) [default:WGS].
-// -P  --normal-platform [string]                   Normal platform. Overrides the values retrieved from bam header.
-// -T  --tumour-platform [string]                   Tumour platform. Overrides the values retrieved from bam header.
-// -M  --max-copy-number [int]                      Maximum copy number permitted. If exceeded the copy number for the offending region will be set to this value. [default:10].
-// -h	help                                         Display this usage information.
-
-}
-
-process merge_results {
-// mergeCavemanResults -s %s -o %s -f %s
-// Usage:
-//     mergeCavemanResults [options] [file(s)...]
-
-//     Required parameters: --output -o File to output result to. --splitlist
-//     -s File containing list of split section --file-match -f ls style
-//     pattern match of files to be merged. e.g. 
-//     --help -h Brief help message.
-}
-
-process add_ids {
-//   cgpAppendIdsToVcf.pl -i %s -o %s 
-//   cgpAppendIdsToVcf.pl --help
-// Usage
-
-// Usage:
-//     cgpAppendIdsToVcf.pl [-h] -i this.vcf -o this_with_ids.vcf
-
-//       General Options:
-
-//       --help      (-h)       Brief documentation
-
-//             --file      (-i)       The file to append IDs to.
-
-//             --outFile   (-o)       The output filename
-
-//             Optional parameters:
-
-//             --idstart   (-g)       Will set a sequential id generator to the given integer value. If not present will assign UUIDs to each variant.
-
-//             --version   (-v)       Prints version information.
-
-//       Examples:
-
-//         cgpAppendIdsToVcf.pl -f this.vcf -o this_with_ids.vcf -g 1
-}
-
-process flag {
-  cgpFlagCaVEMan.pl -i %s -o %s -s %s -m %s -n %s -b %s -g %s -umv %s -ref %s -t %s -sa %s
-}
-*/
-
+//mstep; merge; estep; combine;
 // Print help if no workflow specified
 workflow { 
     if ( params.help ) {
@@ -332,14 +121,17 @@ workflow caveman {
     mutBam: ${params.mutBam}
     controlBam: ${params.controlBam}
     ignoreContigs: ${params.ignoreContigs}
+    ignoreRegions: ${params.ignoreRegions}
   """.stripIndent()
 
   main:
     genome = tuple file(params.genomefa), file("${params.genomefa}.fai")
     mt = tuple file(params.mutBam), file("${params.mutBam}.bai")
     wt = tuple file(params.controlBam), file("${params.controlBam}.bai")
-    ign_file = file(params.ignoreContigs)
+    ign_file = file(params.ignoreRegions)
     results = file(params.resultsDir)
+    splitF = file(params.splitList)
+    ignoreContigFile = file(params.ignoreContigs)
     
     subCaVEMan(
       //setup
@@ -347,19 +139,22 @@ workflow caveman {
       mt,
       wt,
       ign_file,
-
+      ignoreContigFile,
       //Optional setup - or empty file and blanket CN
       params.normcn,
       params.tumcn,
       params.configF,
       params.algBeanF,
       results,
-      params.splitList,
+      splitF,
       params.includeSW,
       params.includeSE,
       params.includeDups,
 
-      params.maxSplitReadNum
+      params.maxSplitReadNum,
+
+      params.mstepSplitSize,
+      params.mstepMinBaseQual
     )
 }
 
@@ -371,20 +166,24 @@ workflow subCaVEMan {
     mt
     wt
     ign_file
-
+    ignoreContigFile
     //Optional setup - or empty file and blanket CN
     normcn
     tumcn
     configF
     algBeanF
     results
-    splitList
+    splitF
     includeSW
     includeSE
     includeDups
 
     //Optional spliut 
     maxSplitReadNum
+
+    //Optional mstep
+    mstepSplitSize
+    mstepMinBaseQual
 
   main:
     setup(
@@ -394,18 +193,16 @@ workflow subCaVEMan {
       ign_file,
       normcn,
       tumcn,
-      configF,
-      algBeanF,
-      results,
-      splitList,
+      // configF,
+      // algBeanF,
+      // results,
+      // splitF,
       includeSW,
       includeSE,
       includeDups
     )
-    // contigs(
-    //   genome
-    // )
-    Channel.of(1..file("${params.genomefa}.fai").countLines()).set({contig_index})
+    //Only want the indices of usable contigs - subtract contents of the ignoreContigsFile from the genome.fa.fa file
+    Channel.fromList(getUsableContigIndices("${params.genomefa}.fai", ignoreContigFile)).set({contig_index})
     split(
       setup.out.configFile,
       genome,
@@ -414,21 +211,29 @@ workflow subCaVEMan {
       ign_file,
       contig_index,
       maxSplitReadNum,
-      splitList
-    ) | collect | 
-    split_concat(
-
     )
+    //Concatenate split files
+    split_concat(
+      split.out.splitFiles.collect(),
+    )
+    Channel.of(1..file("$baseDir/splitList").countLines()).set({mstep_index})
     mstep(
       setup.out.configFile,
+      setup.out.algBeanFile, 
+      split_concat.out.splitList,
       genome,
       mt,
       wt,
       ign_file,
-      split.out.splitFiles,
+      mstep_index,
       mstepSplitSize,
       mstepMinBaseQual,
-      splitList,
-      results
+      split.out.rposFiles.collect()
     )
+    // merge(
+    //   setup.out.configFile,
+    //   setup.out.algBeanFile, 
+    //   split_concat.out.splitList,
+    //   mstep.mstepResults.collect()
+    // )
 }
