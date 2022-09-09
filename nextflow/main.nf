@@ -51,6 +51,9 @@ def helpCavemanMessage() {
     --mutBam        Tumour BAM/CRAM file (co-located index and bas files)
     --controlBam    Normal BAM/CRAM file (co-located index and bas files)
     --ignoreContigs Location of tsv ignore regions file
+    --species       Species name to be output in VCF
+    --assembly      Species assembly to be output in VCF
+    --analysisName
 
 
 
@@ -76,6 +79,21 @@ def helpCavemanMessage() {
     --debug      Don't cleanup workarea on completion.
     --apid       Analysis process ID (numeric) - for cgpAnalysisProc header info
                   - not necessary for external use
+
+      priorMutProb = 0.000006
+  priorSnpProb = 0.000100
+  normalContamination = 0.100000
+  refBias = 0.950000
+  mutProbCutoff = 0.800000
+  snpProbCutoff = 0.950000
+  minTumCvg = 1
+  minNormCvg = 1
+  normProtocol = "WGS"
+  tumProtocol = "WGS"
+  normCNFill = 2
+  tumCNFill = 2
+  normSeqPlatform = "NO_PLAT"
+  tumSeqPlatform = "NO_PLAT"
     """.stripIndent()
 }
 
@@ -95,7 +113,7 @@ def getUsableContigIndices(genomeFai, ignoreContigs) {
   return indices
 }
 
-include { setup; split; split_concat; mstep } from './modules/caveman-core.nf'
+include { setup; split; split_concat; generate_mstep_indices; mstep; merge; estep; merge_results; add_ids; } from './modules/caveman-core.nf'
 
 //mstep; merge; estep; combine;
 // Print help if no workflow specified
@@ -117,11 +135,14 @@ workflow caveman {
     CaVEMan:caveman - NF Pipeline
     ------------------------------
     //setup
+    analysisName: ${params.analysisName}
     genomefa: ${params.genomefa}
     mutBam: ${params.mutBam}
     controlBam: ${params.controlBam}
     ignoreContigs: ${params.ignoreContigs}
     ignoreRegions: ${params.ignoreRegions}
+    species: ${params.species}
+    assembly: ${params.assembly}
   """.stripIndent()
 
   main:
@@ -140,6 +161,8 @@ workflow caveman {
       wt,
       ign_file,
       ignoreContigFile,
+      params.species,
+      params.assembly,
       //Optional setup - or empty file and blanket CN
       params.normcn,
       params.tumcn,
@@ -154,7 +177,26 @@ workflow caveman {
       params.maxSplitReadNum,
 
       params.mstepSplitSize,
-      params.mstepMinBaseQual
+      params.minBaseQual,
+
+      //Optional estep
+      params.priorMutProb,
+      params.priorSnpProb,
+      params.normalContamination,
+      params.refBias,
+      params.mutProbCutoff,
+      params.snpProbCutoff,
+      params.minTumCvg,
+      params.minNormCvg,
+      params.normProtocol,
+      params.tumProtocol,
+      params.normCNFill,
+      params.tumCNFill,
+      params.normSeqPlatform,
+      params.tumSeqPlatform,
+
+      //Analysis name for output files
+      params.analysisName
     )
 }
 
@@ -167,6 +209,8 @@ workflow subCaVEMan {
     wt
     ign_file
     ignoreContigFile
+    species
+    assembly
     //Optional setup - or empty file and blanket CN
     normcn
     tumcn
@@ -177,13 +221,28 @@ workflow subCaVEMan {
     includeSW
     includeSE
     includeDups
-
     //Optional spliut 
     maxSplitReadNum
-
     //Optional mstep
     mstepSplitSize
-    mstepMinBaseQual
+    minBaseQual
+    //Optional estep
+    priorMutProb
+    priorSnpProb
+    normalContamination
+    refBias
+    mutProbCutoff
+    snpProbCutoff
+    minTumCvg
+    minNormCvg
+    normProtocol
+    tumProtocol
+    normCNFill
+    tumCNFill
+    normSeqPlatform
+    tumSeqPlatform
+    //Output files naming
+    analysisName
 
   main:
     setup(
@@ -210,13 +269,15 @@ workflow subCaVEMan {
       wt,
       ign_file,
       contig_index,
-      maxSplitReadNum,
+      maxSplitReadNum
     )
     //Concatenate split files
     split_concat(
-      split.out.splitFiles.collect(),
+      split.out.splitFiles.collect()
     )
-    Channel.of(1..file("$baseDir/splitList").countLines()).set({mstep_index})
+    generate_mstep_indices(
+      split_concat.out.splitList
+    )
     mstep(
       setup.out.configFile,
       setup.out.algBeanFile, 
@@ -225,15 +286,58 @@ workflow subCaVEMan {
       mt,
       wt,
       ign_file,
-      mstep_index,
       mstepSplitSize,
-      mstepMinBaseQual,
-      split.out.rposFiles.collect()
+      minBaseQual,
+      split.out.rposFiles.collect(),
+      generate_mstep_indices.out.mstep_index.splitText()
     )
-    // merge(
-    //   setup.out.configFile,
-    //   setup.out.algBeanFile, 
-    //   split_concat.out.splitList,
-    //   mstep.mstepResults.collect()
-    // )
+    merge(
+      setup.out.configFile,
+      setup.out.algBeanFile,
+      split_concat.out.splitList,
+      mstep.out.mstepResults.collect(),
+      "$launchDir/results"
+    )
+    estep(
+      setup.out.configFile,
+      merge.out.covArrFile,
+      merge.out.probsArrFile,
+      setup.out.algBeanFile, 
+      split_concat.out.splitList,
+      "$launchDir/results",
+      genome,
+      mt,
+      wt,
+      ign_file,
+      split.out.rposFiles.collect(),
+      minBaseQual,
+      species,
+      assembly,
+      priorMutProb,
+      priorSnpProb,
+      normalContamination,
+      refBias,
+      mutProbCutoff,
+      snpProbCutoff,
+      minTumCvg,
+      minNormCvg,
+      normProtocol,
+      tumProtocol,
+      normCNFill,
+      tumCNFill,
+      normSeqPlatform,
+      tumSeqPlatform,
+      generate_mstep_indices.out.mstep_index.splitText()
+    )
+    merge_results(
+      "$launchDir/results",
+      split_concat.out.splitList,
+      estep.out.estep_idx.collect(),
+      analysisName
+    )
+    add_ids(
+      merge_results.out.mergedMutsVCF,
+      merge_results.out.mergedSnpVCF,
+      analysisName
+    )
 }
