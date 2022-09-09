@@ -1,5 +1,9 @@
 # CHANGES
 
+## 1.15.3
+
+* Remove requirement for CWD in config ini file
+
 ## 1.15.2
 
 * Correct genotype bug since inception. Now uses / rather than | in sample genotype section (GT) of VCF.
