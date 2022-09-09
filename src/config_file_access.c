@@ -159,9 +159,9 @@ int config_file_access_write_config_file(FILE *file, char *tum_bam_file, char *n
 	check_mem(curr_wd);
 	char *chk = getcwd(curr_wd,size);
 	check(chk!=NULL,"Error retrieving cwd for config file.");
-	int res = fprintf(file,"%s=%s\n",CWD,curr_wd);
-	check(res>=0,"Error writing cwd to config file.");
-	res = fprintf(file,"%s=%s\n",MUT_TUM,tum_bam_file);
+	//int res = fprintf(file,"%s=%s\n",CWD,curr_wd);
+	//check(res>=0,"Error writing cwd to config file.");
+	int res = fprintf(file,"%s=%s\n",MUT_TUM,tum_bam_file);
 	check(res>=0,"Error writing mutant bam file loc to config file.");
 	res = fprintf(file,"%s=%s\n",NORM_TUM,norm_bam_file);
 	check(res>=0,"Error writing normal bam file loc to config file.");
