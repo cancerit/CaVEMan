@@ -6,3 +6,6 @@
 setup.log
 /tests/*.dSYM
 /install
+.vstags
+.nextflow
+nextflow/.nextflow*
