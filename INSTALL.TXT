@@ -11,22 +11,14 @@ caveman depends on:
 Compilation
 ===========
 
-If you have a local install of htslib:
+```
+  cd CaVEMan
+  ./setup.sh <install_dir>
+```
 
-Type 'make' if you have the following environmental variables $HTSLIB set
-to be the directory of your local install of each.
-
-Otherwise the command below will hopefully help you.
-
-make HTSLOC="/full/path/to/htslib" TEST_REF="/path/to/GRCh37/genome.fa.fai"
-
-If you wish to temporarily install htslib purely for building caveman:
-
-Type './setup.sh <install_directory>' within the CaVEMan directory. Caveman executables
-will be installed to 'install_directory/bin/'.
+Caveman executables will be installed to `<install_dir>/bin/`.
 
 Installation
 ============
 
-Copy 'bin/caveman', and other executables in bin/ to a location you want
-(e.g. a directory in your $PATH).
+Add `<install_dir>/bin/` to path

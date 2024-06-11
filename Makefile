@@ -19,7 +19,7 @@ HTSTMP?=./caveman_tmp
 prefix=?/usr/local/
 
 #Define locations of header files
-OPTINC?=-I$(HTSLOC)/
+OPTINC?=-I$(HTSLOC)/ -I$(LINASM_INC)
 INCLUDES= -Isrc $(OPTINC) -rdynamic
 
 JOIN_INCLUDES= -I$(prefix)/include
@@ -28,7 +28,7 @@ CAT_LFLAGS= -L$(prefix)/lib
 # define library paths in addition to /usr/lib
 #   if I wanted to include libraries not in /usr/lib I'd specify
 #   their path using -Lpath, something like:
-LFLAGS?=-L$(HTSTMP)
+LFLAGS?=-L$(HTSTMP) -L$(LINASM_LIB)
 
 # define any libraries to link into executable:
 #   if I want to link in libraries (libx.so or libx.a) I use the -llibname
@@ -85,7 +85,7 @@ test: $(TESTS)
 #Unit tests with coverage
 coverage: CFLAGS += --coverage
 coverage: test
-
+ 
 make_bin:
 	$(MD) ./bin
 
