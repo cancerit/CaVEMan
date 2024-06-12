@@ -81,29 +81,29 @@ echo -n "Building linasm..."
 if [ -e $SETUP_DIR/linasm.success ]; then
   echo -n "previously installed..."
 else
-  wget https://github.com/rurban/linasm/archive/refs/heads/master.zip
-  unzip -o master.zip && cd linasm-master
-  mkdir -p linasm_inst
-  make
-  make install prefix=${SETUP_DIR}/linasm-master/linasm_inst/
-  make clean
+  wget https://github.com/rurban/linasm/archive/e33b4a083f8bbdcbd58018c9abc65047d20fd431.zip &&
+  unzip -o e33b4a083f8bbdcbd58018c9abc65047d20fd431.zip && mv linasm-e33b4a083f8bbdcbd58018c9abc65047d20fd431 linasm && cd linasm &&
+  mkdir -p linasm_inst &&
+  make &&
+  make install prefix=${SETUP_DIR}/linasm/linasm_inst/ &&
+  make clean &&
   touch $SETUP_DIR/linasm.success
 fi
 
-export LINASM_INC=$SETUP_DIR/linasm-master/linasm_inst/include/
-export LINASM_LIB=$SETUP_DIR/linasm-master/linasm_inst/lib/
+export LINASM_INC=$SETUP_DIR/linasm/linasm_inst/include/
+export LINASM_LIB=$SETUP_DIR/linasm/linasm_inst/lib/
 
 cd $SETUP_DIR
 echo -n "Building htslib ..."
 if [ -e $SETUP_DIR/htslib.success ]; then
   echo -n "previously installed ...";
 else
-  wget https://github.com/samtools/htslib/releases/download/1.10.2/htslib-1.10.2.tar.bz2
-  bzip2 -fd htslib-1.10.2.tar.bz2
-  mkdir -p htslib
-  tar --strip-components 1 -C htslib -xf htslib-1.10.2.tar
-  cd htslib
-  make -j$CPU
+  wget https://github.com/samtools/htslib/releases/download/1.10.2/htslib-1.10.2.tar.bz2 &&
+  bzip2 -fd htslib-1.10.2.tar.bz2 &&
+  mkdir -p htslib &&
+  tar --strip-components 1 -C htslib -xf htslib-1.10.2.tar &&
+  cd htslib &&
+  make -j$CPU &&
   touch $SETUP_DIR/htslib.success
 fi
 
@@ -115,20 +115,21 @@ if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
-  mkdir -p $INIT_DIR/c/bin &&
   make clean &&
   make -j$CPU &&
-  cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
-  cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
+  mv $INIT_DIR/bin/* $INST_PATH/bin/ &&
+  mkdir -p $INST_PATH/lib/ &&
+  cp $LINASM_LIB/liblinasm.so $INST_PATH/lib/. &&
   touch $SETUP_DIR/caveman.success
 fi
 
-cd $INIT_DIR
+exit
 
 # cleanup all junk
-rm -rf $SETUP_DIR c/
+rm -rf $SETUP_DIR 
 make clean
 
 echo
 echo "Installation succesful"
 echo "Binaries available at $INST_PATH/bin/"
+echo "linasm.so available at $INST_PATH/lib/ - directory must be on LD_LIBRARY_PATH"
