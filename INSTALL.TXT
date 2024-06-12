@@ -21,4 +21,6 @@ Caveman executables will be installed to `<install_dir>/bin/`.
 Installation
 ============
 
-Add `<install_dir>/bin/` to path
+`<install_dir>/lib/` must be appended to LD_LIBRARY_PATH.
+This ensures shared libraries are available to executables. 
+Add `<install_dir>/bin/` to path if system-wide availbility of executables is desired.
