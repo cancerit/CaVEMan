@@ -303,7 +303,7 @@ List *gen_panel_get_list_of_samples_and_locs(){
 	char *bamchar = NULL;
 	samples = List_create();
 	//Iterate through list of sample_names using comma as separator
-	char *new_sample_names = calloc((strlen(sample_names)+1), sizeof(char));
+	char *new_sample_names = calloc((strlen(sample_names)+2), sizeof(char));
 	check_mem(new_sample_names);
 	sampchar = strtok(sample_names,",");
 	while(sampchar != NULL){
