@@ -123,8 +123,6 @@ else
   touch $SETUP_DIR/caveman.success
 fi
 
-exit
-
 # cleanup all junk
 rm -rf $SETUP_DIR 
 make clean
