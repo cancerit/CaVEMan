@@ -21,8 +21,6 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 ##########LICENCE##########
 
-SOURCE_HTSLIB="https://github.com/samtools/htslib/releases/download/1.10.2/htslib-1.10.2.tar.bz2"
-
 REQUIRED_MIN_LIBZ="1.2.3.4"
 
 function version_eq_gt() {
@@ -32,28 +30,7 @@ function version_eq_gt() {
     test "$(printf '%s\n' "$@" | sort -V | head -n 1)" != "$1";
 }
 
-get_distro () {
-  EXT=""
-  DECOMP="gunzip -f"
-  echo "$1"
-  if [[ $2 == *.tar.bz2* ]] ; then
-    EXT="tar.bz2"
-    DECOMP="bzip2 -fd"
-  elif [[ $2 == *.tar.gz* ]] ; then
-    EXT="tar.gz"
-  else
-    echo "I don't understand the file type for $1"
-    exit 1
-  fi
-  if hash curl 2>/dev/null; then
-    curl -sS -o $1.$EXT -L $2
-  else
-    wget -nv -O $1.$EXT $2
-  fi
-  mkdir -p $1
-  `$DECOMP $1.$EXT`
-  tar --strip-components 1 -C $1 -xf $1.tar
-}
+set -euo pipefail 
 
 if [ "$#" -ne "1" ] ; then
   echo "Please provide an installation path  such as /opt/pancan"
@@ -75,18 +52,10 @@ echo "Max compilation CPUs set to $CPU"
 # get current directory
 INIT_DIR=`pwd`
 
-# log information about this system
-    echo '============== System information ===='
-    set -x
-    lsb_release -a
-    uname -a
-    sw_vers
-    system_profiler
-    grep MemTotal /proc/meminfo
-    set +x
-    echo; echo
-LIBZ_VER=`echo '#include <zlib.h>' | cpp -H -o /dev/null |& head -1 | cut -d' ' -f 2 | xargs grep -e '#define ZLIB_VERSION' | cut -d ' ' -f 3 | perl -pe 's/["\n]//g'`
-echo $LIBZ_VER
+set +o pipefail
+LIBZ_VER=$(echo '#include <zlib.h>' | cpp -H -o /dev/null |& head -1 | cut -d' ' -f 2 | xargs grep -e '#define ZLIB_VERSION' | cut -d ' ' -f 3 | perl -pe 's/["\n]//g')
+set -o pipefail
+
 if version_eq_gt $LIBZ_VER $REQUIRED_MIN_LIBZ ; then
 	echo "Found acceptable libz version $LIBZ_VER."
 	echo "Continuing install"
@@ -96,8 +65,6 @@ else
 	echo "Exiting install"
 	exit 1
 fi
-
-set -ue
 
 # cleanup inst_path
 mkdir -p $INST_PATH/bin
@@ -110,41 +77,57 @@ SETUP_DIR=$INIT_DIR/install_tmp
 mkdir -p $SETUP_DIR
 
 cd $SETUP_DIR
+echo -n "Building linasm..."
+if [ -e $SETUP_DIR/linasm.success ]; then
+  echo -n "previously installed..."
+else
+  wget https://github.com/rurban/linasm/archive/e33b4a083f8bbdcbd58018c9abc65047d20fd431.zip &&
+  unzip -o e33b4a083f8bbdcbd58018c9abc65047d20fd431.zip && mv linasm-e33b4a083f8bbdcbd58018c9abc65047d20fd431 linasm && cd linasm &&
+  mkdir -p linasm_inst &&
+  make &&
+  make install prefix=${SETUP_DIR}/linasm/linasm_inst/ &&
+  make clean &&
+  touch $SETUP_DIR/linasm.success
+fi
 
+export LINASM_INC=$SETUP_DIR/linasm/linasm_inst/include/
+export LINASM_LIB=$SETUP_DIR/linasm/linasm_inst/lib/
+
+cd $SETUP_DIR
 echo -n "Building htslib ..."
 if [ -e $SETUP_DIR/htslib.success ]; then
-  echo -n " previously installed ...";
+  echo -n "previously installed ...";
 else
-  cd $SETUP_DIR
-  if [ ! -e htslib ]; then
-    get_distro "htslib" $SOURCE_HTSLIB
-  fi
-  make -C htslib -j$CPU
+  wget https://github.com/samtools/htslib/releases/download/1.10.2/htslib-1.10.2.tar.bz2 &&
+  bzip2 -fd htslib-1.10.2.tar.bz2 &&
+  mkdir -p htslib &&
+  tar --strip-components 1 -C htslib -xf htslib-1.10.2.tar &&
+  cd htslib &&
+  make -j$CPU &&
   touch $SETUP_DIR/htslib.success
 fi
 
 export HTSLIB="$SETUP_DIR/htslib"
-
-set -e
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${HTSLIB}:${LINASM_LIB}"
 
 echo -n "Building CaVEMan ..."
 if [ -e "$SETUP_DIR/caveman.success" ]; then
   echo -n " previously installed ...";
 else
   cd $INIT_DIR
-  mkdir -p $INIT_DIR/c/bin &&
   make clean &&
   make -j$CPU &&
-  cp $INIT_DIR/bin/caveman $INST_PATH/bin/. &&
-  cp $INIT_DIR/bin/mergeCavemanResults $INST_PATH/bin/. &&
+  mv $INIT_DIR/bin/* $INST_PATH/bin/ &&
+  mkdir -p $INST_PATH/lib/ &&
+  cp $LINASM_LIB/liblinasm.so $INST_PATH/lib/. &&
   touch $SETUP_DIR/caveman.success
 fi
 
-cd $INIT_DIR
-
 # cleanup all junk
-rm -rf $SETUP_DIR
+rm -rf $SETUP_DIR 
+make clean
 
 echo
-echo "Please add the following to beginning of path:"
-echo "  $INST_PATH/bin"
+echo "Installation succesful"
+echo "Binaries available at $INST_PATH/bin/"
+echo "linasm.so available at $INST_PATH/lib/ - directory must be on LD_LIBRARY_PATH"

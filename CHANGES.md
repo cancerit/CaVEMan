@@ -1,5 +1,11 @@
 # CHANGES
 
+## 1.15.4
+
+* Fix memory bug causing crash in generateCavemanUMNormVCF
+* Add missing dependecies to install script
+* Streamline install script
+
 ## 1.15.3
 
 * Remove requirement for CWD in config ini file
