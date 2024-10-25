@@ -35,7 +35,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dbg.h"
-#include <fai_access.h>
+#include "fai_access.h"
 
 int fai_access_get_name_from_index(int idx, char *index_file_name, char *chr_name, int *length){
 	assert(index_file_name != NULL);
