@@ -34,7 +34,7 @@
 #define _alg_bean_h
 
 #include <stdio.h>
-#include <List.h>
+#include "List.h"
 #include "khash.h"
 
 //New hash to store unique readlengths

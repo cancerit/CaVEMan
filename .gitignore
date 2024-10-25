@@ -6,3 +6,4 @@
 setup.log
 /tests/*.dSYM
 /install
+debug-scratch/

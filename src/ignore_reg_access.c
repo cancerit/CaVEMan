@@ -36,8 +36,8 @@
 #include "dbg.h"
 #include <string.h>
 #include <limits.h>
-#include <alg_bean.h>
-#include <ignore_reg_access.h>
+#include "alg_bean.h"
+#include "ignore_reg_access.h"
 
 int ignore_reg_access_get_ign_reg_count_for_chr(char *ign_file, char *chr){
      assert(ign_file != NULL);
@@ -111,7 +111,7 @@ int ignore_reg_access_get_ign_reg_for_chr(char *ign_file,char *chr, int entry_co
         int chk = sscanf(rd,"%s\t%d\t%d",chr_nom,&beg,&end);
         if(chk==3){
             if(strcmp(chr_nom,chr) == 0){
-                regions[found_count] = malloc(sizeof(struct seq_region_t));
+                regions[found_count] = malloc(sizeof(struct seq_region_t));  // not free'd :/
                 check_mem(regions[found_count]);
                 regions[found_count]->beg = beg + is_bed;
                 regions[found_count]->end = end;
