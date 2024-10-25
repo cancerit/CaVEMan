@@ -13,9 +13,9 @@ CC = gcc -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
 CFLAGS = -Wall
 
 ifneq ($(DEBUG),)
-    CFLAGS += -g -O0  # Debug flags
+    CFLAGS += -O3  # Optimise
 else
-    CFLAGS += -O3     # Optimization flags for release
+    CFLAGS += -g -O0  # Debug
 endif
 
 HTSLOC?=$(HTSLIB)
