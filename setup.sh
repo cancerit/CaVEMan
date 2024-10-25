@@ -32,12 +32,19 @@ function version_eq_gt() {
 
 set -euo pipefail 
 
-if [ "$#" -ne "1" ] ; then
+if [ "$#" -lt "1" ] ; then
   echo "Please provide an installation path  such as /opt/pancan"
   exit 0
 fi
 
 INST_PATH=$1
+DEBUG_ARG="${2:-}"
+if [ "$DEBUG_ARG" = "DEBUG" ]; then
+  DEBUG_FLAG=1
+  echo "DEBUG set"
+else
+  DEBUG_FLAG=0
+fi
 
 CPU=`grep -c ^processor /proc/cpuinfo`
 if [ $? -eq 0 ]; then
@@ -52,9 +59,9 @@ echo "Max compilation CPUs set to $CPU"
 # get current directory
 INIT_DIR=`pwd`
 
-set +o pipefail
-LIBZ_VER=$(echo '#include <zlib.h>' | cpp -H -o /dev/null |& head -1 | cut -d' ' -f 2 | xargs grep -e '#define ZLIB_VERSION' | cut -d ' ' -f 3 | perl -pe 's/["\n]//g')
-set -o pipefail
+echo '#include <zlib.h>' | cpp -H 1>/dev/null 2> tmp.log.cpp
+LIBZ_VER=$(cat tmp.log.cpp | head -1 | cut -d' ' -f 2 | xargs grep -e '#define ZLIB_VERSION' | cut -d ' ' -f 3 | sed 's/"//g')
+rm tmp.log.cpp
 
 if version_eq_gt $LIBZ_VER $REQUIRED_MIN_LIBZ ; then
 	echo "Found acceptable libz version $LIBZ_VER."
@@ -111,23 +118,35 @@ export HTSLIB="$SETUP_DIR/htslib"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${HTSLIB}:${LINASM_LIB}"
 
 echo -n "Building CaVEMan ..."
-if [ -e "$SETUP_DIR/caveman.success" ]; then
-  echo -n " previously installed ...";
+cd $INIT_DIR
+make clean &&
+{
+if [ $DEBUG_FLAG -eq 1 ]; then
+  make -j$CPU DEBUG=1
 else
-  cd $INIT_DIR
-  make clean &&
-  make -j$CPU &&
-  mv $INIT_DIR/bin/* $INST_PATH/bin/ &&
-  mkdir -p $INST_PATH/lib/ &&
-  cp $LINASM_LIB/liblinasm.so $INST_PATH/lib/. &&
-  touch $SETUP_DIR/caveman.success
+  make -j$CPU
+fi
+} &&
+mv $INIT_DIR/bin/* $INST_PATH/bin/ &&
+mkdir -p $INST_PATH/lib/ &&
+cp $LINASM_LIB/liblinasm.so $INST_PATH/lib/. &&
+touch $SETUP_DIR/caveman.success
+
+# cleanup all intermediates
+if [ -e "$SETUP_DIR/caveman.success" ]; then
+  echo
+  echo "Installation succesful"
+  echo "Binaries available at $INST_PATH/bin/"
+  echo "linasm.so available at $INST_PATH/lib/ - directory must be on LD_LIBRARY_PATH"
+  if [ $DEBUG_FLAG -eq 1 ]; then
+    echo "DEBUG set, retaining intermediate files"
+  else
+    rm -rf $SETUP_DIR
+    make clean
+  fi
+else
+  echo
+  echo "Installation failed"
+  echo "Retaining intermediate files"
 fi
 
-# cleanup all junk
-rm -rf $SETUP_DIR 
-make clean
-
-echo
-echo "Installation succesful"
-echo "Binaries available at $INST_PATH/bin/"
-echo "linasm.so available at $INST_PATH/lib/ - directory must be on LD_LIBRARY_PATH"

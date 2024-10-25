@@ -1,9 +1,8 @@
-CAVEMAN_VERSION=1.15.4
+CAVEMAN_VERSION=1.15.5
 
 TEST_REF?=""
 #Compiler
-CC?=gcc
-CC+= -O3 -g -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
+CC = gcc -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
 
 #debug compiler
 #CC = gcc -O3 -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -g
@@ -12,6 +11,12 @@ CC+= -O3 -g -DCAVEMAN_VERSION='"$(CAVEMAN_VERSION)"' -DTEST_REF='"$(TEST_REF)"'
 # -g adds debug info to the executable file
 # -Wall turns on most warnings from compiler
 CFLAGS = -Wall
+
+ifneq ($(DEBUG),)
+    CFLAGS += -O3  # Optimise
+else
+    CFLAGS += -g -O0  # Debug
+endif
 
 HTSLOC?=$(HTSLIB)
 
@@ -73,8 +78,14 @@ all: clean make_bin make_htslib_tmp $(CAVEMAN_TARGET) $(UMNORM_TARGET) copyscrip
 $(UMNORM_TARGET): $(OBJS)
 	$(CC) $(JOIN_INCLUDES) $(INCLUDES) $(CFLAGS) -o $(UMNORM_TARGET) $(OBJS) $(LFLAGS) $(CAT_LFLAGS) $(LIBS) ./src/generateCavemanVCFUnmatchedNormalPanel.c
 
+ifneq ($(DEBUG),)
 $(CAVEMAN_TARGET): $(OBJS)
 	$(CC) $(JOIN_INCLUDES) $(INCLUDES) $(CFLAGS) -o $(CAVEMAN_TARGET) $(OBJS) $(LFLAGS) $(CAT_LFLAGS) $(LIBS) ./src/caveman.c
+else
+$(CAVEMAN_TARGET): $(OBJS)
+	$(CC) $(JOIN_INCLUDES) $(INCLUDES) $(CFLAGS) -o $(CAVEMAN_TARGET) $(OBJS) $(LFLAGS) $(CAT_LFLAGS) $(LIBS) ./src/caveman.c
+	strip $(CAVEMAN_TARGET)
+endif
 
 #Unit Tests
 test: $(CAVEMAN_TARGET)

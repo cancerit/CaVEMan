@@ -33,8 +33,8 @@
 #ifndef _split_h
 #define _split_h
 
-#include <List.h>
-#include <ignore_reg_access.h>
+#include "List.h"
+#include "ignore_reg_access.h"
 
 int get_read_counts_with_ignore(List *ignore,int start, int stop, char *chr);
 int shrink_section_to_size(char *chr_name,int sect_start, int sect_stop,
