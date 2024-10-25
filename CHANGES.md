@@ -1,5 +1,10 @@
 # CHANGES
 
+## 1.15.5
+
+* Fix memory bug in split
+* Add debug option to setup.sh and Makefile
+
 ## 1.15.4
 
 * Fix memory bug causing crash in generateCavemanUMNormVCF
