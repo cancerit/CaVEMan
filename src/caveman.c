@@ -30,12 +30,12 @@
 *
 */
 
-#include <setup.h>
-#include <split.h>
-#include <mstep.h>
-#include <merge.h>
-#include <estep.h>
-#include <dbg.h>
+#include "setup.h"
+#include "split.h"
+#include "mstep.h"
+#include "merge.h"
+#include "estep.h"
+#include "dbg.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <getopt.h>

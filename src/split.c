@@ -35,11 +35,11 @@
 #include <getopt.h>
 #include <string.h>
 #include <assert.h>
-#include <dbg.h>
-#include <split.h>
-#include <file_tests.h>
-#include <alg_bean.h>
-#include <fai_access.h>
+#include "dbg.h"
+#include "split.h"
+#include "file_tests.h"
+#include "alg_bean.h"
+#include "fai_access.h"
 #include <split_access.h>
 #include <bam_access.h>
 #include <config_file_access.h>
@@ -179,7 +179,7 @@ int split_main(int argc, char *argv[]){
     int is_err = split_setup_options(argc,argv);
     check(is_err==0,"Error parsing options");
 
-    char *chr_name = malloc(sizeof(char *));
+    char *chr_name = malloc(sizeof(char) * 100);
     //Open the config file and do relevant things
     FILE *config = fopen(config_file,"r");
     check(config != NULL,"Failed to open config file for reading. Have you run caveman-setup?");
@@ -428,6 +428,8 @@ int split_main(int argc, char *argv[]){
         hts_itr_destroy(iter_tum);
     }//End of checking if this is a valid contig to split.
 
+    free(ignore_regs);
+    free(chr_name);
 
     return 0;
 error:

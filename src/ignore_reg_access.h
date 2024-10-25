@@ -34,7 +34,7 @@
 #define _ignore_reg_access_h
 
 #include <stdio.h>
-#include <List.h>
+#include "List.h"
 
 typedef struct seq_region_t{
    int beg;
