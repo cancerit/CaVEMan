@@ -21,7 +21,7 @@ See INSTALL.TXT
 
 * BWA Mapped, indexed, duplicate marked/removed alignment files, for both a normal and tumour sample
   * Only alignments with standard illumina quality scores have been tested, other inputs may cause unexpected behaviour
-	* Supports BAM and, as of version 1.6.0, CRAM (with index).
+  * Supports BAM and, as of version 1.6.0, CRAM (with index).
 * Reference.fasta and index
 * A one based bed style format file of regions to ignore during analysis (see specified format).
 * [zlib](https://zlib.net/) >= 1.2.3.5
